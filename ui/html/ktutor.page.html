@@ -1,0 +1,66 @@
+{{template "base" .}}
+
+{{define "title"}}Morse Tutor - Keyer{{end}}
+{{define "pagetitle"}}<h5>Morse Tutor - Keyer</h5>{{end}}
+
+{{define "main"}}
+
+
+<form action="/start" method="post">
+
+<label for="basic-url" class="form-label">Sending speed in WPM</label>
+{{with .FormErrors.speed}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Example: {{.Speed}}</span>
+  <input type="text" class="form-control" id="basic-url" 
+  name="speed" aria-describedby="basic-addon3" value='{{.FormData.Get "speed"}}'>
+</div>
+
+<label for="basic-url" class="form-label">Farnswoth speed in WPM</label>
+{{with .FormErrors.farnspeed}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Example: {{.FarnSpeed}}</span>
+  <input type="text" class="form-control" id="basic-url" name="farnspeed" aria-describedby="basic-addon3">
+</div>
+
+<label for="basic-url" class="form-label">Letter spacing margin as multiple of 3 dits</label>
+{{with .FormErrors.lsm}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Example: {{.Lsm}}</span>
+  <input type="text" class="form-control" id="basic-url" name="lsm" aria-describedby="basic-addon3">
+</div>
+
+<label for="basic-url" class="form-label">Word spacing margin as multiple of 7 dits</label>
+{{with .FormErrors.lsm}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3" >Example: {{.Wsm}}</span>
+  <input type="text" class="form-control" id="basic-url" name="wsm" aria-describedby="basic-addon3">
+</div>
+
+{{with .FormErrors.mode}}
+		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
+	{{end}}
+
+<select class="form-select" aria-label="Choices" name="mode">
+  <option selected>Select operating mode</option>
+  <option value="1">Tutor</option>
+  <option value="2">Keyer</option>
+</select>
+<br><br>
+
+  <button type="submit" class="btn btn-primary">Start</button>
+  {{with .FormErrors.ktrunning}}
+		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
+	{{end}}
+</form>
+<br><br>
+
+{{end}}

@@ -1,0 +1,81 @@
+{{define "base"}}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<!--
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+-->
+
+<title>{{template "title" .}} Ktutor</title>
+</head>
+<body>
+
+<div class="row">
+  	<div class="col-sm-1"></div>
+    <div class="col-sm-4">
+      <p class="font-weight-bold"><h3><a href="/home">AD2CC Station Master</a></h3></p>
+      {{template "pagetitle" .}}
+  
+</div>
+</div>
+<hr>
+
+
+<div class="row">
+  <div class="col-sm-1"></div>
+  
+  <div class="col-sm-2">
+  {{block "sidebar" .}}
+  <h5><a href="/ktutor">Start Code</a></h5>
+  <h5><a href="/stopcode">Stop Code</a></h5>
+<h5><a href="/log">Log</a></h5>
+<h5><a href="/ant">Antenna</a></h5>
+  {{end}}
+  </div>
+  
+  <div class="col-sm-6">
+    {{template "main" .}}
+    
+    
+    </div>
+    
+    </div>
+    <hr>
+    <div class="row">
+    <div class="col-sm-3"></div>
+    <div class="col-sm-6">
+    {{template "footer" .}}
+    </div>
+    
+    </div>
+
+<br><br>
+<!--
+  <div id="ajaxrequest"></div>
+</div>
+-->
+
+
+  
+</body>
+<script>
+$(document).ready(function(){
+$("#loaddata").click(function(){
+$.ajax({url:"/start",success:function(ajaxresult){
+$("#ajaxrequest").html(ajaxresult);
+}});
+});
+});
+</script>
+
+
+</script>
+</html>
+
+{{end}}
