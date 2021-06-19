@@ -2,25 +2,23 @@ package main
 
 import (
 	"context"
-//	"fmt"
 	"gobot.io/x/gobot/platforms/raspi"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-//	"time"
 )
 
 //seed data for the keyer - tutor
 const (
-	speed      = "15"
-	floatSpeed = 15.0
-	farnspeed  = "18"
-	floatFarn  = 18.0
-	lsm        = "1.2"
-	floatLsm   = 1.55
-	wsm        = "1.3"
-	floatWsm   = 1.3
+	speed        = "15"
+	floatSpeed   = 15.0
+	farnspeed    = "18"
+	floatFarn    = 18.0
+	lsm          = "1.2"
+	floatLsm     = 1.55
+	wsm          = "1.3"
+	floatWsm     = 1.3
 	displayLines = 10
 )
 

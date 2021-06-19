@@ -69,15 +69,6 @@ func getBaseTemp() *templateData {
 	}
 }
 
-//fix date fixes the date sent from the database for display
-//func fixdate(datetime string) (date, time string, err error) {
-	//dt := strings.Split(datetime, "T")
-	//if len(dt) != 2 {
-		//return 0, 0, fmt.Error("incorrect datetime format %s", datetime)
-	//}
-	//return dt[0], dt[1]
-//}
-
 //centralized error handling
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())

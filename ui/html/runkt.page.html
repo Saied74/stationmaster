@@ -1,11 +1,13 @@
 {{template "base" .}}
 
 {{define "title"}}Morse Tutor - Keyer{{end}}
-{{define "pagetitle"}}<h5>Morse Tutor - Keyer</h5>{{end}}
 
 {{define "main"}}
 
-
+<div class="row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-6">
+	  
 <p>You are running at:</p>
 <p>Sending speed of {{.Speed}} WPM</p>
 <p>With Farnsworth charachter speed of {{.FarnSpeed}} WPM</p>
@@ -14,5 +16,8 @@
 <p>And your operating mode is {{.Mode}}</p>
 <br><br>
 <a class="btn btn-primary" href="/stop" role="button">Stop</a>
+
+</div>
+</div>
 
 {{end}}

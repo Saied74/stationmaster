@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	//	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -44,23 +43,7 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	td := &templateData{
-		Top: LogsRow{"Time", "Call", "Mode", "Sent", "Rcvd", "Band", "Name", "Country",
-			"Comment", "LOTW Sent", "LOTW Rcvd"},
-		Table: []LogsRow{},
-	}
-
-	td.Table = append(td.Table, LogsRow{
-		"3/30/2017", "5T2AI", "USB", "599", "599", "12m", "Al Graham", "Mauritania", "", "", "",
-	})
-
-	td.Table = append(td.Table, LogsRow{
-		"3/23/2017", "J5UAP", "CW", "588", "599", "80m", "Peter Brucker", "Tunisia", "", "", "",
-	})
-
-	td.Table = append(td.Table, LogsRow{
-		"1/13/17", "SV9BAT", "CW", "499", "579", "80m", "Ginnias Glanakis", "Crete", "", "", "",
-	})
+	td := &templateData{}
 
 	dsn := "web:" + *pw + "@/stationmaster?parseTime=true"
 	db, err := openDB(dsn)
