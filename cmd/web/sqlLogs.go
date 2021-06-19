@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
-"fmt"
+	"fmt"
 )
 
 //will insert a new record into the stationlogs table
@@ -56,21 +56,21 @@ func (m *stationModel) getLatestLogs(n int) ([]LogsRow, error) {
 	stmt := fmt.Sprintf(`SELECT time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
 	FROM stationlogs ORDER BY time DESC LIMIT %d`, n)
-	
+
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	tr := []*LogsRow{}
-	
+
 	for rows.Next() {
 		s := &LogsRow{}
-		
+
 		err = rows.Scan(&s.Time, &s.Call, &s.Mode,
-		&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-		&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
-		
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
+
 		if err != nil {
 			return nil, err
 		}

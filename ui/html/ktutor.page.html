@@ -1,10 +1,16 @@
 {{template "base" .}}
 
 {{define "title"}}Morse Tutor - Keyer{{end}}
-{{define "pagetitle"}}<h5>Morse Tutor - Keyer</h5>{{end}}
 
 {{define "main"}}
-<hr>
+
+<div class="row">
+  <div class="col-sm-2">
+  <h5><a href="/stopcode">Stop Code</a></h5>
+  </div>
+  <div class="col-sm-6">
+   
+<h3>Code Tutor and Keyer</h3>
 <p>This is a combinatin of cw totor and a keyer.  
 I hope it helps you with CW and make code enjoyable.
 The keyer is for rigs that don't have a keyer built in but
@@ -71,6 +77,8 @@ specify. Experiment to see what is comfortable for you.</p>
 		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
 	{{end}}
 </form>
+</div>
+</div>
 <br><br>
 
 {{end}}
