@@ -32,6 +32,10 @@ type cwDriver struct {
 }
 
 func (cw *cwDriver) work(ctx context.Context) {
+	//the next few lines and the method "calcSpacing implement
+	//the Farnsworth code speed model which can be found here:
+	//http://www.arrl.org/files/file/Technology/x9004008.pdf
+
 	fmt.Printf("speed: %f, farnspeed: %f, lf: %f, wf: %f\n", cw.speed,
 		cw.farnspeed, cw.lF, cw.wF)
 	if cw.speed >= 18.0 {
@@ -49,8 +53,10 @@ func (cw *cwDriver) work(ctx context.Context) {
 	setL := false
 	setW := false
 	for {
+		//read the paddle - note dots take precedent
 		dit, _ := cw.dit.DigitalRead(ditInput)
 		dah, _ := cw.dit.DigitalRead(dahInput)
+		//if dot, close contact one dot length, open one dot length
 		if dit == 0 && debounce(cw.dit, 0, output) {
 			cw.emit("0")
 			setL = true
@@ -62,7 +68,7 @@ func (cw *cwDriver) work(ctx context.Context) {
 			cw.dit.DigitalWrite(output, 1)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 		}
-
+		//if dash, close contact for three dot lengths, open for one.
 		if dah == 0 && debounce(cw.dit, 0, "7") {
 			cw.emit("1")
 			setL = true
@@ -74,15 +80,20 @@ func (cw *cwDriver) work(ctx context.Context) {
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 
 		}
+		//if nothing happens longer than upper letter margin,
+		//emit the letter
 		if time.Now().After(letterTimer.Add(ulm)) && setL {
 			cw.emit("L")
 			setL = false
 			setW = true
 		}
+		//if nothing happens longer than upper word margin,
+		//emit the word
 		if time.Now().After(wordTimer.Add(uwm)) && setW {
 			cw.emit("W")
 			setW = false
 		}
+		//if the Done channel of the context is closed, return
 		select {
 		case <-ctx.Done():
 			return
@@ -92,6 +103,7 @@ func (cw *cwDriver) work(ctx context.Context) {
 	}
 }
 
+//See the Farnsworth reference above
 func (cw *cwDriver) calcSpacing() (uwm, ulm time.Duration) {
 	if cw.speed >= 18.0 {
 		uwm := time.Duration(cw.wF*cw.dL*7) * time.Millisecond
@@ -107,6 +119,8 @@ func (cw *cwDriver) calcSpacing() (uwm, ulm time.Duration) {
 	return uwm, ulm
 }
 
+//given how the work function loop works, I am not sure if this is needed
+//but here it is.
 func debounce(ada *raspi.Adaptor, state int, pin string) bool {
 	time.Sleep(debounceTime * time.Millisecond)
 	newRead, _ := ada.DigitalRead(pin)
@@ -201,20 +215,4 @@ func decode(s string) string {
 	}
 	return s
 
-}
-
-func printIntro() {
-	fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-	fmt.Println("+   This program is a combinatin of cw totor and a keyer     +")
-	fmt.Println("+              I hope it helps you with CW                   +")
-	fmt.Println("+                and make code enjoyable                     +")
-	fmt.Println("+                                                            +")
-	fmt.Println("+           dit time in milliseconds is an input             +")
-	fmt.Println("+              dah time is 3 times dit time                  +")
-	fmt.Println("+         charachter spacing is 3 times dit time             +")
-	fmt.Println("+            word spacing is 7 times dit time                +")
-	fmt.Println("+  You can increase charachter and word spacing by a factor  +")
-	fmt.Println("+                                                            +")
-	fmt.Println("+                                                            +")
-	fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 }
