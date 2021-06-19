@@ -9,6 +9,8 @@ import (
 	"runtime/debug"
 )
 
+//template caching and rendering are right out of "Let's Go"
+
 func newTemplateCache(dir string) (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
@@ -16,9 +18,9 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, page := range pages {
 		name := filepath.Base(page)
-
 		ts, err := template.ParseFiles(page)
 		if err != nil {
 			return nil, err
@@ -56,6 +58,8 @@ func (app *application) render(w http.ResponseWriter, r *http.Request,
 	buf.WriteTo(w)
 }
 
+//to do: I will have to find a better way to hold this data and also
+//the context of the session - perhaps after I install mySQL
 func getBaseTemp() *templateData {
 	return &templateData{
 		Speed:     speed,
@@ -65,6 +69,16 @@ func getBaseTemp() *templateData {
 	}
 }
 
+//fix date fixes the date sent from the database for display
+//func fixdate(datetime string) (date, time string, err error) {
+	//dt := strings.Split(datetime, "T")
+	//if len(dt) != 2 {
+		//return 0, 0, fmt.Error("incorrect datetime format %s", datetime)
+	//}
+	//return dt[0], dt[1]
+//}
+
+//centralized error handling
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace) //to not get the helper file...

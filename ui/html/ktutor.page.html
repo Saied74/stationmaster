@@ -4,7 +4,17 @@
 {{define "pagetitle"}}<h5>Morse Tutor - Keyer</h5>{{end}}
 
 {{define "main"}}
-
+<hr>
+<p>This is a combinatin of cw totor and a keyer.  
+I hope it helps you with CW and make code enjoyable.
+The keyer is for rigs that don't have a keyer built in but
+do generate side tone</p>
+<p>Dit, dah, and spacing times are calculated based on the data entered
+in the speed and Farnsworth speed fields according to this paper:
+http://www.arrl.org/files/file/Technology/x9004008.pdf.  Letter 
+(3 dit lengths) and word (7 dit lengths) spacings as defined 
+by the Farnsworth algorithm and are stretched by the factors you
+specify. Experiment to see what is comfortable for you.</p>
 
 <form action="/start" method="post">
 
@@ -27,7 +37,7 @@
   <input type="text" class="form-control" id="basic-url" name="farnspeed" aria-describedby="basic-addon3">
 </div>
 
-<label for="basic-url" class="form-label">Letter spacing margin as multiple of 3 dits</label>
+<label for="basic-url" class="form-label">Letter spacing stretch</label>
 {{with .FormErrors.lsm}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
@@ -36,7 +46,7 @@
   <input type="text" class="form-control" id="basic-url" name="lsm" aria-describedby="basic-addon3">
 </div>
 
-<label for="basic-url" class="form-label">Word spacing margin as multiple of 7 dits</label>
+<label for="basic-url" class="form-label">Word spacing stretch</label>
 {{with .FormErrors.lsm}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
