@@ -5,9 +5,20 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
+	"strings"
+	"unicode/utf8"
 )
+
+type formErrors map[string][]string
+
+type formData struct {
+	url.Values
+	Errors formErrors
+}
 
 //template caching and rendering are right out of "Let's Go"
 
@@ -69,7 +80,97 @@ func getBaseTemp() *templateData {
 	}
 }
 
-//centralized error handling
+//<+++++++++++++++++++++  Form Error Handling  ++++++++++++++++++++++++>
+
+func (e formErrors) add(field, message string) {
+	e[field] = append(e[field], message)
+}
+
+func (e formErrors) Get(field string) string {
+	es, ok := e[field]
+	if !ok || len(es) == 0 {
+		return ""
+	}
+	return es[0]
+}
+
+func newForm(data url.Values) *formData {
+	return &formData{
+		data,
+		formErrors(map[string][]string{}),
+	}
+}
+
+func (f *formData) required(fields ...string) {
+	for _, field := range fields {
+		value := f.Get(field)
+		if strings.TrimSpace(value) == "" {
+			f.Errors.add(field, "this field cannoot be blank")
+		}
+	}
+}
+
+func (f *formData) maxLength(field string, d int) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+	if utf8.RuneCountInString(value) > d {
+		f.Errors.add(field, fmt.Sprintf(`this field is too long 
+		(maximum is %d characters)`, d))
+	}
+}
+
+func (f *formData) minLength(field string, d int) {
+	value := f.Get(field)
+	if utf8.RuneCountInString(value) < d {
+		f.Errors.add(field, fmt.Sprintf(`this field is too short 
+		(minimum is %d characters)`, d))
+	}
+}
+
+func (f *formData) isInt(field string) {
+	value := f.Get(field)
+	_, err := strconv.Atoi(value)
+	if err != nil {
+		f.Errors.add(field, "this field must be integers")
+	}
+}
+
+func (f *formData) mustFloat(field string) float64 {
+	value := f.Get(field)
+	num, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		f.Errors.add(field, "this field must be numbers")
+		return 0
+	}
+	return num
+}
+
+func (f *formData) valid() bool {
+	return len(f.Errors) == 0
+}
+
+//extracts the floating value of the keyer fields
+func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
+	value := f.Get(field)
+
+	//if the field is blank, use the example numbers
+	if strings.TrimSpace(value) == "" {
+		return fc, c
+	} else {
+		//if it is not, convert it to float64 and process any error
+		s, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			f.Errors.add(field, "Sending speed must be a number")
+			return 0, value
+		}
+		return s, value
+	}
+}
+
+//<++++++++++++++++   centralized error handling   +++++++++++++++++++>
+
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace) //to not get the helper file...

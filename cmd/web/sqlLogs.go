@@ -29,14 +29,14 @@ func (m *stationModel) insertLog(l *LogsRow) (int, error) {
 
 //will get a record given its id
 func (m *stationModel) getLogByID(id int) (*LogsRow, error) {
-	stmt := `SELECT time, callsign, mode, sent, rcvd,
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
 	FROM stationlogs WHERE id = ?`
 
 	row := m.DB.QueryRow(stmt, id)
 	s := &LogsRow{}
 
-	err := row.Scan(&s.Time, &s.Call, &s.Mode,
+	err := row.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 		&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
 		&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
 
@@ -53,7 +53,7 @@ func (m *stationModel) getLogByID(id int) (*LogsRow, error) {
 
 //will return the n most recently created logs
 func (m *stationModel) getLatestLogs(n int) ([]LogsRow, error) {
-	stmt := fmt.Sprintf(`SELECT time, callsign, mode, sent, rcvd,
+	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
 	FROM stationlogs ORDER BY time DESC LIMIT %d`, n)
 
@@ -67,7 +67,7 @@ func (m *stationModel) getLatestLogs(n int) ([]LogsRow, error) {
 	for rows.Next() {
 		s := &LogsRow{}
 
-		err = rows.Scan(&s.Time, &s.Call, &s.Mode,
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
 			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
 
@@ -85,4 +85,17 @@ func (m *stationModel) getLatestLogs(n int) ([]LogsRow, error) {
 	}
 
 	return t, nil
+}
+
+func (m *stationModel) updateLog(l *LogsRow, id int) error {
+	stmt := `UPDATE stationlogs SET callsign = ?, mode = ?, sent = ?,
+rcvd = ?, band = ?, name = ?, country = ?, comment = ?, lotwsent = ?,
+lotwrcvd = ?  WHERE id = ?`
+	_, err := m.DB.Exec(stmt,
+		l.Call, l.Mode, l.Sent, l.Rcvd,
+		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

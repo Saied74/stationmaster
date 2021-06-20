@@ -5,16 +5,16 @@
 
 {{define "main"}}
 <!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
   Add
 </button>
-<hr>
 
 
 <table class="table">
   <thead>
     <tr>
       {{with .Top}}
+      <th scope="col">{{.Id}}</th>
       <th scope="col">{{.Time}}</th>
     	<th scope="col">{{.Call}}</th>
     	<th scope="col">{{.Mode}}</th>
@@ -32,7 +32,8 @@
   <tbody>
     {{range .Table}}
     <tr>
-    	<th scope="col">{{.Time}}</th>
+      <th scope="col"><a href="/editlog?id={{.Id}}">{{.Id}}</a></th>
+    	<th scope="col">{{.Time.Format "Jan 2 2006 15:04:05 UTC"}}</th>
     	<th scope="col">{{.Call}}</th>
     	<th scope="col">{{.Mode}}</th>
     	<th scope="col">{{.Sent}}</th>
@@ -40,13 +41,16 @@
     	<th scope="col">{{.Band}}</th>
     	<th scope="col">{{.Name}}</th>
     	<th scope="col">{{.Country}}</th>
+      <th scope="col">{{.Comment}}</th>
+      <th scope="col">{{.Lotwsent}}</th>
+      <th scope="col">{{.Lotwrcvd}}</th>
     </tr>
       {{end}}
   </tbody>
 </table>
 
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- Add Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -54,17 +58,22 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        ...
 
-<form action="/addlog" method="post">
+<form action="{{if .Edit}}/updatedb{{else}}/addlog{{end}}" method="post">
 
 <label for="basic-url" class="form-label">Call</label>
+{{with .FormData.Errors.Get "call"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: AD2CC</span>
   <input type="text" class="form-control" id="basic-url"
-  name="call" aria-describedby="basic-addon3">
+  name="call" value='{{if .Edit }}{{.LogEdit.Call}} {{else}}{{.FormData.Get "call"}}{{end}}'aria-describedby="basic-addon3">
 </div>
 
+{{with .FormData.Errors.Get "mode"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <select class="form-select" aria-label="Choices" name="mode">
   <option selected>Select operating mode</option>
   <option value="1">USB</option>
@@ -72,33 +81,84 @@
 </select>
 
 <label for="basic-url" class="form-label">Sent</label>
+{{with .FormData.Errors.Get "sent"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: 599</span>
-  <input type="text" class="form-control" id="basic-url" name="sent" aria-describedby="basic-addon3">
+  <input type="text" class="form-control" id="basic-url" name="sent" 
+  value='{{if .Edit }}{{.LogEdit.Sent}}{{else}}{{.FormData.Get "sent"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
 <label for="basic-url" class="form-label">Rcvd</label>
+{{with .FormData.Errors.Get "rcvd"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3" >Example: 599</span>
-  <input type="text" class="form-control" id="basic-url" name="rcvd" aria-describedby="basic-addon3">
+  <input type="text" class="form-control" id="basic-url" name="rcvd" 
+  value='{{if .Edit }}{{.LogEdit.Rcvd}}{{else}}{{.FormData.Get "rcvd"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
 <label for="basic-url" class="form-label">Band</label>
+{{with .FormData.Errors.Get "band"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: 40m</span>
-  <input type="text" class="form-control" id="basic-url" name="band" aria-describedby="basic-addon3">
+  <input type="text" class="form-control" id="basic-url" name="band" 
+  value='{{if .Edit }}{{.LogEdit.Band}}{{else}}{{.FormData.Get "band"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
 <label for="basic-url" class="form-label">Name</label>
+{{with .FormData.Errors.Get "name"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: Saied</span>
-  <input type="text" class="form-control" id="basic-url" name="name" aria-describedby="basic-addon3">
+  <input type="text" class="form-control" id="basic-url" name="name" 
+  value='{{if .Edit }}{{.LogEdit.Name}}{{else}}{{.FormData.Get "name"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
 <label for="basic-url" class="form-label">Country</label>
+{{with .FormData.Errors.Get "country"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: France</span>
-  <input type="text" class="form-control" id="basic-url" name="country" aria-describedby="basic-addon3">
+  <input type="text" class="form-control" id="basic-url" name="country" 
+  value='{{if .Edit }}{{.LogEdit.Call}}{{else}}{{.FormData.Get "country"}}{{end}}' aria-describedby="basic-addon3">
+</div>
+
+<label for="basic-url" class="form-label">Comment</label>
+{{with .FormData.Errors.Get "comment"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="form-floating">
+  <textarea class="form-control" placeholder="Leave a comment here" 
+  id="floatingTextarea" name="comment" 
+  value='{{if .Edit }}{{.LogEdit.Comment}}{{else}}{{.FormData.Get "comment"}}{{end}}' ></textarea>
+  <label for="floatingTextarea">Comments</label>
+</div>
+
+<label for="basic-url" class="form-label">LOTW Rcvd</label>
+{{with .FormData.Errors.Get "lotwrcvd"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Example: Yes or No</span>
+  <input type="text" class="form-control" id="basic-url" name="lotwrcvd" 
+  value='{{if .Edit }}{{.LogEdit.Lotwrcvd}}{{else}}{{.FormData.Get "lotwrcvd"}}{{end}}' aria-describedby="basic-addon3">
+</div>
+
+<label for="basic-url" class="form-label">LOTW Sent</label>
+{{with .FormData.Errors.Get "lotwsent"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Example: Yes or No</span>
+  <input type="text" class="form-control" id="basic-url" name="lotwsent" 
+  value='{{if .Edit }} {{.LogEdit.Lotwsent}} {{else}}{{.FormData.Get "lotwsent"}}{{end}}'aria-describedby="basic-addon3">
 </div>
 <br><br>
 
@@ -108,5 +168,12 @@
     </div>
   </div>
 </div>
+
+<<script>
+{{if .Show}}
+let addModal = new bootstrap.Modal(document.getElementById("addModal"), {});
+addModal.show();
+{{end}}
+</script>>
 
 {{end}}

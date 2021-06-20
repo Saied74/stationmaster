@@ -71,6 +71,8 @@ func main() {
 	mux.HandleFunc("/start", app.start)
 	mux.HandleFunc("/stop", app.stop)
 	mux.HandleFunc("/stopcode", app.stopcode)
+	mux.HandleFunc("/editlog", app.editlog)
+	mux.HandleFunc("/updatedb", app.updatedb)
 
 	srv := &http.Server{
 		Addr:     ":4000",
