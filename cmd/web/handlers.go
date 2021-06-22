@@ -4,20 +4,22 @@ import (
 	"context"
 	"gobot.io/x/gobot/platforms/raspi"
 	"net/http"
+	"os"
 	"strconv"
+
+	"github.com/Saied74/stationmaster/pkg/code"
 )
 
 //seed data for the keyer - tutor
 const (
-	speed        = "15"
-	floatSpeed   = 15.0
-	farnspeed    = "18"
-	floatFarn    = 18.0
-	lsm          = "1.2"
-	floatLsm     = 1.55
-	wsm          = "1.3"
-	floatWsm     = 1.3
-	displayLines = 10
+	speed      = "15"
+	floatSpeed = 15.0
+	farnspeed  = "18"
+	floatFarn  = 18.0
+	lsm        = "1.2"
+	floatLsm   = 1.55
+	wsm        = "1.3"
+	floatWsm   = 1.3
 )
 
 //for feeding dynamic data and error reports to templates
@@ -46,10 +48,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 	var err error
-	
+
 	td := initTemplateData()
 	td.Logger = true
-	td.Table, err = app.stationModel.getLatestLogs(displayLines)
+	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
 	}
@@ -73,10 +75,10 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	f.minLength("rcvd", 2)
 	f.isInt("sent")
 	f.isInt("rcvd")
-	
+
 	if !f.valid() {
 		var err error
-		td.Table, err = app.stationModel.getLatestLogs(displayLines)
+		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
 		}
@@ -87,7 +89,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "log.page.html", td)
 		return
 	}
-	
+
 	tr := copyPostForm(r)
 
 	_, err = app.stationModel.insertLog(&tr)
@@ -96,7 +98,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	td.Table, err = app.stationModel.getLatestLogs(displayLines)
+	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -118,12 +120,12 @@ func (app *application) editlog(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverError(w, err)
 	}
-	
-		td.Table, err = app.stationModel.getLatestLogs(displayLines)
-		if err != nil {
-			app.serverError(w, err)
-		}
-app.putId(id)
+
+	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	app.putId(id)
 	td.LogEdit = tr
 	td.Show = true
 	td.Edit = true
@@ -149,7 +151,7 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 
 	if !f.valid() {
 		var err error
-		td.Table, err = app.stationModel.getLatestLogs(displayLines)
+		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
 		}
@@ -159,16 +161,16 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "log.page.html", td)
 		return
 	}
-tr := copyPostForm(r)
-	
-id := app.getId()
+	tr := copyPostForm(r)
+
+	id := app.getId()
 	err = app.stationModel.updateLog(&tr, id)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	td.Table, err = app.stationModel.getLatestLogs(displayLines)
+	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -199,7 +201,7 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	//thier numeric version has float in front ot it
 	//data extracted from the form ends in X (they are all strings)
 	//when converted to float64, they are shortened
-    td := initTemplateData()
+	td := initTemplateData()
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -223,27 +225,27 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 
 	if !f.valid() {
 		td.FormData = f
+		td.StopCode = true
 		app.render(w, r, "ktutor.page.html", td)
 		return
 	}
 	//get context with cancel so the keyer can be stopped when needed
 	ctx, cancel := context.WithCancel(context.Background())
 	app.putCancel(ctx, cancel, true)
-	cw := &cwDriver{
-		dit:       raspi.NewAdaptor(),
-		speed:     s,
-		farnspeed: fs,
-		lF:        lf,
-		wF:        wf,
+	cw := &code.CwDriver{
+		Dit:       raspi.NewAdaptor(),
+		Speed:     s,
+		Farnspeed: fs,
+		LF:        lf,
+		WF:        wf,
 	}
 
-	go cw.work(ctx)
-	
-	
-		td.Speed =     speedX
-		td.FarnSpeed = fspeedX
-		td.Lsm =       lsmX
-		td.Wsm =      wsmX
+	go cw.Work(ctx)
+
+	td.Speed = speedX
+	td.FarnSpeed = fspeedX
+	td.Lsm = lsmX
+	td.Wsm = wsmX
 
 	switch modeX {
 	case "1":
@@ -261,13 +263,13 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 func (app *application) stop(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel, _ := app.getCancel()
 	if cancel != nil {
-	cancel()
-}
+		cancel()
+	}
 	app.putCancel(ctx, cancel, false)
 	//to do: it would be better if the last data the user inputted was
 	//used here.
 	td := initTemplateData()
-td.StopCode = true
+	td.StopCode = true
 	app.render(w, r, "ktutor.page.html", td)
 }
 
@@ -275,4 +277,10 @@ func (app *application) stopcode(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	td.StopCode = true
 	app.render(w, r, "runkt.page.html", td)
+}
+
+//<++++++++++++++++++++++++++++  Quit  ++++++++++++++++++++++++++++++>
+
+func (app *application) quit(w http.ResponseWriter, r *http.Request) {
+	os.Exit(1)
 }

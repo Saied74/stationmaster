@@ -1,4 +1,6 @@
-package main
+// +build rpi
+
+package code
 
 import (
 	"context"
@@ -20,63 +22,63 @@ const (
 	debounceTime = 2    //in milliseconds
 )
 
-type cwDriver struct {
+type CwDriver struct {
 	letter    string
 	cnt       int
-	dit       *raspi.Adaptor
-	speed     float64
-	farnspeed float64
+	Dit       *raspi.Adaptor
+	Speed     float64
+	Farnspeed float64
 	dL        float64 //dot length
-	lF        float64 //letter factor
-	wF        float64 //word factor
+	LF        float64 //letter factor
+	WF        float64 //word factor
 }
 
-func (cw *cwDriver) work(ctx context.Context) {
+func (cw *CwDriver) Work(ctx context.Context) {
 	//the next few lines and the method "calcSpacing implement
 	//the Farnsworth code speed model which can be found here:
 	//http://www.arrl.org/files/file/Technology/x9004008.pdf
 
-	fmt.Printf("speed: %f, farnspeed: %f, lf: %f, wf: %f\n", cw.speed,
-		cw.farnspeed, cw.lF, cw.wF)
-	if cw.speed >= 18.0 {
-		cw.dL = 1200.0 / cw.speed
+	fmt.Printf("speed: %f, farnspeed: %f, lf: %f, wf: %f\n", cw.Speed,
+		cw.Farnspeed, cw.LF, cw.WF)
+	if cw.Speed >= 18.0 {
+		cw.dL = 1200.0 / cw.Speed
 	} else {
-		cw.dL = 1200.0 / cw.farnspeed
+		cw.dL = 1200.0 / cw.Farnspeed
 	}
 	uwm, ulm := cw.calcSpacing()
 
 	fmt.Printf("DL: %f, uwm: %v, ulm: %v\n", cw.dL, uwm, ulm)
 
-	cw.dit.DigitalWrite(output, 1)
+	cw.Dit.DigitalWrite(output, 1)
 	letterTimer := time.Now()
 	wordTimer := time.Now()
 	setL := false
 	setW := false
 	for {
 		//read the paddle - note dots take precedent
-		dit, _ := cw.dit.DigitalRead(ditInput)
-		dah, _ := cw.dit.DigitalRead(dahInput)
+		dit, _ := cw.Dit.DigitalRead(ditInput)
+		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && debounce(cw.dit, 0, output) {
+		if dit == 0 && debounce(cw.Dit, 0, output) {
 			cw.emit("0")
 			setL = true
 			letterTimer = time.Now()
 			wordTimer = time.Now()
 
-			cw.dit.DigitalWrite(output, 0)
+			cw.Dit.DigitalWrite(output, 0)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
-			cw.dit.DigitalWrite(output, 1)
+			cw.Dit.DigitalWrite(output, 1)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 		}
 		//if dash, close contact for three dot lengths, open for one.
-		if dah == 0 && debounce(cw.dit, 0, "7") {
+		if dah == 0 && debounce(cw.Dit, 0, "7") {
 			cw.emit("1")
 			setL = true
 			letterTimer = time.Now()
 			wordTimer = time.Now()
-			cw.dit.DigitalWrite(output, 0)
+			cw.Dit.DigitalWrite(output, 0)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
-			cw.dit.DigitalWrite(output, 1)
+			cw.Dit.DigitalWrite(output, 1)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 
 		}
@@ -104,18 +106,18 @@ func (cw *cwDriver) work(ctx context.Context) {
 }
 
 //See the Farnsworth reference above
-func (cw *cwDriver) calcSpacing() (uwm, ulm time.Duration) {
-	if cw.speed >= 18.0 {
-		uwm := time.Duration(cw.wF*cw.dL*7) * time.Millisecond
-		ulm := time.Duration(cw.lF*cw.dL*3) * time.Millisecond
+func (cw *CwDriver) calcSpacing() (uwm, ulm time.Duration) {
+	if cw.Speed >= 18.0 {
+		uwm := time.Duration(cw.WF*cw.dL*7) * time.Millisecond
+		ulm := time.Duration(cw.LF*cw.dL*3) * time.Millisecond
 		return uwm, ulm
 	}
-	dL := 1200 / cw.speed
-	ta := (60.0*cw.farnspeed - 32.7*cw.speed) / (cw.farnspeed * cw.speed)
+	dL := 1200 / cw.Speed
+	ta := (60.0*cw.Farnspeed - 32.7*cw.Speed) / (cw.Farnspeed * cw.Speed)
 	tc := (3 * ta) / 19
 	tw := (7 * ta) / 19
-	uwm = time.Duration(cw.wF*(tw+7*dL)) * time.Millisecond
-	ulm = time.Duration(cw.lF*(tc+3*dL)) * time.Millisecond
+	uwm = time.Duration(cw.WF*(tw+7*dL)) * time.Millisecond
+	ulm = time.Duration(cw.LF*(tc+3*dL)) * time.Millisecond
 	return uwm, ulm
 }
 
@@ -130,11 +132,11 @@ func debounce(ada *raspi.Adaptor, state int, pin string) bool {
 	return false
 }
 
-func newCWDriver() *cwDriver {
-	return &cwDriver{}
+func newCwDriver() *CwDriver {
+	return &CwDriver{}
 }
 
-func (cw *cwDriver) emit(s string) {
+func (cw *CwDriver) emit(s string) {
 
 	switch s {
 	case "0":

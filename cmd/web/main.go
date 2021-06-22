@@ -20,18 +20,19 @@ type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
 	templateCache map[string]*template.Template
-	td            *templateData
+	displayLines  int
 	stationModel  *stationModel
-	putCancel	putCancelFunc
-	getCancel   getCancelFunc
-	putId       putIdFunc
-	getId       getIdFunc
+	putCancel     putCancelFunc
+	getCancel     getCancelFunc
+	putId         putIdFunc
+	getId         getIdFunc
 }
 
 func main() {
 	var err error
 
 	pw := flag.String("pw", "", "MySQL Password")
+	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
@@ -43,8 +44,6 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	td := &templateData{}
-
 	dsn := "web:" + *pw + "@/stationmaster?parseTime=true"
 	db, err := openDB(dsn)
 	if err != nil {
@@ -52,7 +51,7 @@ func main() {
 	}
 
 	defer db.Close()
-	
+
 	putCancel, getCancel := contextStore()
 	putId, getId := saveId()
 
@@ -60,13 +59,12 @@ func main() {
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		templateCache: templateCache,
-		td:            td,
+		displayLines:  *displayLines,
 		stationModel:  &stationModel{DB: db},
-		putCancel:		putCancel,
-		getCancel:		getCancel,
+		putCancel:     putCancel,
+		getCancel:     getCancel,
 		putId:         putId,
 		getId:         getId,
-		
 	}
 
 	mux := http.NewServeMux()
@@ -81,6 +79,7 @@ func main() {
 	mux.HandleFunc("/stopcode", app.stopcode)
 	mux.HandleFunc("/editlog", app.editlog)
 	mux.HandleFunc("/updatedb", app.updatedb)
+	mux.HandleFunc("/quit", app.quit)
 
 	srv := &http.Server{
 		Addr:     ":4000",

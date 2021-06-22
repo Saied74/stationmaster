@@ -70,56 +70,44 @@ func (app *application) render(w http.ResponseWriter, r *http.Request,
 	buf.WriteTo(w)
 }
 
-//to do: I will have to find a better way to hold this data and also
-//the context of the session - perhaps after I install mySQL
-func getBaseTemp() *templateData {
+func initTemplateData() *templateData {
 	return &templateData{
+		FormData:  newForm(url.Values{}),
 		Speed:     speed,
 		FarnSpeed: farnspeed,
 		Lsm:       lsm,
 		Wsm:       wsm,
+		Top:       tableHead,
+		Table:     []LogsRow{},
+		LogEdit:   &LogsRow{},
+		Show:      false,
+		Edit:      false,
+		StopCode:  false,
+		Logger:    false,
 	}
 }
 
-func initTemplateData() *templateData {
-	return &templateData {
-		FormData: newForm(url.Values{}),
-		Speed: speed,
-		FarnSpeed: farnspeed,
-		Lsm: lsm,
-		Wsm: wsm,
-		Top: tableHead,
-		Table: []LogsRow{},
-		LogEdit: &LogsRow{},
-		Show: false,
-		Edit: false,
-		StopCode: false,
-		Logger: false,
+func copyPostForm(r *http.Request) LogsRow {
+	//var m string
+	//switch r.PostForm.Get("mode") {
+	//case "1":
+	//m = "USB"
+	//case "2":
+	//m = "CW"
+	//}
+	return LogsRow{
+		Call:     strings.ToUpper(r.PostForm.Get("call")),
+		Sent:     r.PostForm.Get("sent"),
+		Rcvd:     r.PostForm.Get("rcvd"),
+		Band:     strings.ToLower(r.PostForm.Get("band")),
+		Mode:     r.PostForm.Get("mode"), //m,
+		Name:     r.PostForm.Get("name"),
+		Country:  r.PostForm.Get("country"),
+		Comment:  r.PostForm.Get("comment"),
+		Lotwsent: r.PostForm.Get("lotwsent"),
+		Lotwrcvd: r.PostForm.Get("lotwrcvd"),
 	}
 }
-
-func copyPostForm(r *http.Request) LogsRow{
-	var m string
-	switch r.PostForm.Get("mode") {
-		case "1":
-		m = "USB"
-		case "2":
-		m = "CW"
-	}
-return LogsRow{
-	Call: strings.ToUpper(r.PostForm.Get("call")),
-	Sent: r.PostForm.Get("sent"),
-	Rcvd: r.PostForm.Get("rcvd"),
-	Band: strings.ToLower(r.PostForm.Get("band")),
-	Mode: m,
-	Name: r.PostForm.Get("name"),
-	Country: r.PostForm.Get("country"),
-	Comment: r.PostForm.Get("comment"),
-	Lotwsent: r.PostForm.Get("lotwsent"),
-	Lotwrcvd: r.PostForm.Get("lotwrcvd"),
-}
-}
-
 
 //<+++++++++++++++++++++  Form Error Handling  ++++++++++++++++++++++++>
 
@@ -162,7 +150,7 @@ func (f *formData) maxLength(field string, d int) {
 	}
 }
 
-func (f *formData) checkAllLogMax(){
+func (f *formData) checkAllLogMax() {
 	f.maxLength("call", 10)
 	f.maxLength("sent", 3)
 	f.maxLength("rcvd", 3)
@@ -243,7 +231,7 @@ func (app *application) notFound(w http.ResponseWriter) {
 //<+++++++++++++++++   Context and ID Mgmt.   ++++++++++++++++++++>
 
 type putCancelFunc func(context.Context, context.CancelFunc, bool)
-type getCancelFunc func()(context.Context, context.CancelFunc, bool)
+type getCancelFunc func() (context.Context, context.CancelFunc, bool)
 
 func contextStore() (putCancelFunc, getCancelFunc) {
 	var ktutor bool
@@ -262,10 +250,10 @@ func contextStore() (putCancelFunc, getCancelFunc) {
 
 type putIdFunc func(int)
 type getIdFunc func() int
-	
+
 func saveId() (putId putIdFunc, getId getIdFunc) {
 	var id int
-	put := func(n int){
+	put := func(n int) {
 		id = n
 	}
 	get := func() int {
