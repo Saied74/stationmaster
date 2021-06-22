@@ -62,6 +62,7 @@
       <div class="modal-body">
 
 <form action="{{if .Edit}}/updatedb{{else}}/addlog{{end}}" method="post">
+  <div class="row"><button type="submit" class="btn btn-primary">Update</button></div>
 
 <label for="basic-url" class="form-label">Call</label>
 {{with .FormData.Errors.Get "call"}}
@@ -70,17 +71,19 @@
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: AD2CC</span>
   <input type="text" class="form-control" id="basic-url"
-  name="call" value='{{if .Edit }}{{.LogEdit.Call}} {{else}}{{.FormData.Get "call"}}{{end}}'aria-describedby="basic-addon3">
+  name="call" value='{{if .Edit }}{{.LogEdit.Call}}{{else}}{{.FormData.Get "call"}}{{end}}'aria-describedby="basic-addon3">
 </div>
 
 {{with .FormData.Errors.Get "mode"}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
 
+<p class="form-label">Mode</p>
 <select class="form-select" aria-label="Choices" name="mode">
+  
   <option selected>Select operating mode</option>
-  <option value="1">USB</option>
-  <option value="2">CW</option>
+  <option value="USB" {{if eq .LogEdit.Mode "USB"}}selected{{end}}>USB</option>
+  <option value="CW" {{if eq .LogEdit.Mode "CW"}}selected{{end}}>CW</option>
 </select>
 
 <label for="basic-url" class="form-label">Sent</label>
@@ -130,19 +133,19 @@
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: France</span>
   <input type="text" class="form-control" id="basic-url" name="country" 
-  value='{{if .Edit }}{{.LogEdit.Call}}{{else}}{{.FormData.Get "country"}}{{end}}' aria-describedby="basic-addon3">
+  value='{{if .Edit }}{{.LogEdit.Country}}{{else}}{{.FormData.Get "country"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
-<label for="basic-url" class="form-label">Comment</label>
-{{with .FormData.Errors.Get "comment"}}
+<div class="mb-3">
+  <label for="exampleFormControlTextarea1" class="form-label">Comment</label>
+  {{with .FormData.Errors.Get "comment"}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
-<div class="form-floating">
-  <textarea class="form-control" placeholder="Leave a comment here" 
-  id="floatingTextarea" name="comment" 
-  value='{{if .Edit }}{{.LogEdit.Comment}}{{else}}{{.FormData.Get "comment"}}{{end}}' ></textarea>
-  <label for="floatingTextarea">Comment</label>
+  <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="comment">
+{{if .Edit }}{{.LogEdit.Comment}}{{else}}{{.FormData.Get "comment"}}{{end}}</textarea>
 </div>
+
+
 
 <label for="basic-url" class="form-label">LOTW Rcvd</label>
 {{with .FormData.Errors.Get "lotwrcvd"}}
@@ -161,22 +164,21 @@
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: Yes or No</span>
   <input type="text" class="form-control" id="basic-url" name="lotwsent" 
-  value='{{if .Edit }} {{.LogEdit.Lotwsent}} {{else}}{{.FormData.Get "lotwsent"}}{{end}}'aria-describedby="basic-addon3">
+  value='{{if .Edit }}{{.LogEdit.Lotwsent}}{{else}}{{.FormData.Get "lotwsent"}}{{end}}' aria-describedby="basic-addon3">
 </div>
-<br><br>
 
-  <button type="submit" class="btn btn-primary">Update</button>
+  
 </form>
       </div>
     </div>
   </div>
 </div>
 
-<<script>
+<script>
 {{if .Show}}
 let addModal = new bootstrap.Modal(document.getElementById("addModal"), {});
 addModal.show();
 {{end}}
-</script>>
+</script>
 
 {{end}}
