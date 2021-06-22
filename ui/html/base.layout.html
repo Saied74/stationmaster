@@ -32,9 +32,26 @@
         <li class="nav-item">
           <a class="nav-link" href="/ktutor">Code</a>
         </li>
+        
+        {{if .StopCode}}
+        <li class="nav-item">
+          <a class="nav-link" href="/stopcode">Stop Code</a>
+        </li>
+       {{end}} 
+        
         <li class="nav-item">
           <a class="nav-link" href="/qsolog">Logger</a>
         </li>
+        {{if .Logger }}
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="modal" data-bs-target="#addModal" href="/stopcode">Add</a>
+<!--
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+  Add
+</button>
+-->
+        </li>
+        {{end}} 
         <li class="nav-item">
           <a class="nav-link" href="/ant">Antenna</a>
         </li>
