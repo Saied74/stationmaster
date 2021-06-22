@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -80,6 +81,46 @@ func getBaseTemp() *templateData {
 	}
 }
 
+func initTemplateData() *templateData {
+	return &templateData {
+		FormData: newForm(url.Values{}),
+		Speed: speed,
+		FarnSpeed: farnspeed,
+		Lsm: lsm,
+		Wsm: wsm,
+		Top: tableHead,
+		Table: []LogsRow{},
+		LogEdit: &LogsRow{},
+		Show: false,
+		Edit: false,
+		StopCode: false,
+		Logger: false,
+	}
+}
+
+func copyPostForm(r *http.Request) LogsRow{
+	var m string
+	switch r.PostForm.Get("mode") {
+		case "1":
+		m = "USB"
+		case "2":
+		m = "CW"
+	}
+return LogsRow{
+	Call: strings.ToUpper(r.PostForm.Get("call")),
+	Sent: r.PostForm.Get("sent"),
+	Rcvd: r.PostForm.Get("rcvd"),
+	Band: strings.ToLower(r.PostForm.Get("band")),
+	Mode: m,
+	Name: r.PostForm.Get("name"),
+	Country: r.PostForm.Get("country"),
+	Comment: r.PostForm.Get("comment"),
+	Lotwsent: r.PostForm.Get("lotwsent"),
+	Lotwrcvd: r.PostForm.Get("lotwrcvd"),
+}
+}
+
+
 //<+++++++++++++++++++++  Form Error Handling  ++++++++++++++++++++++++>
 
 func (e formErrors) add(field, message string) {
@@ -119,6 +160,18 @@ func (f *formData) maxLength(field string, d int) {
 		f.Errors.add(field, fmt.Sprintf(`this field is too long 
 		(maximum is %d characters)`, d))
 	}
+}
+
+func (f *formData) checkAllLogMax(){
+	f.maxLength("call", 10)
+	f.maxLength("sent", 3)
+	f.maxLength("rcvd", 3)
+	f.maxLength("band", 8)
+	f.maxLength("name", 25)
+	f.maxLength("country", 25)
+	f.maxLength("comment", 75)
+	f.maxLength("lotwrcvd", 10)
+	f.maxLength("lotwsent", 10)
 }
 
 func (f *formData) minLength(field string, d int) {
@@ -185,4 +238,38 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
+}
+
+//<+++++++++++++++++   Context and ID Mgmt.   ++++++++++++++++++++>
+
+type putCancelFunc func(context.Context, context.CancelFunc, bool)
+type getCancelFunc func()(context.Context, context.CancelFunc, bool)
+
+func contextStore() (putCancelFunc, getCancelFunc) {
+	var ktutor bool
+	var canFunc context.CancelFunc
+	var ctx context.Context
+	putCF := func(cx context.Context, cf context.CancelFunc, kt bool) {
+		ktutor = kt
+		canFunc = cf
+		ctx = cx
+	}
+	getCF := func() (context.Context, context.CancelFunc, bool) {
+		return ctx, canFunc, ktutor
+	}
+	return putCF, getCF
+}
+
+type putIdFunc func(int)
+type getIdFunc func() int
+	
+func saveId() (putId putIdFunc, getId getIdFunc) {
+	var id int
+	put := func(n int){
+		id = n
+	}
+	get := func() int {
+		return id
+	}
+	return put, get
 }

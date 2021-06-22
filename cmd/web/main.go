@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -21,11 +20,12 @@ type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
 	templateCache map[string]*template.Template
-	ctx           context.Context //for stopping the keyer/tutor
-	cancel        context.CancelFunc
-	ktrunning     bool
 	td            *templateData
 	stationModel  *stationModel
+	putCancel	putCancelFunc
+	getCancel   getCancelFunc
+	putId       putIdFunc
+	getId       getIdFunc
 }
 
 func main() {
@@ -52,6 +52,9 @@ func main() {
 	}
 
 	defer db.Close()
+	
+	putCancel, getCancel := contextStore()
+	putId, getId := saveId()
 
 	app := &application{
 		errorLog:      errorLog,
@@ -59,6 +62,11 @@ func main() {
 		templateCache: templateCache,
 		td:            td,
 		stationModel:  &stationModel{DB: db},
+		putCancel:		putCancel,
+		getCancel:		getCancel,
+		putId:         putId,
+		getId:         getId,
+		
 	}
 
 	mux := http.NewServeMux()
