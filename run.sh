@@ -8,5 +8,5 @@ then
 fi
 
 rm master
-go build -tags !rpi -o master cmd/web/*.go
+go build  -o master cmd/web/*.go
 ./master -pw $1 -lines $2

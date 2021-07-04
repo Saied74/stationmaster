@@ -26,13 +26,18 @@ type application struct {
 	getCancel     getCancelFunc
 	putId         putIdFunc
 	getId         getIdFunc
+	sKey     sessionMgr
+	qrzuser     string
+	qrzpw string
 }
 
 func main() {
 	var err error
 
-	pw := flag.String("pw", "", "MySQL Password")
+	sqlpw := flag.String("sqlpw", "", "MySQL Password")
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
+	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
+	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name") 
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
@@ -44,7 +49,7 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	dsn := "web:" + *pw + "@/stationmaster?parseTime=true"
+	dsn := "web:" + *sqlpw + "@/stationmaster?parseTime=true"
 	db, err := openDB(dsn)
 	if err != nil {
 		errorLog.Fatal(err)
@@ -65,6 +70,9 @@ func main() {
 		getCancel:     getCancel,
 		putId:         putId,
 		getId:         getId,
+		sKey: sessionCache(),
+		qrzpw: *qrzpw,
+		qrzuser: *qrzuser,
 	}
 
 	mux := http.NewServeMux()
