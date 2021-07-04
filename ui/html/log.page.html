@@ -80,9 +80,10 @@
 
 <p class="form-label">Mode</p>
 <select class="form-select" aria-label="Choices" name="mode">
-  
+
   <option selected>Select operating mode</option>
   <option value="USB" {{if eq .LogEdit.Mode "USB"}}selected{{end}}>USB</option>
+  <option value="LSB" {{if eq .LogEdit.Mode "LSB"}}selected{{end}}>LSB</option>
   <option value="CW" {{if eq .LogEdit.Mode "CW"}}selected{{end}}>CW</option>
 </select>
 
@@ -92,7 +93,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: 599</span>
-  <input type="text" class="form-control" id="basic-url" name="sent" 
+  <input type="text" class="form-control" id="basic-url" name="sent"
   value='{{if .Edit }}{{.LogEdit.Sent}}{{else}}{{.FormData.Get "sent"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -102,7 +103,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3" >Example: 599</span>
-  <input type="text" class="form-control" id="basic-url" name="rcvd" 
+  <input type="text" class="form-control" id="basic-url" name="rcvd"
   value='{{if .Edit }}{{.LogEdit.Rcvd}}{{else}}{{.FormData.Get "rcvd"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -112,7 +113,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: 40m</span>
-  <input type="text" class="form-control" id="basic-url" name="band" 
+  <input type="text" class="form-control" id="basic-url" name="band"
   value='{{if .Edit }}{{.LogEdit.Band}}{{else}}{{.FormData.Get "band"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -122,7 +123,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: Saied</span>
-  <input type="text" class="form-control" id="basic-url" name="name" 
+  <input type="text" class="form-control" id="basic-url" name="name"
   value='{{if .Edit }}{{.LogEdit.Name}}{{else}}{{.FormData.Get "name"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -132,7 +133,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: France</span>
-  <input type="text" class="form-control" id="basic-url" name="country" 
+  <input type="text" class="form-control" id="basic-url" name="country"
   value='{{if .Edit }}{{.LogEdit.Country}}{{else}}{{.FormData.Get "country"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -153,7 +154,7 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: Yes or No</span>
-  <input type="text" class="form-control" id="basic-url" name="lotwrcvd" 
+  <input type="text" class="form-control" id="basic-url" name="lotwrcvd"
   value='{{if .Edit }}{{.LogEdit.Lotwrcvd}}{{else}}{{.FormData.Get "lotwrcvd"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
@@ -163,11 +164,11 @@
 	{{end}}
 <div class="input-group mb-3">
   <span class="input-group-text" id="basic-addon3">Example: Yes or No</span>
-  <input type="text" class="form-control" id="basic-url" name="lotwsent" 
+  <input type="text" class="form-control" id="basic-url" name="lotwsent"
   value='{{if .Edit }}{{.LogEdit.Lotwsent}}{{else}}{{.FormData.Get "lotwsent"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
-  
+
 </form>
       </div>
     </div>
