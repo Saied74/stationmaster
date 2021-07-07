@@ -10,7 +10,7 @@ import (
 func (m *stationModel) insertLog(l *LogsRow) (int, error) {
 
 	stmt := `INSERT INTO stationlogs (time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd) 
+	band, name, country, comment, lotwsent, lotwrcvd)
 	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.DB.Exec(stmt,

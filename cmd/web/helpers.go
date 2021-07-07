@@ -145,7 +145,7 @@ func (f *formData) maxLength(field string, d int) {
 		return
 	}
 	if utf8.RuneCountInString(value) > d {
-		f.Errors.add(field, fmt.Sprintf(`this field is too long 
+		f.Errors.add(field, fmt.Sprintf(`this field is too long
 		(maximum is %d characters)`, d))
 	}
 }
@@ -165,7 +165,7 @@ func (f *formData) checkAllLogMax() {
 func (f *formData) minLength(field string, d int) {
 	value := f.Get(field)
 	if utf8.RuneCountInString(value) < d {
-		f.Errors.add(field, fmt.Sprintf(`this field is too short 
+		f.Errors.add(field, fmt.Sprintf(`this field is too short
 		(minimum is %d characters)`, d))
 	}
 }

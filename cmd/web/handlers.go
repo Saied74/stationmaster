@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
-	"gobot.io/x/gobot/platforms/raspi"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
+
+	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
 )
@@ -37,6 +40,13 @@ type templateData struct {
 	Edit      bool
 	StopCode  bool
 	Logger    bool
+}
+
+type LogType struct {
+	Name    string `json:"Name"`
+	Country string `json:"Country"`
+	Band    string `json:"Band"`
+	Mode    string `json:"Mode"`
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -178,6 +188,65 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 	td.Show = false
 	td.Edit = false
 	app.render(w, r, "log.page.html", td)
+}
+
+func (app *application) getConn(w http.ResponseWriter, r *http.Request) {
+	callSign := r.URL.Query().Get("call")
+	if callSign == "" {
+		app.infoLog.Printf("Got an empty call sign")
+		return
+	}
+	mode := r.URL.Query().Get("mode")
+	var m string
+	switch mode {
+	case "1":
+		m = "LSB"
+	case "2":
+		m = "USB"
+	case "3":
+		m = "CW"
+	default:
+		m = ""
+		app.errorLog.Printf("bad mode value %s was recieved", mode)
+		return
+	}
+	band := r.URL.Query().Get("band")
+	var bnd string
+	switch band {
+	case "1":
+		bnd = "160m"
+	case "2":
+		bnd = "80m"
+	case "3":
+		bnd = "40m"
+	case "4":
+		bnd = "20m"
+	case "5":
+		bnd = "10m"
+	default:
+		bnd = ""
+		app.errorLog.Printf("bad band value %s was recieved", band)
+		return
+	}
+	q, err := app.getHamInfo(callSign)
+	if err != nil {
+		app.errorLog.Printf("API call to QRZ returned error %v", err)
+		return
+	}
+	update := &LogType{
+		Name:    fmt.Sprintf("%s %s", q.Callsign.Fname, q.Callsign.Lname),
+		Country: q.Callsign.Country,
+		Mode:    m,
+		Band:    bnd,
+	}
+	b, err := json.Marshal(update)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
+	//app.infoLog.Printf("q is %v", *q)
 }
 
 //<++++++++++++++++++++++++++  Antenna  ++++++++++++++++++++++++++++>

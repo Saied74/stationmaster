@@ -26,9 +26,9 @@ type application struct {
 	getCancel     getCancelFunc
 	putId         putIdFunc
 	getId         getIdFunc
-	sKey     sessionMgr
-	qrzuser     string
-	qrzpw string
+	sKey          sessionMgr
+	qrzuser       string
+	qrzpw         string
 }
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 	sqlpw := flag.String("sqlpw", "", "MySQL Password")
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
-	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name") 
+	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
@@ -70,9 +70,9 @@ func main() {
 		getCancel:     getCancel,
 		putId:         putId,
 		getId:         getId,
-		sKey: sessionCache(),
-		qrzpw: *qrzpw,
-		qrzuser: *qrzuser,
+		sKey:          sessionCache(),
+		qrzpw:         *qrzpw,
+		qrzuser:       *qrzuser,
 	}
 
 	mux := http.NewServeMux()
@@ -88,6 +88,7 @@ func main() {
 	mux.HandleFunc("/editlog", app.editlog)
 	mux.HandleFunc("/updatedb", app.updatedb)
 	mux.HandleFunc("/quit", app.quit)
+	mux.HandleFunc("/getconn", app.getConn)
 
 	srv := &http.Server{
 		Addr:     ":4000",

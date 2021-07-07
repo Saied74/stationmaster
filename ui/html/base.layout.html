@@ -32,13 +32,13 @@
         <li class="nav-item">
           <a class="nav-link" href="/ktutor">Code</a>
         </li>
-        
+
         {{if .StopCode}}
         <li class="nav-item">
           <a class="nav-link" href="/stopcode">Stop Code</a>
         </li>
-       {{end}} 
-        
+       {{end}}
+
         <li class="nav-item">
           <a class="nav-link" href="/qsolog">Logger</a>
         </li>
@@ -51,7 +51,7 @@
 </button>
 -->
         </li>
-        {{end}} 
+        {{end}}
         <li class="nav-item">
           <a class="nav-link" href="/ant">Antenna</a>
         </li>
@@ -66,16 +66,16 @@
 
 <div class="row">
   <div class="col-sm-1"></div>
-  
-  
-  
+
+
+
   <div class="col-sm-10">
-    
+
     {{template "main" .}}
-    
-    
+
+
     </div>
-    
+
     </div>
     <hr>
     <div class="row">
@@ -83,7 +83,7 @@
     <div class="col-sm-6">
     {{template "footer" .}}
     </div>
-    
+
     </div>
 
 <br><br>
@@ -93,14 +93,20 @@
 -->
 
 
-  
+
 </body>
 <script>
+
 $(document).ready(function(){
-$("#loaddata").click(function(){
-$.ajax({url:"/start",success:function(ajaxresult){
-$("#ajaxrequest").html(ajaxresult);
-}});
+$("#call-sign").blur(function(){
+  $.getJSON("/getconn?call="+$("#call-sign").val()+"&mode="+$("#master-mode").val()+
+  "&band="+$("#master-band").val(), function(data, status){
+    $("#name").val(data["Name"])
+    $("#country").val(data["Country"])
+    $("#band-select").val(data["Band"])
+    $("#mode-select").val(data["Mode"])
+    // alert($("#master-mode").val());
+  });
 });
 });
 </script>

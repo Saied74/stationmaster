@@ -6,46 +6,78 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"  
+	"strings"
 )
 
 type Qtype struct {
 	XMLName  xml.Name `xml:"QRZDatabase"`
-	Callsign []Ctype
-	Session  []Stype
+	Callsign Ctype
+	Session  Stype
 }
 
 type Ctype struct {
-	XMLName xml.Name `xml:"Callsign"`
-	Call    string   `xml:"call"`
-	Aliases string   `xml:"aliases"`
-	Dxcc    string   `xml:"dxcc"`
-	Fname   string   `xml:"fname"`
-	Lname   string   `xml:"name"`
-	Addr1   string   `xml:"addr1"`
-	Addr2   string   `xml:"addr2"`
-	State   string   `xml:"state"`
-	Zip     string   `xml:"zip"`
-	Country string   `xml:"country"`
+	XMLName     xml.Name `xml:"Callsign"`
+	Call        string   `xml:"call"`
+	Aliases     string   `xml:"aliases"`
+	Dxcc        string   `xml:"dxcc"`
+	Fname       string   `xml:"fname"`
+	Lname       string   `xml:"name"`
+	Addr1       string   `xml:"addr1"`
+	Addr2       string   `xml:"addr2"`
+	State       string   `xml:"state"`
+	Zip         string   `xml:"zip"`
+	Country     string   `xml:"country"` //Country name for QSL mailing address
+	CountryCode string   `xml:"ccode"`
+	Lat         string   `xml:"lat"`
+	Long        string   `xml:"lon"`
+	Grid        string   `xml:"grid"`
+	County      string   `xml:"county"`
+	FIPS        string   `xml:"fips"`
+	Land        string   `xml:"land"` //DXCC country name of the call sign
+	EffDate     string   `xml:"efdate"`
+	ExpDate     string   `xml:"expdate"`
+	PrevCall    string   `xml:"p_call"` //previous calls
+	Class       string   `xml:"class"`
+	Codes       string   `xml:"codes"` //FCC code for the license
+	QSLMgr      string   `xml:"qslmgr"`
+	Email       string   `xml:"email"`
+	URL         string   `xml:"url"`     //typically QRZ webpage.
+	Views       string   `xml:"u_views"` //Number of QRZ webpage views
+	Bio         string   `xml:"bio"`     //Number of bytes and updated date of QRZ Bio.
+	Image       string   `xml:"image"`   //url of the image on QRZ
+	ModDate     string   `xml:"moddate"`
+	MSA         string   `xml:"MSA"` //USPS Metropolitan Serving Area
+	AreaCode    string   `xml:"AreaCode"`
+	TimeZone    string   `xml:"TimeZone"`
+	GMTOffset   string   `xml:"GMTOffset"`
+	DST         string   `xml:"DST"` //DST observed (or not)
+	EQSL        string   `xml:"eqsl"`
+	MQSL        string   `xml:"mqsl"`
+	CQzone      string   `xml:"cqzone"`
+	ITUzone     string   `xml:"ituzone"`
+	GeoLocation string   `xml:"geoloc"`
+	Attn        string   `xml:"attn"`
+	NickName    string   `xml:"nickname"`
+	WholeName   string   `xml:"name_fmt"`
+	Born        string   `xml:"born"`
 }
 
 type Stype struct {
 	Key   string `xml:"Key"`
 	Count string `xml:"Count"`
-	Time string `xml:"GMTime"`
+	Time  string `xml:"GMTime"`
 }
 
-type httpClient interface{
+type httpClient interface {
 	Get(url string) (*http.Response, error)
 }
 
 var noKey = errors.New("no session id")
 var client httpClient
 
-func init(){ 
+func init() {
 	client = &http.Client{}
 }
-
 
 func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 	key, err := app.sKey("")
@@ -62,12 +94,12 @@ func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("//xmldata.qrz.com/xml/current/?s=%s;callsign=%s", key, callSign)
+	url := fmt.Sprintf("https://xmldata.qrz.com/xml/current/?s=%s;callsign=%s", key, callSign)
 	result, err := getXML(url)
 	if err != nil {
 		return nil, err
 	}
-	v := Qtype{Callsign: []Ctype{}, Session: []Stype{}}
+	v := Qtype{Callsign: Ctype{}, Session: Stype{}}
 	err = xml.Unmarshal(result, &v)
 	if err != nil {
 		return nil, err
@@ -76,7 +108,7 @@ func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 }
 
 func loginQRZ(user, pwd string) (string, error) {
-	url := fmt.Sprintf("//xmldata.qrz.com/xml/current/?username=%s;password=%s;agent=ad2ccSM", user, pwd)
+	url := fmt.Sprintf("https://xmldata.qrz.com/xml/current/?username=%s;password=%s;agent=ad2ccSM", user, pwd)
 	data, err := getXML(url)
 	if err != nil {
 		return "", err
@@ -89,15 +121,15 @@ func loginQRZ(user, pwd string) (string, error) {
 }
 
 func sessionId(data []byte) (string, error) {
-	v := Qtype{Callsign: []Ctype{}, Session: []Stype{}}
+	v := Qtype{Callsign: Ctype{}, Session: Stype{}}
 	err := xml.Unmarshal(data, &v)
 	if err != nil {
 		return "", err
 	}
-	if strings.TrimSpace(v.Session[0].Key) == "" {
+	if strings.TrimSpace(v.Session.Key) == "" {
 		return "", fmt.Errorf("No key returned")
 	}
-	return v.Session[0].Key, nil
+	return v.Session.Key, nil
 }
 
 func getXML(url string) ([]byte, error) {
