@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Qtype struct {
@@ -17,49 +18,52 @@ type Qtype struct {
 
 type Ctype struct {
 	XMLName     xml.Name `xml:"Callsign"`
-	Call        string   `xml:"call"`
-	Aliases     string   `xml:"aliases"`
-	Dxcc        string   `xml:"dxcc"`
-	Fname       string   `xml:"fname"`
-	Lname       string   `xml:"name"`
-	Addr1       string   `xml:"addr1"`
-	Addr2       string   `xml:"addr2"`
-	State       string   `xml:"state"`
-	Zip         string   `xml:"zip"`
-	Country     string   `xml:"country"` //Country name for QSL mailing address
-	CountryCode string   `xml:"ccode"`
-	Lat         string   `xml:"lat"`
-	Long        string   `xml:"lon"`
-	Grid        string   `xml:"grid"`
-	County      string   `xml:"county"`
-	FIPS        string   `xml:"fips"`
-	Land        string   `xml:"land"` //DXCC country name of the call sign
-	EffDate     string   `xml:"efdate"`
-	ExpDate     string   `xml:"expdate"`
-	PrevCall    string   `xml:"p_call"` //previous calls
-	Class       string   `xml:"class"`
-	Codes       string   `xml:"codes"` //FCC code for the license
-	QSLMgr      string   `xml:"qslmgr"`
-	Email       string   `xml:"email"`
-	URL         string   `xml:"url"`     //typically QRZ webpage.
-	Views       string   `xml:"u_views"` //Number of QRZ webpage views
-	Bio         string   `xml:"bio"`     //Number of bytes and updated date of QRZ Bio.
-	Image       string   `xml:"image"`   //url of the image on QRZ
-	ModDate     string   `xml:"moddate"`
-	MSA         string   `xml:"MSA"` //USPS Metropolitan Serving Area
-	AreaCode    string   `xml:"AreaCode"`
-	TimeZone    string   `xml:"TimeZone"`
-	GMTOffset   string   `xml:"GMTOffset"`
-	DST         string   `xml:"DST"` //DST observed (or not)
-	EQSL        string   `xml:"eqsl"`
-	MQSL        string   `xml:"mqsl"`
-	CQzone      string   `xml:"cqzone"`
-	ITUzone     string   `xml:"ituzone"`
-	GeoLocation string   `xml:"geoloc"`
-	Attn        string   `xml:"attn"`
-	NickName    string   `xml:"nickname"`
-	WholeName   string   `xml:"name_fmt"`
-	Born        string   `xml:"born"`
+	Id          int32
+	Time        time.Time
+	Call        string `xml:"call"`
+	Aliases     string `xml:"aliases"`
+	Dxcc        string `xml:"dxcc"`
+	Fname       string `xml:"fname"`
+	Lname       string `xml:"name"`
+	Addr1       string `xml:"addr1"`
+	Addr2       string `xml:"addr2"`
+	State       string `xml:"state"`
+	Zip         string `xml:"zip"`
+	Country     string `xml:"country"` //Country name for QSL mailing address
+	CountryCode string `xml:"ccode"`
+	Lat         string `xml:"lat"`
+	Long        string `xml:"lon"`
+	Grid        string `xml:"grid"`
+	County      string `xml:"county"`
+	FIPS        string `xml:"fips"`
+	Land        string `xml:"land"` //DXCC country name of the call sign
+	EffDate     string `xml:"efdate"`
+	ExpDate     string `xml:"expdate"`
+	PrevCall    string `xml:"p_call"` //previous calls
+	Class       string `xml:"class"`
+	Codes       string `xml:"codes"` //FCC code for the license
+	QSLMgr      string `xml:"qslmgr"`
+	Email       string `xml:"email"`
+	URL         string `xml:"url"`     //typically QRZ webpage.
+	Views       string `xml:"u_views"` //Number of QRZ webpage views
+	Bio         string `xml:"bio"`     //Number of bytes and updated date of QRZ Bio.
+	Image       string `xml:"image"`   //url of the image on QRZ
+	ModDate     string `xml:"moddate"`
+	MSA         string `xml:"MSA"` //USPS Metropolitan Serving Area
+	AreaCode    string `xml:"AreaCode"`
+	TimeZone    string `xml:"TimeZone"`
+	GMTOffset   string `xml:"GMTOffset"`
+	DST         string `xml:"DST"` //DST observed (or not)
+	EQSL        string `xml:"eqsl"`
+	MQSL        string `xml:"mqsl"`
+	CQzone      string `xml:"cqzone"`
+	ITUzone     string `xml:"ituzone"`
+	GeoLocation string `xml:"geoloc"`
+	Attn        string `xml:"attn"`
+	NickName    string `xml:"nickname"`
+	WholeName   string `xml:"name_fmt"`
+	Born        string `xml:"born"`
+	QSOCount    int
 }
 
 type Stype struct {
@@ -103,6 +107,26 @@ func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 	err = xml.Unmarshal(result, &v)
 	if err != nil {
 		return nil, err
+	}
+	//QRZ.COM does not return the key if it has expired and it must be renewed.
+	if v.Session.Key == "" {
+		key, err = loginQRZ(app.qrzuser, app.qrzpw)
+		if err != nil {
+			return nil, err
+		}
+		key, err = app.sKey(key)
+		if err != nil {
+			return nil, err
+		}
+		result, err := getXML(url)
+		if err != nil {
+			return nil, err
+		}
+		v := Qtype{Callsign: Ctype{}, Session: Stype{}}
+		err = xml.Unmarshal(result, &v)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &v, nil
 }

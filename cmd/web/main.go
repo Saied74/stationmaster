@@ -89,6 +89,8 @@ func main() {
 	mux.HandleFunc("/updatedb", app.updatedb)
 	mux.HandleFunc("/quit", app.quit)
 	mux.HandleFunc("/getconn", app.getConn)
+	mux.HandleFunc("/callsearch", app.callSearch)
+	mux.HandleFunc("/updateQRZ", app.updateQRZ)
 
 	srv := &http.Server{
 		Addr:     ":4000",
