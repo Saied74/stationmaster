@@ -9,7 +9,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">></script>
 <!--
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 -->
@@ -51,6 +51,15 @@
 </button>
 -->
         </li>
+        <li class="nav-item">
+          <!-- <a class="nav-link" data-bs-toggle="modal" data-bs-target="#searchModal" href="/stopcode" id="search-button">Search</a> -->
+        <!--
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+        Add
+        </button>
+        -->
+        </li>
+
         {{end}}
         <li class="nav-item">
           <a class="nav-link" href="/ant">Antenna</a>
@@ -79,7 +88,7 @@
     </div>
     <hr>
     <div class="row">
-    <div class="col-sm-3"></div>
+    <div class="col-sm-1"></div>
     <div class="col-sm-6">
     {{template "footer" .}}
     </div>
@@ -95,12 +104,39 @@
 
 
 </body>
+
+</html>
+
 <script>
 
+
 $(document).ready(function(){
+
+  // let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
+  // sModal.show();
+
+  $("#search-button").click(function() {
+
+    $.getJSON("/callsearch?call="+$("#search-call").val())
+    .then(function(data){
+    $("#want-update").html(data["QRZMsg"])
+    $("#call").text(data["Call"])
+    $("#qrzname").text(data["Name"])
+    $("#born").text(data["Born"])
+    $("#addr1").text(data["Addr1"])
+    $("#addr2").text(data["Addr2"])
+    $("#qrzcountry").text(data["QRZCountry"])
+    $("#class").text(data["Class"])
+    $("#timezone").text(data["TimeZone"])
+    $("#qsocount").text(data["QSOCount"])
+  });
+
+  });
+
 $("#call-sign").blur(function(){
   $.getJSON("/getconn?call="+$("#call-sign").val()+"&mode="+$("#master-mode").val()+
-  "&band="+$("#master-band").val(), function(data, status){
+  "&band="+$("#master-band").val())
+  .then(function(data){
     $("#name").val(data["Name"])
     $("#country").val(data["Country"])
     $("#band-select").val(data["Band"])
@@ -108,11 +144,15 @@ $("#call-sign").blur(function(){
     // alert($("#master-mode").val());
   });
 });
+
+
 });
-</script>
+
+// let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
+// sModal.show();
 
 
+
 </script>
-</html>
 
 {{end}}

@@ -4,10 +4,13 @@
 
 
 {{define "main"}}
+
 <div class="row">
-  <div class="col-sm-3">
+    <p>Enter your session's operating band and mode here.</p>
+      <div class="row">
+  <div class="col-sm-4">
     <select class="form-select" aria-label="select group one" id="master-band">
-      <option selected>Select session's operating band</option>
+      <option selected>Session's operating band</option>
       <option value="1">160m</option>
       <option value="2">80m</option>
       <option value="3">40m</option>
@@ -15,13 +18,25 @@
       <option value="5">10m</option>
     </select>
   </div>
-  <div class="col-sm-3">
+  <div class="col-sm-4">
     <select class="form-select" aria-label="select group 2" id="master-mode">
-      <option selected>Selecct session's operating mode</option>
+      <option selected>Session's operating mode</option>
       <option value="1">LSB</option>
       <option value="2">USB</option>
       <option value="3">CW</option>
     </select>
+  </div>
+  <div class="col-sm-4">
+    <form class="row g-3">
+  <div class="col-auto">
+    <input type="text" class="form-control" id="search-call" placeholder="Call Sign">
+  </div>
+  <div class="col-auto">
+<button class="btn btn-primary mb-3"><a data-bs-toggle="modal" data-bs-target="#searchModal" id="search-button">Search</a></button>
+  </div>
+
+</form>
+  </div>
   </div>
 </div>
 <hr>
@@ -188,11 +203,38 @@
   </div>
 </div>
 
+<div class="modal hide fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="searchModalLabel">Call Sign Search</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="want-update"></div>
+        <div class="row">
+        <p id="call">call</p>
+        <p id="qrzname">name</p>
+        <p id="born">born</p>
+        <p id="addr1">addr1</p>
+        <p id="addr2">addr2</p>
+        <p id="qrzcountry">country</p>
+        <p id="class">class</p>
+        <p id="timezone">timezone</p>
+        <p id="qsocount">qsocount</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{end}}
+
 <script>
 {{if .Show}}
 let addModal = new bootstrap.Modal(document.getElementById("addModal"), {});
 addModal.show();
 {{end}}
-</script>
 
-{{end}}
+
+</script>
