@@ -6,6 +6,47 @@ import (
 	"fmt"
 )
 
+type DefType struct {
+	Id  int
+	Kee string
+	Val string
+}
+
+func (m *stationModel) getDefault(k string) (string, error) {
+	stmt := `SELECT id, kee, val FROM defaults WHERE kee = ?`
+
+	row := m.DB.QueryRow(stmt, k)
+	d := &DefType{}
+
+	err := row.Scan(&d.Id, &d.Kee, &d.Val)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errNoRecord
+		} else {
+			return "", err
+		}
+	}
+	return d.Val, nil
+}
+
+func (m *stationModel) updateDefault(k, v string) error {
+	_, err := m.getDefault(k)
+	if errors.Is(err, errNoRecord) {
+		stmt := `INSERT INTO defaults (kee, val) VALUES (?, ?)`
+		_, err := m.DB.Exec(stmt, k, v)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	stmt := `UPDATE defaults SET val = ? WHERE kee = ?`
+	_, err = m.DB.Exec(stmt, v, k)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *stationModel) insertQRZ(c *Ctype) error {
 
 	stmt := `INSERT INTO qrztable (time, callsign, aliases, dxcc, first_name,
@@ -56,6 +97,15 @@ func (m *stationModel) getQRZ(call string) (*Ctype, error) {
 
 	}
 	return c, nil
+}
+
+func (m *stationModel) updateQSOCount(callSign string, qsoCount int) error {
+	stmt := `UPDATE qrztable SET qso_count = ? WHERE callsign = ?`
+	_, err := m.DB.Exec(stmt, qsoCount, callSign)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *stationModel) stashQRZdata(c *Ctype) error {
