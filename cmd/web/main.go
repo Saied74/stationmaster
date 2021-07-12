@@ -59,18 +59,18 @@ func main() {
 
 	putCancel, getCancel := contextStore()
 	putId, getId := saveId()
-
+	m := &stationModel{DB: db}
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		templateCache: templateCache,
 		displayLines:  *displayLines,
-		stationModel:  &stationModel{DB: db},
+		stationModel:  m,
 		putCancel:     putCancel,
 		getCancel:     getCancel,
 		putId:         putId,
 		getId:         getId,
-		sKey:          sessionCache(),
+		sKey:          m.sKey, //sessionCache(),
 		qrzpw:         *qrzpw,
 		qrzuser:       *qrzuser,
 	}
@@ -91,6 +91,9 @@ func main() {
 	mux.HandleFunc("/getconn", app.getConn)
 	mux.HandleFunc("/callsearch", app.callSearch)
 	mux.HandleFunc("/updateQRZ", app.updateQRZ)
+	mux.HandleFunc("/defaults", app.defaults)
+	mux.HandleFunc("/store-defaults", app.storeDefaults)
+	mux.HandleFunc("/contacts", app.contacts)
 
 	srv := &http.Server{
 		Addr:     ":4000",

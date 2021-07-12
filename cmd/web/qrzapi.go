@@ -190,3 +190,18 @@ func sessionCache() sessionMgr {
 	}
 	return mgr
 }
+
+func (m *stationModel) sKey(key string) (string, error) {
+	sessionKey, err := m.getDefault("qrzkey")
+	if err != nil {
+		return "", err
+	}
+	if key == "" {
+		if sessionKey == "" {
+			return "", noKey
+		}
+		return sessionKey, nil
+	}
+	err = m.updateDefault("qrzkey", key)
+	return sessionKey, nil
+}

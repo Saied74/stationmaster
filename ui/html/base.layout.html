@@ -44,20 +44,10 @@
         </li>
         {{if .Logger }}
         <li class="nav-item">
-          <a class="nav-link" data-bs-toggle="modal" data-bs-target="#addModal" href="/stopcode">Add</a>
-<!--
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-  Add
-</button>
--->
+          <a class="nav-link" data-bs-toggle="modal" data-bs-target="#addModal" href="#">Add</a>
         </li>
         <li class="nav-item">
-          <!-- <a class="nav-link" data-bs-toggle="modal" data-bs-target="#searchModal" href="/stopcode" id="search-button">Search</a> -->
-        <!--
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-        Add
-        </button>
-        -->
+          <a class="nav-link" href="/defaults">Defaults</a>
         </li>
 
         {{end}}
@@ -134,13 +124,12 @@ $(document).ready(function(){
   });
 
 $("#call-sign").blur(function(){
-  $.getJSON("/getconn?call="+$("#call-sign").val()+"&mode="+$("#master-mode").val()+
-  "&band="+$("#master-band").val())
+  $.getJSON("/getconn?call="+$("#call-sign").val())
   .then(function(data){
     $("#name").val(data["Name"])
     $("#country").val(data["Country"])
-    $("#band-select").val(data["Band"])
-    $("#mode-select").val(data["Mode"])
+    // $("#band-select").val(data["Band"])
+    // $("#mode-select").val(data["Mode"])
     // alert($("#master-mode").val());
   });
 });
