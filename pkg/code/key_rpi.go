@@ -16,9 +16,10 @@ const (
 	wordFact     = "Word Spacing Factor"
 	eol          = "\n"
 	lineLength   = 100  //number of letters and spaces per printed line
-	ditInput     = "11" // GPIO physical input pin 11
+	ditInput     = "3" // GPIO physical input pin 11
 	dahInput     = "7"  // GPIO physical input pin 7
 	output       = "10" // GPIO physical output pin 10
+	toradio      = "8"  // key input to the radio
 	debounceTime = 2    //in milliseconds
 )
 
@@ -32,6 +33,15 @@ type CwDriver struct {
 	LF        float64 //letter factor
 	WF        float64 //word factor
 }
+
+func (cw *CwDriver)KeyDown() {
+	cw.Dit.DigitalWrite(toradio, 1)
+}
+
+func (cw *CwDriver)KeyUp() {
+	cw.Dit.DigitalWrite(toradio, 0)
+}
+	
 
 func (cw *CwDriver) Work(ctx context.Context) {
 	//the next few lines and the method "calcSpacing implement
@@ -60,6 +70,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
 		if dit == 0 && debounce(cw.Dit, 0, output) {
+
 			cw.emit("0")
 			setL = true
 			letterTimer = time.Now()
@@ -210,6 +221,8 @@ func decode(s string) string {
 		"111000": ":",
 		"10010":  "/",
 		"100001": "-",
+		"10001": "=",
+		"10110": "kn",
 	}
 	s, ok := code[s]
 	if !ok {

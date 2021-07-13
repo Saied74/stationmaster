@@ -17,7 +17,7 @@ const (
 	farnspeed  = "18"
 	floatFarn  = 18.0
 	lsm        = "1.2"
-	floatLsm   = 1.55
+	floatLsm   = 1.2
 	wsm        = "1.3"
 	floatWsm   = 1.3
 )
@@ -183,6 +183,28 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 //<++++++++++++++++++++++++++  Antenna  ++++++++++++++++++++++++++++>
 
 func (app *application) ant(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	app.render(w, r, "ant.page.html", td)
+}
+
+func (app *application) keyDown(w http.ResponseWriter, r *http.Request) {
+	
+	cw := &code.CwDriver{
+		Dit:       raspi.NewAdaptor(),
+	}
+	cw.KeyDown()
+	
+	td := initTemplateData()
+	app.render(w, r, "ant.page.html", td)
+}
+
+func (app *application) keyUp(w http.ResponseWriter, r *http.Request) {
+
+	cw := &code.CwDriver{
+		Dit:       raspi.NewAdaptor(),
+	}
+	cw.KeyUp()
+	
 	td := initTemplateData()
 	app.render(w, r, "ant.page.html", td)
 }

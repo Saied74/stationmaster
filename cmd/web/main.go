@@ -88,6 +88,8 @@ func main() {
 	mux.HandleFunc("/editlog", app.editlog)
 	mux.HandleFunc("/updatedb", app.updatedb)
 	mux.HandleFunc("/quit", app.quit)
+	mux.HandleFunc("/keydown", app.keyDown)
+	mux.HandleFunc("/keyup", app.keyUp)
 
 	srv := &http.Server{
 		Addr:     ":4000",
