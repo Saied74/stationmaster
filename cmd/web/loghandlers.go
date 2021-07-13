@@ -382,7 +382,6 @@ func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	var v string
 	td := initTemplateData()
-	td.Logger = true
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -396,7 +395,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "3":
 		v = "CW"
 	default:
-		v = fmt.Sprintf("A Bad Mode Choice %s", m)
+		v = fmt.Sprintf("A Bad Mode Choice. ")
 	}
 	err = app.stationModel.updateDefault("mode", v)
 	if err != nil {
@@ -417,7 +416,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "5":
 		v = "160m"
 	default:
-		v = fmt.Sprintf("A Bad Band Choice %s", v)
+		v = fmt.Sprintf("A Bad Band Choice. ")
 	}
 	err = app.stationModel.updateDefault("band", v)
 	if err != nil {
@@ -430,7 +429,6 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) contacts(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
-	td.Logger = true
 	call := r.URL.Query().Get("contact-call")
 	if call == "" {
 		app.infoLog.Printf("Got an empty call sign\n") //this is for testing

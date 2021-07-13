@@ -6,7 +6,7 @@
 
 <div class="row">
   <div class="col-sm-2"></div>
-  <div class="col-sm-6">
+  <div class="col-sm-8">
 
 <h3>Current Defaults Are:</h3>
 {{with .LogEdit}}
@@ -14,6 +14,11 @@
 <p>Current default band is: {{.Band}}</p>
 {{end}}
 <p>Change the defaults below</p>
+</div>
+
+<div class="row">
+  <div class="col-sm-2"></div>
+<div class="col-sm-2">
 
 <form action="/store-defaults" method="post">
 
@@ -33,9 +38,10 @@
   <option value="5">160m</option>
 </select>
 <br>
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <button type="submit" style="background-color: #9FE1EA; color: #442C2E" class="btn">Submit</button>
 
 </form>
+</div>
 </div>
 </div>
 
