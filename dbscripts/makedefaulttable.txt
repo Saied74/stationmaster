@@ -1,0 +1,7 @@
+CREATE TABLE defaults (
+id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+kee VARCHAR(20) NOT NULL,
+val VARCHAR(100) NOT NULL
+);
+
+CREATE INDEX idx_defaults_kee ON defaults(kee);

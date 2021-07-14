@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"gobot.io/x/gobot/platforms/raspi"
 	"net/http"
 	"os"
-	"strconv"
+
+	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
 )
@@ -22,162 +22,9 @@ const (
 	floatWsm   = 1.3
 )
 
-//for feeding dynamic data and error reports to templates
-type templateData struct {
-	FormData  *formData
-	Speed     string
-	FarnSpeed string
-	Lsm       string
-	Wsm       string
-	Mode      string
-	Top       headRow
-	Table     []LogsRow
-	LogEdit   *LogsRow
-	Show      bool
-	Edit      bool
-	StopCode  bool
-	Logger    bool
-}
-
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	app.render(w, r, "home.page.html", td)
-}
-
-//<++++++++++++++++++++++++++++  Logger  ++++++++++++++++++++++++++++++>
-
-func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	td := initTemplateData()
-	td.Logger = true
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-	if err != nil {
-		app.serverError(w, err)
-	}
-	app.render(w, r, "log.page.html", td)
-}
-
-func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
-	var err error
-	td := initTemplateData()
-	td.Logger = true
-	err = r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-	}
-
-	f := newForm(r.PostForm)
-
-	f.required("call", "sent", "rcvd", "band")
-	f.checkAllLogMax()
-	f.minLength("sent", 2)
-	f.minLength("rcvd", 2)
-	f.isInt("sent")
-	f.isInt("rcvd")
-
-	if !f.valid() {
-		var err error
-		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-		if err != nil {
-			app.serverError(w, err)
-		}
-
-		td.FormData = f
-		td.Show = true
-		td.Edit = false
-		app.render(w, r, "log.page.html", td)
-		return
-	}
-
-	tr := copyPostForm(r)
-
-	_, err = app.stationModel.insertLog(&tr)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.Show = false
-	td.Edit = false
-	app.render(w, r, "log.page.html", td)
-}
-
-func (app *application) editlog(w http.ResponseWriter, r *http.Request) {
-	td := initTemplateData()
-	td.Logger = true
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-	tr, err := app.stationModel.getLogByID(id)
-	if err != nil {
-		app.serverError(w, err)
-	}
-
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-	if err != nil {
-		app.serverError(w, err)
-	}
-	app.putId(id)
-	td.LogEdit = tr
-	td.Show = true
-	td.Edit = true
-	app.render(w, r, "log.page.html", td)
-}
-
-func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
-	td := initTemplateData()
-	td.Logger = true
-	err := r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-	}
-
-	f := newForm(r.PostForm)
-
-	f.required("call", "sent", "rcvd", "band")
-	f.checkAllLogMax()
-	f.minLength("sent", 2)
-	f.minLength("rcvd", 2)
-	f.isInt("sent")
-	f.isInt("rcvd")
-
-	if !f.valid() {
-		var err error
-		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-		if err != nil {
-			app.serverError(w, err)
-		}
-		td.FormData = f
-		td.Show = true
-		td.Edit = false
-		app.render(w, r, "log.page.html", td)
-		return
-	}
-	tr := copyPostForm(r)
-
-	id := app.getId()
-	err = app.stationModel.updateLog(&tr, id)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.Show = false
-	td.Edit = false
-	app.render(w, r, "log.page.html", td)
 }
 
 //<++++++++++++++++++++++++++  Antenna  ++++++++++++++++++++++++++++>

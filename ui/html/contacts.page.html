@@ -1,0 +1,31 @@
+{{template "base" .}}
+
+{{define "title"}}Defaults for  Logger{{end}}
+
+{{define "main"}}
+
+<div class="row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-6">
+
+
+{{with .LookUp}}
+<p>Call Sign: {{.Call}}</p>
+<p>Name: {{.Fname}} ({{.NickName}}) {{.Lname}}</p>
+<p>{{.Addr1}}
+  {{.Addr2}}, {{.State}} {{.Zip}}
+  {{.Country}}
+</p>
+<p> Lat: {{.Lat}}     Long: {{.Long}}     Grid: {{.Grid}}</p>
+<p>CQ Zone: {{.CQzone}}     ITU Zone: {{.ITUzone}}</p>
+<p>GMT Offset: {{.GMTOffset}}</p>
+<p>QSO Count: {{.QSOCount}}</p>
+
+
+{{end}}
+
+
+</div>
+</div>
+
+{{end}}

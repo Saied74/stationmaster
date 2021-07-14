@@ -45,7 +45,7 @@ type headRow struct {
 
 var tableHead = headRow{
 	"ID",
-	"Time",
+	"Time (UTC)",
 	"Call",
 	"Mode",
 	"Sent",

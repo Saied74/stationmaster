@@ -6,84 +6,99 @@
 <head>
 <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">></script>
 <!--
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 -->
+<style>
+body {
+  background-color: #FEDBD0;
+}
 
+p, h3, h4, h5, th, td, input {
+  color: #442C2E;
+}
+
+</style>
 <title>{{template "title" .}} Ktutor</title>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+ <!-- navbar-light bg-light"> -->
+ <!-- class="navbar-brand" -->
+
+<nav class="navbar navbar-expand-lg" style="background-color: #442C2E">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/home">AD2CC Station Master</a>
+    <a  class="nav-link" style="color: white" href="/home">AD2CC Station Master</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+          <a class="nav-link" style="color: white" aria-current="page" href="/home">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/ktutor">Code</a>
+          <a class="nav-link" style="color: white" href="/ktutor">Code</a>
         </li>
-        
+
         {{if .StopCode}}
         <li class="nav-item">
-          <a class="nav-link" href="/stopcode">Stop Code</a>
+          <a class="nav-link" style="color: white" href="/stopcode">Stop Code</a>
         </li>
-       {{end}} 
-        
+       {{end}}
+
         <li class="nav-item">
-          <a class="nav-link" href="/qsolog">Logger</a>
+          <a class="nav-link" style="color: white" href="/qsolog">Logger</a>
         </li>
         {{if .Logger }}
         <li class="nav-item">
-          <a class="nav-link" data-bs-toggle="modal" data-bs-target="#addModal" href="/stopcode">Add</a>
-<!--
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-  Add
-</button>
--->
+          <a class="nav-link" style="color: white" data-bs-toggle="modal" data-bs-target="#addModal" href="#">Add</a>
         </li>
-        {{end}} 
+
+
+        {{end}}
+
         <li class="nav-item">
-          <a class="nav-link" href="/ant">Antenna</a>
+          <a class="nav-link" style="color: white" href="/defaults">Defaults</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" style="color: white" href="/ant">Antenna</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/quit">Quit</a>
+          <a class="nav-link" style="color: white" href="/quit">Quit</a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
+<br>
 
 
 <div class="row">
   <div class="col-sm-1"></div>
-  
-  
-  
+
+
+
   <div class="col-sm-10">
-    
+
     {{template "main" .}}
-    
-    
+
+
     </div>
-    
+
     </div>
     <hr>
     <div class="row">
-    <div class="col-sm-3"></div>
+    <div class="col-sm-1"></div>
     <div class="col-sm-6">
     {{template "footer" .}}
     </div>
-    
+
     </div>
 
 <br><br>
@@ -93,20 +108,56 @@
 -->
 
 
-  
+
 </body>
-<script>
-$(document).ready(function(){
-$("#loaddata").click(function(){
-$.ajax({url:"/start",success:function(ajaxresult){
-$("#ajaxrequest").html(ajaxresult);
-}});
-});
-});
-</script>
 
-
-</script>
 </html>
+
+<script>
+
+
+$(document).ready(function(){
+
+  // let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
+  // sModal.show();
+
+  $("#search-button").click(function() {
+
+    $.getJSON("/callsearch?call="+$("#search-call").val())
+    .then(function(data){
+    $("#want-update").html(data["QRZMsg"])
+    $("#call").text(data["Call"])
+    $("#qrzname").text(data["Name"])
+    $("#born").text(data["Born"])
+    $("#addr1").text(data["Addr1"])
+    $("#addr2").text(data["Addr2"])
+    $("#qrzcountry").text(data["QRZCountry"])
+    $("#class").text(data["Class"])
+    $("#timezone").text(data["TimeZone"])
+    $("#qsocount").text(data["QSOCount"])
+  });
+
+  });
+
+$("#call-sign").blur(function(){
+  $.getJSON("/getconn?call="+$("#call-sign").val())
+  .then(function(data){
+    $("#name").val(data["Name"])
+    $("#country").val(data["Country"])
+    // $("#band-select").val(data["Band"])
+    // $("#mode-select").val(data["Mode"])
+    // alert($("#master-mode").val());
+  });
+});
+
+
+});
+
+// let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
+// sModal.show();
+
+
+
+</script>
 
 {{end}}

@@ -118,14 +118,14 @@ func TestGetXML(t *testing.T) {
 	if len(result) == 0 {
 		t.Errorf("empty result was returned")
 	}
-	v := Qtype{Callsign: []Ctype{}, Session: []Stype{}}
+	v := Qtype{Callsign: Ctype{}, Session: Stype{}}
 	err = xml.Unmarshal(result, &v)
 	if err != nil {
 		t.Errorf("returned xml did not decode %v", err)
 	}
-	if v.Callsign[0].Call != "AA7BQ" && v.Callsign[0].Fname != "LLOYD" {
+	if v.Callsign.Call != "AA7BQ" && v.Callsign.Fname != "LLOYD" {
 		t.Errorf("wanted call sign AA7BQ got %s wanted firs name LLOYD got %s",
-			v.Callsign[0].Call, v.Callsign[0].Fname)
+			v.Callsign.Call, v.Callsign.Fname)
 	}
 	client = &mockClient{
 		mockGet: func(url string) (*http.Response, error) {
@@ -186,13 +186,13 @@ func TestGetHamInfo(t *testing.T) {
 		t.Errorf("getHamInfo did not return anything")
 		return
 	}
-	if len(v.Callsign) < 1 {
-		t.Errorf("Callsign field of returned hamInfo is empty")
-		return
-	}
-	if v.Callsign[0].Call != "AA7BQ" && v.Callsign[0].Fname != "LLOYD" {
+	// if Callsign == nil {
+	// 	t.Errorf("Callsign field of returned hamInfo is empty")
+	// 	return
+	// }
+	if v.Callsign.Call != "AA7BQ" && v.Callsign.Fname != "LLOYD" {
 		t.Errorf("wanted call sign AA7BQ got %s wanted firs name LLOYD got %s",
-			v.Callsign[0].Call, v.Callsign[0].Fname)
+			v.Callsign.Call, v.Callsign.Fname)
 	}
 }
 

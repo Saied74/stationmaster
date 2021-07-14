@@ -88,13 +88,6 @@ func initTemplateData() *templateData {
 }
 
 func copyPostForm(r *http.Request) LogsRow {
-	//var m string
-	//switch r.PostForm.Get("mode") {
-	//case "1":
-	//m = "USB"
-	//case "2":
-	//m = "CW"
-	//}
 	return LogsRow{
 		Call:     strings.ToUpper(r.PostForm.Get("call")),
 		Sent:     r.PostForm.Get("sent"),
@@ -145,7 +138,7 @@ func (f *formData) maxLength(field string, d int) {
 		return
 	}
 	if utf8.RuneCountInString(value) > d {
-		f.Errors.add(field, fmt.Sprintf(`this field is too long 
+		f.Errors.add(field, fmt.Sprintf(`this field is too long
 		(maximum is %d characters)`, d))
 	}
 }
@@ -155,9 +148,9 @@ func (f *formData) checkAllLogMax() {
 	f.maxLength("sent", 3)
 	f.maxLength("rcvd", 3)
 	f.maxLength("band", 8)
-	f.maxLength("name", 25)
-	f.maxLength("country", 25)
-	f.maxLength("comment", 75)
+	f.maxLength("name", 85)
+	f.maxLength("country", 85)
+	f.maxLength("comment", 85)
 	f.maxLength("lotwrcvd", 10)
 	f.maxLength("lotwsent", 10)
 }
@@ -165,7 +158,7 @@ func (f *formData) checkAllLogMax() {
 func (f *formData) minLength(field string, d int) {
 	value := f.Get(field)
 	if utf8.RuneCountInString(value) < d {
-		f.Errors.add(field, fmt.Sprintf(`this field is too short 
+		f.Errors.add(field, fmt.Sprintf(`this field is too short
 		(minimum is %d characters)`, d))
 	}
 }
