@@ -21,7 +21,7 @@ type application struct {
 	infoLog       *log.Logger
 	templateCache map[string]*template.Template
 	displayLines  int
-	stationModel  *stationModel
+	stationModel  dbModel
 	putCancel     putCancelFunc
 	getCancel     getCancelFunc
 	putId         putIdFunc

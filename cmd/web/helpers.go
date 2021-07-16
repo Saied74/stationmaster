@@ -208,7 +208,6 @@ func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace) //to not get the helper file...
-
 	http.Error(w, http.StatusText(http.StatusInternalServerError),
 		http.StatusInternalServerError)
 }

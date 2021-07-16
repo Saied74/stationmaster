@@ -12,16 +12,16 @@ import (
 
 //for feeding dynamic data and error reports to templates
 type templateData struct {
-	FormData  *formData
-	LookUp    *Ctype
-	Speed     string
-	FarnSpeed string
-	Lsm       string
-	Wsm       string
-	Mode      string
-	Top       headRow
-	Table     []LogsRow
-	LogEdit   *LogsRow
+	FormData  *formData //for form validation error handling
+	LookUp    *Ctype    //Full suite of QRZ individual ham data
+	Speed     string    //code sending speed
+	FarnSpeed string    //Farnsworth sending speed
+	Lsm       string    //Letter spacing modifier
+	Wsm       string    //word spacing modifier
+	Mode      string    //keying mode, tutor or keyer
+	Top       headRow   //Log table column titles
+	Table     []LogsRow //full set of log table rows
+	LogEdit   *LogsRow  //single row of the log table for editing
 	Show      bool
 	Edit      bool
 	StopCode  bool
@@ -43,6 +43,7 @@ type QRZType struct {
 	Addr1    string `json:"Addr1"`
 	Addr2    string `json:"Addr2"`
 	Country  string `json:"QRZCountry"`
+	GeoLoc   string `json:"GeoLoc"`
 	Class    string `json:"Class"`
 	TimeZone string `json:"TimeZone"`
 	QSLCount string `json:"QSOCount"`
@@ -58,15 +59,18 @@ func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	v, err := app.stationModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.FormData.Set("band", v)
 	v, err = app.stationModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Mode = v //this is a workaround.  Template library does not seem to like emtpy strings
 	app.render(w, r, "log.page.html", td)
@@ -80,6 +84,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	err = r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
 
 	f := newForm(r.PostForm)
@@ -96,6 +101,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 
 		td.FormData = f
@@ -122,6 +128,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	t, err := app.stationModel.getLogsByCall(call)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Show = false
 	td.Edit = false
@@ -168,11 +175,13 @@ func (app *application) editlog(w http.ResponseWriter, r *http.Request) {
 	tr, err := app.stationModel.getLogByID(id)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	app.putId(id)
 	td.LogEdit = tr
@@ -187,6 +196,7 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
 
 	f := newForm(r.PostForm)
@@ -203,6 +213,7 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 		td.FormData = f
 		td.Show = true
@@ -227,11 +238,13 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 	v, err := app.stationModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.FormData.Set("band", v)
 	v, err = app.stationModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Mode = v //this is a workaround.  Template library does not seem to like emtpy strings
 	td.Show = false
@@ -305,9 +318,8 @@ func (app *application) callSearch(w http.ResponseWriter, r *http.Request) {
 	update := &QRZType{
 		Call:     c.Call,
 		Born:     fmt.Sprintf("Born in: %s", c.Born),
-		Addr1:    c.Addr1,
-		Addr2:    fmt.Sprintf("%s %s", c.Addr2, c.State),
-		Country:  c.Country,
+		Addr1:    fmt.Sprintf("%s   %s   %s   %s", c.Addr1, c.Addr2, c.State, c.Country),
+		GeoLoc:   fmt.Sprintf("Lat: %s,   Long: %s,   Grid: %s", c.Lat, c.Long, c.Grid),
 		Class:    fmt.Sprintf("Class: %s", c.Class),
 		TimeZone: fmt.Sprintf("Time Zone: %s", c.TimeZone),
 		QSLCount: fmt.Sprintf("QSO Count: %d", c.QSOCount),
@@ -349,6 +361,7 @@ func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
 	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	app.render(w, r, "log.page.html", td)
 }
@@ -385,6 +398,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
 	m := r.PostForm.Get("mode")
 	switch m {
@@ -436,7 +450,12 @@ func (app *application) contacts(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := app.stationModel.getQRZ(call)
 	if err != nil {
-		app.serverError(w, err)
+		if errors.Is(err, errNoRecord) {
+			c.Call = "call sign not in the database"
+		} else {
+			app.serverError(w, err)
+			return
+		}
 	}
 	td.LookUp = c
 	app.render(w, r, "contacts.page.html", td)
