@@ -6,6 +6,21 @@ import (
 	"time"
 )
 
+type dbModel interface {
+	getDefault(string) (string, error)
+	updateDefault(string, string) error
+	insertQRZ(*Ctype) error
+	getQRZ(string) (*Ctype, error)
+	updateQSOCount(string, int) error
+	stashQRZdata(*Ctype) error
+	unstashQRZdata() (*Ctype, error)
+	insertLog(*LogsRow) (int, error)
+	getLogByID(int) (*LogsRow, error)
+	getLogsByCall(string) ([]*LogsRow, error)
+	getLatestLogs(int) ([]LogsRow, error)
+	updateLog(*LogsRow, int) error
+}
+
 type stationModel struct {
 	DB *sql.DB
 }
