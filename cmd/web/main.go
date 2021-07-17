@@ -21,7 +21,9 @@ type application struct {
 	infoLog       *log.Logger
 	templateCache map[string]*template.Template
 	displayLines  int
-	stationModel  dbModel
+	logsModel     logsType
+	qrzModel      qrzType
+	otherModel    otherType
 	putCancel     putCancelFunc
 	getCancel     getCancelFunc
 	putId         putIdFunc
@@ -59,20 +61,23 @@ func main() {
 
 	putCancel, getCancel := contextStore()
 	putId, getId := saveId()
-	m := &stationModel{DB: db}
+	m := &otherModel{DB: db}
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		templateCache: templateCache,
 		displayLines:  *displayLines,
-		stationModel:  m,
-		putCancel:     putCancel,
-		getCancel:     getCancel,
-		putId:         putId,
-		getId:         getId,
-		sKey:          m.sKey, //sessionCache(),
-		qrzpw:         *qrzpw,
-		qrzuser:       *qrzuser,
+		logsModel:     &logsModel{DB: db},
+		qrzModel:      &qrzModel{DB: db},
+		otherModel:    m,
+		// stationModel:  m,
+		putCancel: putCancel,
+		getCancel: getCancel,
+		putId:     putId,
+		getId:     getId,
+		sKey:      m.sKey, //sessionCache(),
+		qrzpw:     *qrzpw,
+		qrzuser:   *qrzuser,
 	}
 
 	mux := http.NewServeMux()
