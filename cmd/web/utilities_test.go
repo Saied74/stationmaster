@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"log"
+	"net/http"
 )
 
 func newTestApp() *application {
@@ -16,16 +17,19 @@ func newTestApp() *application {
 		errorLog: log.New(io.Discard, "", 0),
 		// errorLog:      log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile), //
 		templateCache: templateCache,
+		logsModel:     &mockLogsModel{lastLogsErr: nil, defaultErr: nil},
+		qrzModel:      &mockQRZModel{},
+		otherModel:    &mockOtherModel{},
 	}
 }
 
-// type bodyType string
-//
-// func (b bodyType) Read(p []byte) (int, error) {
-// 	p = []byte(b)
-// 	return len(p), nil
-// }
-//
-// func (b bodyType) Close() error {
-// 	return nil
-// }
+func newMockClient(statcode int, r io.ReadCloser) httpClient {
+	return &mockClient{
+		mockGet: func(url string) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: statcode,
+				Body:       r,
+			}, nil
+		},
+	}
+}
