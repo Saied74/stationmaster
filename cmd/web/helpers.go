@@ -192,15 +192,14 @@ func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
 	//if the field is blank, use the example numbers
 	if strings.TrimSpace(value) == "" {
 		return fc, c
-	} else {
-		//if it is not, convert it to float64 and process any error
-		s, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			f.Errors.add(field, "Sending speed must be a number")
-			return 0, value
-		}
-		return s, value
 	}
+	//if it is not, convert it to float64 and process any error
+	s, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		f.Errors.add(field, "Sending speed must be a number")
+		return 0, value
+	}
+	return s, value
 }
 
 //<++++++++++++++++   centralized error handling   +++++++++++++++++++>
@@ -208,7 +207,6 @@ func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errorLog.Output(2, trace) //to not get the helper file...
-
 	http.Error(w, http.StatusText(http.StatusInternalServerError),
 		http.StatusInternalServerError)
 }

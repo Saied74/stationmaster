@@ -10,12 +10,14 @@ import (
 	"time"
 )
 
+//Qtype is the top level structure for the QRZ API
 type Qtype struct {
 	XMLName  xml.Name `xml:"QRZDatabase"`
 	Callsign Ctype
 	Session  Stype
 }
 
+//Ctype is the main payload of the QRZ API
 type Ctype struct {
 	XMLName     xml.Name `xml:"Callsign"`
 	Id          int32
@@ -66,6 +68,7 @@ type Ctype struct {
 	QSOCount    int
 }
 
+//Stype is the validation part of the QRZ API
 type Stype struct {
 	Key   string `xml:"Key"`
 	Count string `xml:"Count"`
@@ -191,7 +194,7 @@ func sessionCache() sessionMgr {
 	return mgr
 }
 
-func (m *stationModel) sKey(key string) (string, error) {
+func (m *otherModel) sKey(key string) (string, error) {
 	sessionKey, err := m.getDefault("qrzkey")
 	if err != nil {
 		return "", err
@@ -203,5 +206,8 @@ func (m *stationModel) sKey(key string) (string, error) {
 		return sessionKey, nil
 	}
 	err = m.updateDefault("qrzkey", key)
+	if err != nil {
+		return "", noKey
+	}
 	return sessionKey, nil
 }

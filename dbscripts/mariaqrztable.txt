@@ -31,21 +31,19 @@ codes        VARCHAR(5)    NOT NULL,
 qslmgr       VARCHAR(20)   NOT NULL,
 email        VARCHAR(50)   NOT NULL,
 url          VARCHAR(50)   NOT NULL,
-views        VARCHAR(20)    NOT NULL,
+views        VARCHAR(5)    NOT NULL,
 bio          VARCHAR(50)   NOT NULL,
 image        VARCHAR(50)   NOT NULL,
 moddate      VARCHAR(30)   NOT NULL,
 msa          VARCHAR(5)    NOT NULL,
 areacode     VARCHAR(5)    NOT NULL,
-timezone     VARCHAR(20)    NOT NULL,
+timezone     VARCHAR(5)    NOT NULL,
 gmtoffset    VARCHAR(5)    NOT NULL,
 dst          VARCHAR(3)    NOT NULL,
 eqsl         VARCHAR(3)    NOT NULL,
 mqsl         VARCHAR(3)    NOT NULL,
 attn         VARCHAR(20)   NOT NULL,
-qso_count    VARCHAR(5)    NOT NULL,
-FOREIGN KEY (callsign)
-        REFERENCES stationlogs(callsign)
+qso_count    VARCHAR(5)    NOT NULL
 );
 
 CREATE INDEX idx_qrztable_callsign ON qrztable(callsign);

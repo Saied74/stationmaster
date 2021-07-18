@@ -3,51 +3,21 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 )
 
-type DefType struct {
-	Id  int
-	Kee string
-	Val string
+type qrzType interface {
+	insertQRZ(*Ctype) error
+	getQRZ(string) (*Ctype, error)
+	updateQSOCount(string, int) error
+	stashQRZdata(*Ctype) error
+	unstashQRZdata() (*Ctype, error)
 }
 
-func (m *stationModel) getDefault(k string) (string, error) {
-	stmt := `SELECT id, kee, val FROM defaults WHERE kee = ?`
-
-	row := m.DB.QueryRow(stmt, k)
-	d := &DefType{}
-
-	err := row.Scan(&d.Id, &d.Kee, &d.Val)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", errNoRecord
-		} else {
-			return "", err
-		}
-	}
-	return d.Val, nil
+type qrzModel struct {
+	DB *sql.DB
 }
 
-func (m *stationModel) updateDefault(k, v string) error {
-	_, err := m.getDefault(k)
-	if errors.Is(err, errNoRecord) {
-		stmt := `INSERT INTO defaults (kee, val) VALUES (?, ?)`
-		_, err := m.DB.Exec(stmt, k, v)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	stmt := `UPDATE defaults SET val = ? WHERE kee = ?`
-	_, err = m.DB.Exec(stmt, v, k)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *stationModel) insertQRZ(c *Ctype) error {
+func (m *qrzModel) insertQRZ(c *Ctype) error {
 
 	stmt := `INSERT INTO qrztable (time, callsign, aliases, dxcc, first_name,
 		last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
@@ -69,7 +39,7 @@ func (m *stationModel) insertQRZ(c *Ctype) error {
 	return nil
 }
 
-func (m *stationModel) getQRZ(call string) (*Ctype, error) {
+func (m *qrzModel) getQRZ(call string) (*Ctype, error) {
 
 	stmt := `SELECT id, time, callsign, aliases, dxcc, first_name,
 		last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
@@ -91,15 +61,13 @@ func (m *stationModel) getQRZ(call string) (*Ctype, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errNoRecord
-		} else {
-			return nil, err
 		}
-
+		return nil, err
 	}
 	return c, nil
 }
 
-func (m *stationModel) updateQSOCount(callSign string, qsoCount int) error {
+func (m *qrzModel) updateQSOCount(callSign string, qsoCount int) error {
 	stmt := `UPDATE qrztable SET qso_count = ? WHERE callsign = ?`
 	_, err := m.DB.Exec(stmt, qsoCount, callSign)
 	if err != nil {
@@ -108,7 +76,7 @@ func (m *stationModel) updateQSOCount(callSign string, qsoCount int) error {
 	return nil
 }
 
-func (m *stationModel) stashQRZdata(c *Ctype) error {
+func (m *qrzModel) stashQRZdata(c *Ctype) error {
 	stmt := `UPDATE stashtable SET callsign = ?, aliases = ?, dxcc = ?, first_name = ?,
 		last_name = ?, nickname = ?, born = ?, addr1 = ?, addr2 = ?, state = ?, zip = ?, country = ?, country_code = ?,
 		lat = ?, lon = ?, grid = ?, county = ?, fips = ?, land = ?, cqzone = ?, ituzone = ?, geolocation = ?, effdate = ?,
@@ -129,7 +97,7 @@ func (m *stationModel) stashQRZdata(c *Ctype) error {
 	return nil
 }
 
-func (m *stationModel) unstashQRZdata() (*Ctype, error) {
+func (m *qrzModel) unstashQRZdata() (*Ctype, error) {
 
 	stmt := `SELECT id, time, callsign, aliases, dxcc, first_name,
 		last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
@@ -152,128 +120,4 @@ func (m *stationModel) unstashQRZdata() (*Ctype, error) {
 		return nil, err
 	}
 	return c, nil
-}
-
-//will insert a new record into the stationlogs table
-func (m *stationModel) insertLog(l *LogsRow) (int, error) {
-
-	stmt := `INSERT INTO stationlogs (time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd)
-	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
-	result, err := m.DB.Exec(stmt,
-		l.Call, l.Mode, l.Sent, l.Rcvd,
-		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd)
-	if err != nil {
-		return 0, err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return int(id), nil
-}
-
-//will get a record given its id
-func (m *stationModel) getLogByID(id int) (*LogsRow, error) {
-	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd
-	FROM stationlogs WHERE id = ?`
-
-	row := m.DB.QueryRow(stmt, id)
-	s := &LogsRow{}
-
-	err := row.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
-		&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-		&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errNoRecord
-		} else {
-			return nil, err
-		}
-
-	}
-	return s, nil
-}
-
-func (m *stationModel) getLogsByCall(call string) ([]*LogsRow, error) {
-	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd
-	FROM stationlogs WHERE callsign = ?`
-
-	rows, err := m.DB.Query(stmt, call)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	tr := []*LogsRow{}
-	for rows.Next() {
-		s := &LogsRow{}
-		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
-			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
-
-		if err != nil {
-			return nil, err
-		}
-		tr = append(tr, s)
-
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return tr, nil
-}
-
-//will return the n most recently created logs
-func (m *stationModel) getLatestLogs(n int) ([]LogsRow, error) {
-	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd
-	FROM stationlogs ORDER BY time DESC LIMIT %d`, n)
-
-	rows, err := m.DB.Query(stmt)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	tr := []*LogsRow{}
-
-	for rows.Next() {
-		s := &LogsRow{}
-
-		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
-			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
-
-		if err != nil {
-			return nil, err
-		}
-		tr = append(tr, s)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	t := []LogsRow{}
-	for _, item := range tr {
-		t = append(t, *item)
-	}
-
-	return t, nil
-}
-
-func (m *stationModel) updateLog(l *LogsRow, id int) error {
-	stmt := `UPDATE stationlogs SET callsign = ?, mode = ?, sent = ?,
-rcvd = ?, band = ?, name = ?, country = ?, comment = ?, lotwsent = ?,
-lotwrcvd = ?  WHERE id = ?`
-	_, err := m.DB.Exec(stmt,
-		l.Call, l.Mode, l.Sent, l.Rcvd,
-		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd, id)
-	if err != nil {
-		return err
-	}
-	return nil
 }

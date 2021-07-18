@@ -76,7 +76,7 @@ const (
 </Session>
 </QRZDatabase>`
 
-	sId = `0b1df943c413fd6d7a60a7ca8af868fd`
+	sID = `0b1df943c413fd6d7a60a7ca8af868fd`
 )
 
 func TestSessionId(t *testing.T) {
@@ -84,8 +84,8 @@ func TestSessionId(t *testing.T) {
 	if err != nil {
 		t.Errorf("error is getting session id %v", err)
 	}
-	if id != sId {
-		t.Errorf("in getting session id, wanted %s got %s", sId, id)
+	if id != sID {
+		t.Errorf("in getting session id, wanted %s got %s", sID, id)
 	}
 }
 
@@ -102,15 +102,7 @@ func (m *mockClient) Get(url string) (*http.Response, error) {
 func TestGetXML(t *testing.T) {
 
 	r := ioutil.NopCloser(bytes.NewReader([]byte(xmlTestData)))
-	client = &mockClient{
-		mockGet: func(url string) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
+	client = newMockClient(200, r)
 	result, err := getXML("abc")
 	if err != nil {
 		t.Errorf("testing getXML call failed with %v ", err)
@@ -127,14 +119,7 @@ func TestGetXML(t *testing.T) {
 		t.Errorf("wanted call sign AA7BQ got %s wanted firs name LLOYD got %s",
 			v.Callsign.Call, v.Callsign.Fname)
 	}
-	client = &mockClient{
-		mockGet: func(url string) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 400,
-				Body:       r,
-			}, nil
-		},
-	}
+	client = newMockClient(400, r)
 	result, err = getXML("abc")
 	if err == nil {
 		t.Errorf("testing getXML statusCode 400 failed with %v ", err)
@@ -144,40 +129,25 @@ func TestGetXML(t *testing.T) {
 
 func TestLoginQRZ(t *testing.T) {
 	r := ioutil.NopCloser(bytes.NewReader([]byte(idTestData)))
-	client = &mockClient{
-		mockGet: func(url string) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
+	client = newMockClient(200, r)
 	id, err := loginQRZ("abc", "def")
 	if err != nil {
 		t.Errorf("loginQRZ returned error %v", err)
 	}
-	if id != sId {
-		t.Errorf("expecting id %s got %s", sId, id)
+	if id != sID {
+		t.Errorf("expecting id %s got %s", sID, id)
 	}
 }
 
 func TestGetHamInfo(t *testing.T) {
 	r := ioutil.NopCloser(bytes.NewReader([]byte(xmlTestData)))
-	client = &mockClient{
-		mockGet: func(url string) (*http.Response, error) {
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
+	client = newMockClient(200, r)
 	app := &application{
 		qrzuser: "abc",
 		qrzpw:   "xyz",
 		sKey:    sessionCache(),
 	}
-	app.sKey(sId)
+	app.sKey(sID)
 	v, err := app.getHamInfo("abc")
 	if err != nil {
 		t.Errorf("getHamInfo returned error %v", err)

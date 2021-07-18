@@ -12,3 +12,5 @@ comment VARCHAR(100) NOT NULL,
 lotwsent VARCHAR(20) NOT NULL,
 lotwrcvd VARCHAR(20) NOT NULL
 );
+
+CREATE INDEX idx_stationmaster_callsign ON stationlogs(callsign);

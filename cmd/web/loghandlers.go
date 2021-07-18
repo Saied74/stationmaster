@@ -12,29 +12,31 @@ import (
 
 //for feeding dynamic data and error reports to templates
 type templateData struct {
-	FormData  *formData
-	LookUp    *Ctype
-	Speed     string
-	FarnSpeed string
-	Lsm       string
-	Wsm       string
-	Mode      string
-	Top       headRow
-	Table     []LogsRow
-	LogEdit   *LogsRow
+	FormData  *formData //for form validation error handling
+	LookUp    *Ctype    //Full suite of QRZ individual ham data
+	Speed     string    //code sending speed
+	FarnSpeed string    //Farnsworth sending speed
+	Lsm       string    //Letter spacing modifier
+	Wsm       string    //word spacing modifier
+	Mode      string    //keying mode, tutor or keyer
+	Top       headRow   //Log table column titles
+	Table     []LogsRow //full set of log table rows
+	LogEdit   *LogsRow  //single row of the log table for editing
 	Show      bool
 	Edit      bool
 	StopCode  bool
 	Logger    bool
 }
 
+//LogType is for passing data to the add button of the logger
 type LogType struct {
 	Name    string `json:"Name"`
 	Country string `json:"Country"`
-	Band    string `json:"Band"`
-	Mode    string `json:"Mode"`
+	Band    string `json:"Band"` //todo, I don't think this is used anymore
+	Mode    string `json:"Mode"` //todo, I don't think this is used anymore
 }
 
+//QRZType is for passing data to the call sign search botton of the logger.
 type QRZType struct {
 	QRZMsg   string `json:"QRZMsg"`
 	Call     string `json:"Call"`
@@ -43,6 +45,7 @@ type QRZType struct {
 	Addr1    string `json:"Addr1"`
 	Addr2    string `json:"Addr2"`
 	Country  string `json:"QRZCountry"`
+	GeoLoc   string `json:"GeoLoc"`
 	Class    string `json:"Class"`
 	TimeZone string `json:"TimeZone"`
 	QSLCount string `json:"QSOCount"`
@@ -55,18 +58,21 @@ func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 
 	td := initTemplateData()
 	td.Logger = true
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
-	v, err := app.stationModel.getDefault("band")
+	v, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.FormData.Set("band", v)
-	v, err = app.stationModel.getDefault("mode")
+	v, err = app.otherModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Mode = v //this is a workaround.  Template library does not seem to like emtpy strings
 	app.render(w, r, "log.page.html", td)
@@ -80,53 +86,48 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	err = r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
-
 	f := newForm(r.PostForm)
-
 	f.required("call", "sent", "rcvd", "band")
 	f.checkAllLogMax()
 	f.minLength("sent", 2)
 	f.minLength("rcvd", 2)
 	f.isInt("sent")
 	f.isInt("rcvd")
-
 	if !f.valid() {
 		var err error
-		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+		td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
-
 		td.FormData = f
 		td.Show = true
 		td.Edit = false
 		app.render(w, r, "log.page.html", td)
 		return
 	}
-
 	tr := copyPostForm(r)
-
-	_, err = app.stationModel.insertLog(&tr)
+	_, err = app.logsModel.insertLog(&tr)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-
 	call := f.Get("call")
-	t, err := app.stationModel.getLogsByCall(call)
+	t, err := app.logsModel.getLogsByCall(call)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Show = false
 	td.Edit = false
-
-	c, err = app.stationModel.getQRZ(call)
+	c, err = app.qrzModel.getQRZ(call)
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
 			q, err := app.getHamInfo(call)
@@ -135,21 +136,19 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			c = &q.Callsign
-
 			c.QSOCount = len(t)
-			err = app.stationModel.insertQRZ(c)
+			err = app.qrzModel.insertQRZ(c)
 			if err != nil {
 				app.serverError(w, err)
 				return
 			}
 			app.render(w, r, "log.page.html", td)
 			return
-		} else {
-			app.serverError(w, err)
-			return
 		}
+		app.serverError(w, err)
+		return
 	}
-	err = app.stationModel.updateQSOCount(call, len(t))
+	err = app.qrzModel.updateQSOCount(call, len(t))
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -165,14 +164,16 @@ func (app *application) editlog(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	tr, err := app.stationModel.getLogByID(id)
+	tr, err := app.logsModel.getLogByID(id)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	app.putId(id)
 	td.LogEdit = tr
@@ -187,6 +188,7 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
 
 	f := newForm(r.PostForm)
@@ -200,9 +202,10 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 
 	if !f.valid() {
 		var err error
-		td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+		td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 		td.FormData = f
 		td.Show = true
@@ -213,25 +216,27 @@ func (app *application) updatedb(w http.ResponseWriter, r *http.Request) {
 	tr := copyPostForm(r)
 
 	id := app.getId()
-	err = app.stationModel.updateLog(&tr, id)
+	err = app.logsModel.updateLog(&tr, id)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	v, err := app.stationModel.getDefault("band")
+	v, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.FormData.Set("band", v)
-	v, err = app.stationModel.getDefault("mode")
+	v, err = app.otherModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.Mode = v //this is a workaround.  Template library does not seem to like emtpy strings
 	td.Show = false
@@ -245,7 +250,7 @@ func (app *application) getConn(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("Got an empty call sign")
 		return
 	}
-	c, err := app.stationModel.getQRZ(callSign)
+	c, err := app.qrzModel.getQRZ(callSign)
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
 			q, err := app.getHamInfo(callSign)
@@ -280,7 +285,7 @@ func (app *application) callSearch(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("Got an empty call sign\n") //this is for testing
 		return
 	}
-	c, err := app.stationModel.getQRZ(callSign)
+	c, err := app.qrzModel.getQRZ(callSign)
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
 			q, err := app.getHamInfo(callSign)
@@ -296,7 +301,7 @@ func (app *application) callSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	err = app.stationModel.stashQRZdata(c)
+	err = app.qrzModel.stashQRZdata(c)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -305,9 +310,8 @@ func (app *application) callSearch(w http.ResponseWriter, r *http.Request) {
 	update := &QRZType{
 		Call:     c.Call,
 		Born:     fmt.Sprintf("Born in: %s", c.Born),
-		Addr1:    c.Addr1,
-		Addr2:    fmt.Sprintf("%s %s", c.Addr2, c.State),
-		Country:  c.Country,
+		Addr1:    fmt.Sprintf("%s   %s   %s   %s", c.Addr1, c.Addr2, c.State, c.Country),
+		GeoLoc:   fmt.Sprintf("Lat: %s,   Long: %s,   Grid: %s", c.Lat, c.Long, c.Grid),
 		Class:    fmt.Sprintf("Class: %s", c.Class),
 		TimeZone: fmt.Sprintf("Time Zone: %s", c.TimeZone),
 		QSLCount: fmt.Sprintf("QSO Count: %d", c.QSOCount),
@@ -331,14 +335,14 @@ func (app *application) callSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
-	c, err := app.stationModel.unstashQRZdata()
+	c, err := app.qrzModel.unstashQRZdata()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	logs, err := app.stationModel.getLogsByCall(c.Call)
+	logs, err := app.logsModel.getLogsByCall(c.Call)
 	c.QSOCount = len(logs)
-	err = app.stationModel.insertQRZ(c)
+	err = app.qrzModel.insertQRZ(c)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -346,9 +350,10 @@ func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
 
 	td := initTemplateData()
 	td.Logger = true
-	td.Table, err = app.stationModel.getLatestLogs(app.displayLines)
+	td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	app.render(w, r, "log.page.html", td)
 }
@@ -356,7 +361,7 @@ func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
 func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	td.Logger = true
-	v, err := app.stationModel.getDefault("mode")
+	v, err := app.otherModel.getDefault("mode")
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
 			v = "USB"
@@ -366,7 +371,7 @@ func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	td.LogEdit.Mode = v
-	v, err = app.stationModel.getDefault("band")
+	v, err = app.otherModel.getDefault("band")
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
 			v = "20m"
@@ -385,6 +390,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
+		return
 	}
 	m := r.PostForm.Get("mode")
 	switch m {
@@ -397,7 +403,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	default:
 		v = fmt.Sprintf("A Bad Mode Choice. ")
 	}
-	err = app.stationModel.updateDefault("mode", v)
+	err = app.otherModel.updateDefault("mode", v)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -418,7 +424,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	default:
 		v = fmt.Sprintf("A Bad Band Choice. ")
 	}
-	err = app.stationModel.updateDefault("band", v)
+	err = app.otherModel.updateDefault("band", v)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -434,9 +440,15 @@ func (app *application) contacts(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("Got an empty call sign\n") //this is for testing
 		return
 	}
-	c, err := app.stationModel.getQRZ(call)
+	c, err := app.qrzModel.getQRZ(call)
 	if err != nil {
-		app.serverError(w, err)
+		if errors.Is(err, errNoRecord) {
+			c = &Ctype{}
+			c.Call = "call sign not in the database"
+		} else {
+			app.serverError(w, err)
+			return
+		}
 	}
 	td.LookUp = c
 	app.render(w, r, "contacts.page.html", td)

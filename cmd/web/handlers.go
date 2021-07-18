@@ -82,10 +82,6 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	wf, wsmX := f.extractFloat("wsm", wsm, floatWsm)
 	lf, lsmX := f.extractFloat("lsm", lsm, floatLsm)
 
-	modeX := r.PostForm.Get("mode") //tutor or keyer
-	if modeX == "2" {
-		f.Errors.add("mode", "Keyer feature not yet implemented")
-	}
 	//check to make sure keyer has stopped
 	_, _, ktrunning := app.getCancel()
 	if ktrunning {
@@ -101,12 +97,23 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	//get context with cancel so the keyer can be stopped when needed
 	ctx, cancel := context.WithCancel(context.Background())
 	app.putCancel(ctx, cancel, true)
+	modeX := r.PostForm.Get("mode") //tutor or keyer
+	var whichOutput string
+	switch modeX {
+	case "1":
+		whichOutput = code.TutorOutput
+	case "2":
+		whichOutput = code.KeyerOutput
+	default:
+		app.clientError(w, http.StatusBadRequest)
+	}
 	cw := &code.CwDriver{
 		Dit:       raspi.NewAdaptor(),
 		Speed:     s,
 		Farnspeed: fs,
 		LF:        lf,
 		WF:        wf,
+		Output:    whichOutput,
 	}
 
 	go cw.Work(ctx)
