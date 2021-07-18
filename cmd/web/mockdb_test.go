@@ -13,27 +13,9 @@ type mockLogsModel struct {
 	mode        string
 }
 
-var testToggle int
-
 func (f *mockLogsModel) getLatestLogs(n int) ([]LogsRow, error) {
-	row := LogsRow{
-		Id:   10,
-		Call: "AD2CC",
-		Band: "40m",
-		Mode: "FOO",
-		Sent: "59",
-		Rcvd: "37",
-	}
-	switch testToggle {
-	case 1:
-		row.Band = "20m"
-	case 2:
-		row.Band = "40m"
-	default:
-		row.Band = "80m"
-	}
 	if f.lastLogsErr == nil {
-		return []LogsRow{row, row}, nil
+		return f.rows, nil
 	}
 	return []LogsRow{}, f.lastLogsErr
 }
@@ -43,7 +25,21 @@ func (f *mockLogsModel) insertLog(l *LogsRow) (int, error) {
 }
 
 func (f *mockLogsModel) getLogByID(id int) (*LogsRow, error) {
-	return &LogsRow{}, nil
+	row := LogsRow{
+		Id:   10,
+		Call: "FOOBAR",
+		Band: "40m",
+		Mode: "FOO",
+		Sent: "59",
+		Rcvd: "37",
+	}
+	switch id {
+	case 10:
+		return &LogsRow{}, errTest
+	case 1:
+		return &row, nil
+	}
+	return &LogsRow{}, errTest
 }
 
 func (f *mockLogsModel) getLogsByCall(call string) ([]*LogsRow, error) {
@@ -72,7 +68,17 @@ func (f *mockQRZModel) insertQRZ(c *Ctype) error {
 }
 
 func (f *mockQRZModel) getQRZ(call string) (*Ctype, error) {
-	return &Ctype{}, nil
+	return &Ctype{
+		Fname:    "FOO",
+		Lname:    "BAR",
+		Born:     "1952",
+		TimeZone: "EST",
+		NickName: "FOOFOO",
+		CQzone:   "EST",
+		ITUzone:  "FOO BAR",
+		Lat:      "1952",
+		Long:     "EST",
+	}, nil
 }
 
 func (f *mockQRZModel) updateQSOCount(call string, id int) error {

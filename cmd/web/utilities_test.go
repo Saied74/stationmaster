@@ -27,7 +27,7 @@ func newMockClient(statcode int, r io.ReadCloser) httpClient {
 	return &mockClient{
 		mockGet: func(url string) (*http.Response, error) {
 			return &http.Response{
-				StatusCode: 200,
+				StatusCode: statcode,
 				Body:       r,
 			}, nil
 		},
