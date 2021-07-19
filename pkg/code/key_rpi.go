@@ -16,7 +16,7 @@ const (
 	wordFact     = "Word Spacing Factor"
 	eol          = "\n"
 	lineLength   = 100  //number of letters and spaces per printed line
-	ditInput     = "11" // GPIO physical input pin 11
+	ditInput     = "3" // GPIO physical input pin 11
 	dahInput     = "7"  // GPIO physical input pin 7
 	TutorOutput  = "10" // GPIO physical output pin 10
 	KeyerOutput  = "8"  //GPIO Pin 8
@@ -33,7 +33,18 @@ type CwDriver struct {
 	LF        float64 //letter factor
 	WF        float64 //word factor
 	Output    string
+	Hi        byte
+	Low       byte
 }
+
+//func (cw *CwDriver)KeyDown() {
+	//cw.Dit.DigitalWrite(toradio, 1)
+//}
+
+//func (cw *CwDriver)KeyUp() {
+	//cw.Dit.DigitalWrite(toradio, 0)
+//}
+	
 
 func (cw *CwDriver) Work(ctx context.Context) {
 	//the next few lines and the method "calcSpacing implement
@@ -51,7 +62,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 
 	fmt.Printf("DL: %f, uwm: %v, ulm: %v\n", cw.dL, uwm, ulm)
 
-	cw.Dit.DigitalWrite(output, 1)
+	cw.Dit.DigitalWrite(cw.Output, cw.Low)
 	letterTimer := time.Now()
 	wordTimer := time.Now()
 	setL := false
@@ -61,15 +72,16 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		dit, _ := cw.Dit.DigitalRead(ditInput)
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && debounce(cw.Dit, 0, output) {
+		if dit == 0 && debounce(cw.Dit, 0, cw.Output) {
+
 			cw.emit("0")
 			setL = true
 			letterTimer = time.Now()
 			wordTimer = time.Now()
 
-			cw.Dit.DigitalWrite(output, 0)
+			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
-			cw.Dit.DigitalWrite(output, 1)
+			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 		}
 		//if dash, close contact for three dot lengths, open for one.
@@ -78,9 +90,9 @@ func (cw *CwDriver) Work(ctx context.Context) {
 			setL = true
 			letterTimer = time.Now()
 			wordTimer = time.Now()
-			cw.Dit.DigitalWrite(output, 0)
+			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
-			cw.Dit.DigitalWrite(output, 1)
+			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 
 		}
@@ -212,6 +224,8 @@ func decode(s string) string {
 		"111000": ":",
 		"10010":  "/",
 		"100001": "-",
+		"10001": "=",
+		"10110": "kn",
 	}
 	s, ok := code[s]
 	if !ok {
