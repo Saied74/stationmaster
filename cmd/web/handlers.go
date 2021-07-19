@@ -34,27 +34,27 @@ func (app *application) ant(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "ant.page.html", td)
 }
 
-func (app *application) keyDown(w http.ResponseWriter, r *http.Request) {
+//func (app *application) keyDown(w http.ResponseWriter, r *http.Request) {
 	
-	cw := &code.CwDriver{
-		Dit:       raspi.NewAdaptor(),
-	}
-	cw.KeyDown()
+	//cw := &code.CwDriver{
+		//Dit:       raspi.NewAdaptor(),
+	//}
+	//cw.KeyDown()
 	
-	td := initTemplateData()
-	app.render(w, r, "ant.page.html", td)
-}
+	//td := initTemplateData()
+	//app.render(w, r, "ant.page.html", td)
+//}
 
-func (app *application) keyUp(w http.ResponseWriter, r *http.Request) {
+//func (app *application) keyUp(w http.ResponseWriter, r *http.Request) {
 
-	cw := &code.CwDriver{
-		Dit:       raspi.NewAdaptor(),
-	}
-	cw.KeyUp()
+	//cw := &code.CwDriver{
+		//Dit:       raspi.NewAdaptor(),
+	//}
+	//cw.KeyUp()
 	
-	td := initTemplateData()
-	app.render(w, r, "ant.page.html", td)
-}
+	//td := initTemplateData()
+	//app.render(w, r, "ant.page.html", td)
+//}
 
 //<++++++++++++++++++++++++  Keyer - Tutor  ++++++++++++++++++++++++++>
 
@@ -99,11 +99,16 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	app.putCancel(ctx, cancel, true)
 	modeX := r.PostForm.Get("mode") //tutor or keyer
 	var whichOutput string
+	var hi, low byte
 	switch modeX {
 	case "1":
 		whichOutput = code.TutorOutput
+		hi = byte(0)
+		low = byte(1)
 	case "2":
 		whichOutput = code.KeyerOutput
+		hi = byte(1)
+		low = byte(0)
 	default:
 		app.clientError(w, http.StatusBadRequest)
 	}
@@ -114,6 +119,8 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		LF:        lf,
 		WF:        wf,
 		Output:    whichOutput,
+		Hi: hi,
+		Low: low,
 	}
 
 	go cw.Work(ctx)
