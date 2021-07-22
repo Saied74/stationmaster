@@ -5,6 +5,7 @@
 *.so
 *.dylib
 master
+adif.txt
 
 # Test binary, built with `go test -c`
 *.test

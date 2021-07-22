@@ -34,28 +34,6 @@ func (app *application) ant(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "ant.page.html", td)
 }
 
-//func (app *application) keyDown(w http.ResponseWriter, r *http.Request) {
-	
-	//cw := &code.CwDriver{
-		//Dit:       raspi.NewAdaptor(),
-	//}
-	//cw.KeyDown()
-	
-	//td := initTemplateData()
-	//app.render(w, r, "ant.page.html", td)
-//}
-
-//func (app *application) keyUp(w http.ResponseWriter, r *http.Request) {
-
-	//cw := &code.CwDriver{
-		//Dit:       raspi.NewAdaptor(),
-	//}
-	//cw.KeyUp()
-	
-	//td := initTemplateData()
-	//app.render(w, r, "ant.page.html", td)
-//}
-
 //<++++++++++++++++++++++++  Keyer - Tutor  ++++++++++++++++++++++++++>
 
 func (app *application) ktutor(w http.ResponseWriter, r *http.Request) {
@@ -105,12 +83,17 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		whichOutput = code.TutorOutput
 		hi = byte(0)
 		low = byte(1)
+		td.Mode = "Tutor"
 	case "2":
 		whichOutput = code.KeyerOutput
 		hi = byte(1)
 		low = byte(0)
+		td.Mode = "Keyer"
 	default:
-		app.clientError(w, http.StatusBadRequest)
+		hi = byte(0)
+		low = byte(1)
+		td.Mode = "Tutor"
+		f.Errors.add("ktrunning", "No mode selected, set to Tutor - Be careful putting the radio on CW")
 	}
 	cw := &code.CwDriver{
 		Dit:       raspi.NewAdaptor(),
@@ -119,8 +102,8 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		LF:        lf,
 		WF:        wf,
 		Output:    whichOutput,
-		Hi: hi,
-		Low: low,
+		Hi:        hi,
+		Low:       low,
 	}
 
 	go cw.Work(ctx)
@@ -129,15 +112,6 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	td.FarnSpeed = fspeedX
 	td.Lsm = lsmX
 	td.Wsm = wsmX
-
-	switch modeX {
-	case "1":
-		td.Mode = "Tutor"
-	case "2":
-		td.Mode = "keyer"
-	default:
-		td.Mode = "tutor"
-	}
 	td.StopCode = true
 	app.render(w, r, "runkt.page.html", td)
 

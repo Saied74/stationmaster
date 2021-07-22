@@ -12,6 +12,8 @@ type logsType interface {
 	getLogByID(int) (*LogsRow, error)
 	getLogsByCall(string) ([]*LogsRow, error)
 	getLatestLogs(int) ([]LogsRow, error)
+	getADIFData() ([]LogsRow, error)
+	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
 }
 
@@ -99,7 +101,7 @@ func (m *logsModel) getLogByID(id int) (*LogsRow, error) {
 
 	err := row.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 		&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-		&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
+		&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -128,7 +130,7 @@ func (m *logsModel) getLogsByCall(call string) ([]*LogsRow, error) {
 		s := &LogsRow{}
 		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
 
 		if err != nil {
 			return nil, err
@@ -160,7 +162,7 @@ func (m *logsModel) getLatestLogs(n int) ([]LogsRow, error) {
 
 		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-			&s.Comment, &s.Lotwrcvd, &s.Lotwsent)
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
 
 		if err != nil {
 			return nil, err
@@ -185,6 +187,49 @@ lotwrcvd = ?  WHERE id = ?`
 	_, err := m.DB.Exec(stmt,
 		l.Call, l.Mode, l.Sent, l.Rcvd,
 		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *logsModel) getADIFData() ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd
+	FROM stationlogs WHERE lotwsent <> ?`
+
+	rows, err := m.DB.Query(stmt, "YES")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tr := []*LogsRow{}
+	for rows.Next() {
+		s := &LogsRow{}
+		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+	return t, nil
+}
+
+func (m *logsModel) updateLOTWSent(id int) error {
+	stmt := `UPDATE stationlogs SET lotwsent = ? WHERE id = ?`
+	_, err := m.DB.Exec(stmt, "YES", id)
 	if err != nil {
 		return err
 	}

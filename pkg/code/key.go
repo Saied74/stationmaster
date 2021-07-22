@@ -16,12 +16,14 @@ const (
 	lineLength = 100  //number of letters and spaces per printed line
 	ditInput   = "11" // GPIO physical input pin 11
 	dahInput   = "7"  // GPIO physical input pin 7
-	// output       = "10" // GPIO physical output pin 10
-	TutorOutput  = "10" // GPIO physical output pin 10
-	KeyerOutput  = "8"  //GPIO Pin 8
-	debounceTime = 2    //in milliseconds
+	//TutorOutput is the output driving the tutor circuit.
+	TutorOutput = "10" // GPIO physical output pin 10
+	//KeyerOutput is the pin driving the radio keyer, tone is coming from the radio
+	KeyerOutput  = "8" //GPIO Pin 8
+	debounceTime = 2   //in milliseconds
 )
 
+//CwDriver injects the required data into the CW work function.
 type CwDriver struct {
 	letter    string
 	cnt       int
@@ -32,8 +34,11 @@ type CwDriver struct {
 	LF        float64 //letter factor
 	WF        float64 //word factor
 	Output    string
+	Hi        byte
+	Low       byte
 }
 
+//Work in this file does nothing.  It is for outside of RPI build
 func (cw *CwDriver) Work(ctx context.Context) {
 	return
 }

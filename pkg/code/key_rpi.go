@@ -16,7 +16,7 @@ const (
 	wordFact     = "Word Spacing Factor"
 	eol          = "\n"
 	lineLength   = 100  //number of letters and spaces per printed line
-	ditInput     = "3" // GPIO physical input pin 11
+	ditInput     = "3"  // GPIO physical input pin 11
 	dahInput     = "7"  // GPIO physical input pin 7
 	TutorOutput  = "10" // GPIO physical output pin 10
 	KeyerOutput  = "8"  //GPIO Pin 8
@@ -36,15 +36,6 @@ type CwDriver struct {
 	Hi        byte
 	Low       byte
 }
-
-//func (cw *CwDriver)KeyDown() {
-	//cw.Dit.DigitalWrite(toradio, 1)
-//}
-
-//func (cw *CwDriver)KeyUp() {
-	//cw.Dit.DigitalWrite(toradio, 0)
-//}
-	
 
 func (cw *CwDriver) Work(ctx context.Context) {
 	//the next few lines and the method "calcSpacing implement
@@ -224,8 +215,8 @@ func decode(s string) string {
 		"111000": ":",
 		"10010":  "/",
 		"100001": "-",
-		"10001": "=",
-		"10110": "kn",
+		"10001":  "=",
+		"10110":  "kn",
 	}
 	s, ok := code[s]
 	if !ok {
