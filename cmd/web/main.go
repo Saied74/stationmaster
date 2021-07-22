@@ -3,17 +3,25 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-yaml/yaml"
 )
 
 //The design of this program is along the lines of Alex Edward's
 //Let's Go except since it is a single user local program, it
 //ignore the rules for a shared over the internet application
+
+type configType struct {
+	DSN        string `yaml:"dsn"`
+	ConfigFile string `yaml:"configfile"`
+	ADIFFile   string `yaml:"adiffile"`
+}
 
 //for injecting data into handlers
 type application struct {
@@ -31,6 +39,7 @@ type application struct {
 	sKey          sessionMgr
 	qrzuser       string
 	qrzpw         string
+	adifFile      string
 }
 
 func main() {
@@ -45,13 +54,25 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile)
 
+	var config = &configType{"", "", ""}
+	configPath := os.Getenv("STATIONMASTER")
+	configData, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", configPath))
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	err = yaml.Unmarshal(configData, config)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	//note, this requires the run command be issues from the project base
 	templateCache, err := newTemplateCache("./ui/html/")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
 
-	dsn := "web:" + *sqlpw + "@/stationmaster?parseTime=true"
+	dsn := fmt.Sprintf(config.DSN, *sqlpw) //"web:" + *sqlpw + "@/stationmaster?parseTime=true"
+
 	db, err := openDB(dsn)
 	if err != nil {
 		errorLog.Fatal(err)
@@ -70,18 +91,30 @@ func main() {
 		logsModel:     &logsModel{DB: db},
 		qrzModel:      &qrzModel{DB: db},
 		otherModel:    m,
-		// stationModel:  m,
-		putCancel: putCancel,
-		getCancel: getCancel,
-		putId:     putId,
-		getId:     getId,
-		sKey:      m.sKey, //sessionCache(),
-		qrzpw:     *qrzpw,
-		qrzuser:   *qrzuser,
+		putCancel:     putCancel,
+		getCancel:     getCancel,
+		putId:         putId,
+		getId:         getId,
+		sKey:          m.sKey, //sessionCache(),
+		qrzpw:         *qrzpw,
+		qrzuser:       *qrzuser,
+		adifFile:      fmt.Sprintf("%s/%s", configPath, config.ADIFFile),
 	}
 
-	mux := http.NewServeMux()
+	mux := app.routes()
+	srv := &http.Server{
+		Addr:     ":4000",
+		ErrorLog: errorLog,
+		Handler:  mux,
+	}
 
+	infoLog.Printf("starting server on :4000")
+	err = srv.ListenAndServe()
+	errorLog.Fatal(err)
+}
+
+func (app *application) routes() *http.ServeMux {
+	mux := http.NewServeMux()
 	mux.HandleFunc("/home", app.home)
 	mux.HandleFunc("/ktutor", app.ktutor)
 	mux.HandleFunc("/qsolog", app.qsolog)
@@ -99,16 +132,9 @@ func main() {
 	mux.HandleFunc("/defaults", app.defaults)
 	mux.HandleFunc("/store-defaults", app.storeDefaults)
 	mux.HandleFunc("/contacts", app.contacts)
-
-	srv := &http.Server{
-		Addr:     ":4000",
-		ErrorLog: errorLog,
-		Handler:  mux,
-	}
-
-	infoLog.Printf("starting server on :4000")
-	err = srv.ListenAndServe()
-	errorLog.Fatal(err)
+	mux.HandleFunc("/adif", app.adif)
+	mux.HandleFunc("/gen-adif", app.genadif)
+	return mux
 }
 
 func openDB(dsn string) (*sql.DB, error) {

@@ -54,6 +54,10 @@ func (f *mockLogsModel) updateLog(l *LogsRow, id int) error {
 	return nil
 }
 
+func (f *mockLogsModel) getADIFData() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
 type mockQRZModel struct {
 	row         LogsRow
 	rows        []LogsRow
@@ -117,5 +121,9 @@ func (f *mockOtherModel) getDefault(d string) (string, error) {
 }
 
 func (f *mockOtherModel) updateDefault(k, v string) error {
+	return nil
+}
+
+func (m *mockLogsModel) updateLOTWSent(id int) error {
 	return nil
 }

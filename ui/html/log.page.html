@@ -157,17 +157,6 @@
 </div>
 
 
-
-<label for="lotw-r" class="form-label">LOTW Rcvd</label>
-{{with .FormData.Errors.Get "lotwrcvd"}}
-		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
-	{{end}}
-<div class="input-group mb-3">
-  <!-- <span class="input-group-text" id="basic-addon3">Example: Yes or No</span> -->
-  <input type="text" class="form-control" id="lotw-r" name="lotwrcvd"
-  value='{{if .Edit }}{{.LogEdit.Lotwrcvd}}{{else}}{{.FormData.Get "lotwrcvd"}}{{end}}' aria-describedby="basic-addon3">
-</div>
-
 <label for="lotw-s" class="form-label">LOTW Sent</label>
 {{with .FormData.Errors.Get "lotwsent"}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
@@ -178,6 +167,15 @@
   value='{{if .Edit }}{{.LogEdit.Lotwsent}}{{else}}{{.FormData.Get "lotwsent"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
+<label for="lotw-r" class="form-label">LOTW Rcvd</label>
+{{with .FormData.Errors.Get "lotwrcvd"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <!-- <span class="input-group-text" id="basic-addon3">Example: Yes or No</span> -->
+  <input type="text" class="form-control" id="lotw-r" name="lotwrcvd"
+  value='{{if .Edit }}{{.LogEdit.Lotwrcvd}}{{else}}{{.FormData.Get "lotwrcvd"}}{{end}}' aria-describedby="basic-addon3">
+</div>
 
 </form>
       </div>

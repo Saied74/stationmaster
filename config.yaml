@@ -1,0 +1,4 @@
+---
+  dsn: "web:%s@/stationmaster?parseTime=true"
+  configfile: "$STATIONMASTER/config.yaml"
+  adiffile: "adif.txt"
