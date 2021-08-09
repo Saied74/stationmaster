@@ -6,16 +6,27 @@
 {{define "main"}}
 
 <div class="row">
-      <div class="row">
-  <div class="col-sm-4">
-    <form class="row g-3">
-  <div class="col-auto">
-<button class="btn mb-3" style="background-color: #9FE1EA">
-  <a style="color: #442C2E"id="adifgen-button" href="/gen-adif">Generate ADIF</a></button>
+  <div class="row">
+    <div class="col-sm-2">
+      <form class="row g-3">
+        <div class="col-auto">
+          <button class="btn mb-3" style="background-color: #9FE1EA">
+          <a style="color: #442C2E"id="adifgen-button" href="/gen-adif">Generate ADIF</a></button>
+        </div>
+      </form>
+    </div>
+    <div class="col-sm-10">
+      <form class="row g-3" method="POST" action="/confirmqsls">
+        <div class="col-sm-2">
+          <button type="submit" class="btn mb-3" style="background-color: #9FE1EA">Update QSLs</button>
+        </div>
+  <div class="col-sm-8">
+    <label for="qslconfirm" class="form-control-lg">File name</label>
+    <input type="text" id="qslconfirm" name="qslfile">
   </div>
 
 </form>
-  </div>
+    </div>
   </div>
 </div>
 <hr>
