@@ -13,6 +13,14 @@ type mockLogsModel struct {
 	mode        string
 }
 
+func (f *mockLogsModel) getUniqueCountries() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) getLogsByCountry(country string) ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
 func (f *mockLogsModel) getLatestLogs(n int) ([]LogsRow, error) {
 	if f.lastLogsErr == nil {
 		return f.rows, nil
@@ -56,6 +64,10 @@ func (f *mockLogsModel) updateLog(l *LogsRow, id int) error {
 
 func (f *mockLogsModel) getADIFData() ([]LogsRow, error) {
 	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) updateQSO(map[itemType]string) error {
+	return nil
 }
 
 type mockQRZModel struct {

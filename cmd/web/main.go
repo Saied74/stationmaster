@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-yaml/yaml"
@@ -21,6 +23,7 @@ type configType struct {
 	DSN        string `yaml:"dsn"`
 	ConfigFile string `yaml:"configfile"`
 	ADIFFile   string `yaml:"adiffile"`
+	QSLdir     string `yaml:"qsldir"`
 }
 
 //for injecting data into handlers
@@ -40,6 +43,7 @@ type application struct {
 	qrzuser       string
 	qrzpw         string
 	adifFile      string
+	qslDir        string
 }
 
 func main() {
@@ -54,7 +58,7 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile)
 
-	var config = &configType{"", "", ""}
+	var config = &configType{"", "", "", ""}
 	configPath := os.Getenv("STATIONMASTER")
 	configData, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", configPath))
 	if err != nil {
@@ -83,6 +87,11 @@ func main() {
 	putCancel, getCancel := contextStore()
 	putId, getId := saveId()
 	m := &otherModel{DB: db}
+
+	home := os.Getenv("HOME")
+	qslDir := strings.TrimPrefix(config.QSLdir, "$HOME/")
+	qslDir = filepath.Join(home, qslDir)
+
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
@@ -99,6 +108,7 @@ func main() {
 		qrzpw:         *qrzpw,
 		qrzuser:       *qrzuser,
 		adifFile:      fmt.Sprintf("%s/%s", configPath, config.ADIFFile),
+		qslDir:        qslDir,
 	}
 
 	mux := app.routes()
@@ -134,6 +144,11 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/contacts", app.contacts)
 	mux.HandleFunc("/adif", app.adif)
 	mux.HandleFunc("/gen-adif", app.genadif)
+	mux.HandleFunc("/analysis", app.analysis)
+	mux.HandleFunc("/country", app.country)
+	mux.HandleFunc("/countryselect", app.countrySelect)
+	mux.HandleFunc("/repeat", app.repeat)
+	mux.HandleFunc("/confirmqsls", app.confirmQSLs)
 	return mux
 }
 

@@ -93,7 +93,7 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		hi = byte(0)
 		low = byte(1)
 		td.Mode = "Tutor"
-		f.Errors.add("ktrunning", "No mode selected, set to Tutor - Be careful putting the radio on CW")
+		f.Errors.add("ktrunning", "No mode selected, set to Tutor")
 	}
 	cw := &code.CwDriver{
 		Dit:       raspi.NewAdaptor(),

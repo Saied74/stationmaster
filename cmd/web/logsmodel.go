@@ -15,6 +15,9 @@ type logsType interface {
 	getADIFData() ([]LogsRow, error)
 	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
+	getUniqueCountries() ([]LogsRow, error)
+	getLogsByCountry(string) ([]LogsRow, error)
+	updateQSO(map[itemType]string) error
 }
 
 type logsModel struct {
@@ -25,18 +28,20 @@ var errNoRecord = errors.New("no matching record found")
 
 //LogsRow is the data for the logs table rows
 type LogsRow struct {
-	Id       int
-	Time     time.Time
-	Call     string
-	Mode     string
-	Sent     string
-	Rcvd     string
-	Band     string
-	Name     string
-	Country  string
-	Comment  string
-	Lotwsent string
-	Lotwrcvd string
+	Id          int
+	Time        time.Time
+	Call        string
+	Mode        string
+	Sent        string
+	Rcvd        string
+	Band        string
+	Name        string
+	Country     string
+	Comment     string
+	Lotwsent    string
+	Lotwrcvd    string
+	LotwQSOdate time.Time
+	LotwQSLdate time.Time
 }
 
 type headRow struct {
@@ -196,7 +201,7 @@ lotwrcvd = ?  WHERE id = ?`
 func (m *logsModel) getADIFData() ([]LogsRow, error) {
 	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
-	FROM stationlogs WHERE lotwsent <> ?`
+	FROM stationlogs WHERE lotwsent <> ? ORDER BY time DESC`
 
 	rows, err := m.DB.Query(stmt, "YES")
 	if err != nil {
@@ -230,6 +235,119 @@ func (m *logsModel) getADIFData() ([]LogsRow, error) {
 func (m *logsModel) updateLOTWSent(id int) error {
 	stmt := `UPDATE stationlogs SET lotwsent = ? WHERE id = ?`
 	_, err := m.DB.Exec(stmt, "YES", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *logsModel) getUniqueCountries() ([]LogsRow, error) {
+
+	stmt := `SELECT DISTINCT country FROM stationlogs ORDER BY country ASC`
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Country)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getLogsByCountry(country string) ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd
+	FROM stationlogs WHERE country = ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, country)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) updateQSO(row map[itemType]string) error {
+
+	stmt := `SELECT id, time, callsign, mode, band FROM stationlogs
+	WHERE callSign = ?` // AND time = ?`
+	qsoTime := row[itemQSOTimeStamp]
+	t, err := time.Parse(time.RFC3339, qsoTime)
+	if err != nil {
+		return err
+	}
+	rows, err := m.DB.Query(stmt, row[itemCall]) //, t)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	var s = &LogsRow{}
+	for rows.Next() {
+		s = &LogsRow{}
+		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Band)
+		if err != nil {
+			return err
+		}
+
+		if int(t.Sub(s.Time).Round(time.Minute)) == 0 {
+			break
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+
+	tQSO, err := timeIt(row[itemRxQSO])
+	if err != nil {
+		return err
+	}
+	tQSL, err := timeIt(row[itemRxQSL])
+	if err != nil {
+		return err
+	}
+	stmt = `UPDATE stationlogs SET lotwrcvd = ?, lotwqsodate=?, lotwqsldate= ?
+		WHERE id = ?`
+	_, err = m.DB.Exec(stmt, "YES", tQSO, tQSL, s.Id)
 	if err != nil {
 		return err
 	}
