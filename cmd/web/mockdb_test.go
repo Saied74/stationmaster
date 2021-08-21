@@ -70,6 +70,18 @@ func (f *mockLogsModel) updateQSO(map[itemType]string) error {
 	return nil
 }
 
+func (f *mockLogsModel) getConfirmedCountries() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) getLogsByCounty() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) getConfirmedCounties() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
 type mockQRZModel struct {
 	row         LogsRow
 	rows        []LogsRow
@@ -107,6 +119,10 @@ func (f *mockQRZModel) stashQRZdata(*Ctype) error {
 
 func (f *mockQRZModel) unstashQRZdata() (*Ctype, error) {
 	return &Ctype{}, nil
+}
+
+func (m *mockQRZModel) getUniqueCounties() ([]LogsRow, error) {
+	return []LogsRow{}, nil
 }
 
 type mockOtherModel struct {

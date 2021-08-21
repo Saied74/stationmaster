@@ -103,21 +103,69 @@ func (app *application) country(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "country.page.html", td)
 }
 
+func (app *application) countryConfirmed(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getConfirmedCountries()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	app.render(w, r, "country.page.html", td)
+}
+
 func (app *application) repeat(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	app.render(w, r, "repeat.page.html", td)
 }
 
 func (app *application) countrySelect(w http.ResponseWriter, r *http.Request) {
-	app.infoLog.Printf("countrySelect")
+
 	td := initTemplateData()
 	country := r.URL.Query().Get("sel")
-	app.infoLog.Printf("Country: %s\n", country)
 	t, err := app.logsModel.getLogsByCountry(country)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 	td.Table = t
+	app.render(w, r, "log.page.html", td)
+}
+
+func (app *application) county(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.qrzModel.getUniqueCounties()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	app.render(w, r, "county.page.html", td)
+}
+
+func (app *application) countyConfirmed(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getConfirmedCounties()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Top.Cnty = true
+	td.Table = t
+	app.render(w, r, "log.page.html", td)
+}
+
+func (app *application) countySelect(w http.ResponseWriter, r *http.Request) {
+
+	td := initTemplateData()
+	county := r.URL.Query().Get("sel")
+
+	t, err := app.logsModel.getLogsByCounty(county)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	td.Top.Cnty = true
 	app.render(w, r, "log.page.html", td)
 }
