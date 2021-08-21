@@ -107,7 +107,7 @@ func main() {
 		sKey:          m.sKey, //sessionCache(),
 		qrzpw:         *qrzpw,
 		qrzuser:       *qrzuser,
-		adifFile:      fmt.Sprintf("%s/%s", configPath, config.ADIFFile),
+		adifFile:      fmt.Sprintf("%s/%s", qslDir, config.ADIFFile),
 		qslDir:        qslDir,
 	}
 
@@ -146,7 +146,11 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/gen-adif", app.genadif)
 	mux.HandleFunc("/analysis", app.analysis)
 	mux.HandleFunc("/country", app.country)
+	mux.HandleFunc("/country-confirmed", app.countryConfirmed)
 	mux.HandleFunc("/countryselect", app.countrySelect)
+	mux.HandleFunc("/county", app.county)
+	mux.HandleFunc("/county-confirmed", app.countyConfirmed)
+	mux.HandleFunc("/countyselect", app.countySelect)
 	mux.HandleFunc("/repeat", app.repeat)
 	mux.HandleFunc("/confirmqsls", app.confirmQSLs)
 	return mux

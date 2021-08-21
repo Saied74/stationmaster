@@ -16,7 +16,10 @@ type logsType interface {
 	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
 	getUniqueCountries() ([]LogsRow, error)
+	getConfirmedCountries() ([]LogsRow, error)
 	getLogsByCountry(string) ([]LogsRow, error)
+	getLogsByCounty(string) ([]LogsRow, error)
+	getConfirmedCounties() ([]LogsRow, error)
 	updateQSO(map[itemType]string) error
 }
 
@@ -36,6 +39,9 @@ type LogsRow struct {
 	Rcvd        string
 	Band        string
 	Name        string
+	County      string
+	Cnty        bool
+	State       string
 	Country     string
 	Comment     string
 	Lotwsent    string
@@ -53,6 +59,8 @@ type headRow struct {
 	Rcvd     string
 	Band     string
 	Name     string
+	County   string
+	Cnty     bool
 	Country  string
 	Comment  string
 	Lotwsent string
@@ -68,6 +76,8 @@ var tableHead = headRow{
 	"Rcvd",
 	"Band",
 	"Name",
+	"County",
+	false,
 	"Country",
 	"Comment",
 	"LOTW Sent",
@@ -272,6 +282,37 @@ func (m *logsModel) getUniqueCountries() ([]LogsRow, error) {
 	return t, nil
 }
 
+func (m *logsModel) getConfirmedCountries() ([]LogsRow, error) {
+
+	stmt := `SELECT DISTINCT country FROM stationlogs where lotwrcvd = ? ORDER BY country ASC`
+	rows, err := m.DB.Query(stmt, "YES")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Country)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
 func (m *logsModel) getLogsByCountry(country string) ([]LogsRow, error) {
 	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
@@ -301,6 +342,82 @@ func (m *logsModel) getLogsByCountry(country string) ([]LogsRow, error) {
 	}
 	t := []LogsRow{}
 	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getLogsByCounty(county string) ([]LogsRow, error) {
+	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
+	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
+	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
+	stationlogs.lotwrcvd, qrztable.county FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE qrztable.county = ? and
+	stationlogs.country = ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, county, "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		item.Cnty = true
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getConfirmedCounties() ([]LogsRow, error) {
+	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
+	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
+	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
+	stationlogs.lotwrcvd, qrztable.county FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE stationlogs.lotwrcvd = ? and
+	stationlogs.country = ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, "YES", "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		item.Cnty = true
 		t = append(t, *item)
 	}
 

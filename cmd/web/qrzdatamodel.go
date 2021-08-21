@@ -11,6 +11,7 @@ type qrzType interface {
 	updateQSOCount(string, int) error
 	stashQRZdata(*Ctype) error
 	unstashQRZdata() (*Ctype, error)
+	getUniqueCounties() ([]LogsRow, error)
 }
 
 type qrzModel struct {
@@ -120,4 +121,36 @@ func (m *qrzModel) unstashQRZdata() (*Ctype, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func (m *qrzModel) getUniqueCounties() ([]LogsRow, error) {
+	stmt := `select county, state from qrztable where state in
+	(select distinct state from qrztable where country=?)
+	and country=? and county <> ''`
+	rows, err := m.DB.Query(stmt, "United States", "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.County, &s.State)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
 }

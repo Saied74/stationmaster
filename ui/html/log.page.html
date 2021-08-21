@@ -34,7 +34,7 @@
     	<th scope="col">{{.Sent}}</th>
     	<th scope="col">{{.Rcvd}}</th>
     	<th scope="col">{{.Name}}</th>
-    	<th scope="col">{{.Country}}</th>
+    	<th scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</th>
       <th scope="col">{{.Comment}}</th>
       <th scope="col">{{.Lotwsent}}</th>
       <th scope="col">{{.Lotwrcvd}}</th>
@@ -52,7 +52,7 @@
     	<td scope="col">{{.Sent}}</td>
     	<td scope="col">{{.Rcvd}}</td>
     	<td scope="col">{{.Name}}</td>
-    	<td scope="col">{{.Country}}</td>
+    	<td scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</td>
       <td scope="col">{{.Comment}}</td>
       <td scope="col">{{.Lotwsent}}</td>
       <td scope="col">{{.Lotwrcvd}}</td>
