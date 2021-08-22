@@ -152,7 +152,7 @@ func (app *application) countyConfirmed(w http.ResponseWriter, r *http.Request) 
 	}
 	td.Top.Cnty = true
 	td.Table = t
-	app.render(w, r, "log.page.html", td)
+	app.render(w, r, "county.page.html", td)
 }
 
 func (app *application) countySelect(w http.ResponseWriter, r *http.Request) {
