@@ -352,7 +352,8 @@ func (m *logsModel) getLogsByCounty(county string) ([]LogsRow, error) {
 	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
 	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
 	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
-	stationlogs.lotwrcvd, qrztable.county FROM stationlogs inner join qrztable on
+	stationlogs.lotwrcvd, qrztable.county, qrztable.state
+	FROM stationlogs inner join qrztable on
 	stationlogs.callsign=qrztable.callsign WHERE qrztable.county = ? and
 	stationlogs.country = ? ORDER BY time DESC`
 
@@ -367,7 +368,8 @@ func (m *logsModel) getLogsByCounty(county string) ([]LogsRow, error) {
 		s := &LogsRow{}
 
 		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
-			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County)
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County,
+			&s.State)
 
 		if err != nil {
 			return nil, err
@@ -390,9 +392,10 @@ func (m *logsModel) getConfirmedCounties() ([]LogsRow, error) {
 	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
 	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
 	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
-	stationlogs.lotwrcvd, qrztable.county FROM stationlogs inner join qrztable on
+	stationlogs.lotwrcvd, qrztable.county, qrztable.state
+	FROM stationlogs inner join qrztable on
 	stationlogs.callsign=qrztable.callsign WHERE stationlogs.lotwrcvd = ? and
-	stationlogs.country = ? ORDER BY time DESC`
+	stationlogs.country = ? and qrztable.county <> '' ORDER BY time DESC`
 
 	rows, err := m.DB.Query(stmt, "YES", "United States")
 	if err != nil {
@@ -405,7 +408,8 @@ func (m *logsModel) getConfirmedCounties() ([]LogsRow, error) {
 		s := &LogsRow{}
 
 		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
-			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County)
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County,
+			&s.State)
 
 		if err != nil {
 			return nil, err
