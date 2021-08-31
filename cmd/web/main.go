@@ -46,6 +46,20 @@ type application struct {
 	qslDir        string
 }
 
+type httpClient interface {
+	Get(url string) (*http.Response, error)
+}
+
+type createFunction interface{}
+
+var client httpClient
+var cF createFunction
+
+func init() {
+	client = &http.Client{}
+	cF = os.Create
+}
+
 func main() {
 	var err error
 

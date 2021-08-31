@@ -75,16 +75,7 @@ type Stype struct {
 	Time  string `xml:"GMTime"`
 }
 
-type httpClient interface {
-	Get(url string) (*http.Response, error)
-}
-
 var noKey = errors.New("no session id")
-var client httpClient
-
-func init() {
-	client = &http.Client{}
-}
 
 func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 	key, err := app.sKey("")
