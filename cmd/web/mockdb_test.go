@@ -74,7 +74,7 @@ func (f *mockLogsModel) getConfirmedCountries() ([]LogsRow, error) {
 	return []LogsRow{}, nil
 }
 
-func (f *mockLogsModel) getLogsByCounty() ([]LogsRow, error) {
+func (f *mockLogsModel) getLogsByCounty(county string) ([]LogsRow, error) {
 	return []LogsRow{}, nil
 }
 

@@ -32,10 +32,29 @@ func (app *application) genADIFFile(rows []LogsRow) error {
 	l := b.Len()
 	p := make([]byte, l)
 	b.Read(p)
-	// fmt.Println(string(p))
-	err := os.WriteFile(app.adifFile, p, 0644)
+
+	err := writeADIFOutput(app.adifFile, p)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+var testBuffer = []byte{}
+
+func writeADIFOutput(fileName string, b []byte) error {
+	switch v := cF.(type) {
+	case func(string) (*os.File, error):
+		f, err := v(fileName)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		f.Write(b)
+	case []byte:
+		testBuffer = b
+	default:
+		return fmt.Errorf("Bad type to writeADIFFile")
 	}
 	return nil
 }
