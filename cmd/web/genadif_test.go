@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -48,21 +49,28 @@ func (tp *parsPat) testRows() ([]LogsRow, error) {
 	return rows, nil
 }
 
-type mockOSF struct {
-	record []byte
+type mockWrite struct {
+	testBuffer bytes.Buffer
 }
 
-func (m mockOSF) Close() error {
+type mockRead struct {
+	testBuffer []byte
+}
+
+func (m *mockWrite) write(filename string, c []byte) error {
+	n, _ := m.testBuffer.Write(c)
+	fmt.Println("written to buffer", n)
 	return nil
 }
 
-func (m mockOSF) Write(p []byte) (int, error) {
-	p = m.record
-	return len(p), nil
+func (m *mockWrite) read(filename string) ([]byte, error) {
+	p := make([]byte, m.testBuffer.Len())
+	m.testBuffer.Read(p)
+	return p, nil
 }
 
-func (m mockOSF) Read(p []byte) (int, error) {
-	return 0, nil
+func (mr *mockRead) read(filename string) ([]byte, error) {
+	return mr.testBuffer, nil
 }
 
 func TestGenADIFFile(t *testing.T) {
@@ -80,10 +88,23 @@ func TestGenADIFFile(t *testing.T) {
 				"N2KF", "40M", "SSB", "55", "48", "Harry",
 			},
 		},
+		{
+			testName: "USB LSB test",
+			call:     []string{"AD2CC", "W2MMT", "N2KF"},
+			band:     []string{"20m", "20m", "40m"},
+			mode:     []string{"USB", "CW", "LSB"},
+			sent:     []string{"59", "488", "55"},
+			rcvd:     []string{"59", "599", "48"},
+			name:     []string{"Joe", "Frank", "Harry"},
+			contains: []string{"AD2CC", "20M", "SSB", "59", "59", "Joe",
+				"W2MMT", "20M", "CW", "488", "599", "Frank",
+				"N2KF", "40M", "SSB", "55", "48", "Harry",
+			},
+		},
 	}
 	app := &application{}
 	for _, tp := range tps {
-		cF = []byte{}
+		writeControl = &mockWrite{}
 		t.Run(tp.testName, func(t *testing.T) {
 			rows, err := tp.testRows()
 			if err != nil {
@@ -93,12 +114,12 @@ func TestGenADIFFile(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error from getADIFFile %v", err)
 			}
+			testBuffer, _ := writeControl.read("abc")
 			for _, item := range tp.contains {
 				if !bytes.Contains(testBuffer, []byte(item)) {
 					t.Errorf("ADIF file did not contain %s", item)
 				}
 			}
-
 		})
 	}
 }
@@ -121,6 +142,83 @@ func (tp *genPat) testLexer() *lexer {
 		pos:   tp.pos,
 		width: tp.width,
 		items: make(chan item),
+	}
+}
+
+func TestGetQSLData(t *testing.T) {
+	testBuffer := []byte(`ARRL Logbook of the World Status Report
+Generated at 2021-08-23 04:17:35
+for ad2cc
+Query:
+    QSL ONLY: YES
+QSL RX SINCE: 2021-08-16 00:00:00 (user supplied value)
+
+<PROGRAMID:4>LoTW
+<APP_LoTW_LASTQSL:19>2021-08-23 04:13:11
+
+<APP_LoTW_NUMREC:1>7
+
+<eoh>
+
+<APP_LoTW_OWNCALL:5>AD2CC
+<STATION_CALLSIGN:5>AD2CC
+<CALL:4>AC0W
+<BAND:3>20M
+<MODE:3>SSB
+<APP_LoTW_MODEGROUP:5>PHONE
+<QSO_DATE:8>20210821
+<APP_LoTW_RXQSO:19>2021-08-23 04:13:11 // QSO record inserted/modified at LoTW
+<TIME_ON:6>190600
+<APP_LoTW_QSO_TIMESTAMP:20>2021-08-21T19:06:00Z // QSO Date & Time; ISO-8601
+<QSL_RCVD:1>Y
+<QSLRDATE:8>20210823
+<APP_LoTW_RXQSL:19>2021-08-23 04:13:11 // QSL record matched/modified at LoTW
+<eor>
+
+<APP_LoTW_OWNCALL:5>AD2CC
+<STATION_CALLSIGN:5>AD2CC
+<CALL:4>KE4Q
+<BAND:3>20M
+<MODE:3>SSB
+<APP_LoTW_MODEGROUP:5>PHONE
+<QSO_DATE:8>20210822
+<APP_LoTW_RXQSO:19>2021-08-23 04:13:11 // QSO record inserted/modified at LoTW
+<TIME_ON:6>004700
+<APP_LoTW_QSO_TIMESTAMP:20>2021-08-22T00:47:00Z // QSO Date & Time; ISO-8601
+<QSL_RCVD:1>Y
+<QSLRDATE:8>20210823
+<APP_LoTW_RXQSL:19>2021-08-23 04:13:11 // QSL record matched/modified at LoTW
+<eor>`)
+	app := &application{}
+	readControl = &mockRead{testBuffer: testBuffer}
+	adifData, err := app.getQSLData("abc")
+	if err != nil {
+		t.Fatal("getQSLData returned error ", err)
+	}
+	if len(adifData) != 2 {
+		t.Fatal("length of parsed adif data was not two, it was", len(adifData))
+	}
+	adi0 := adifData[0]
+	if adi0[itemCall] != "AC0W" {
+		t.Errorf("getQSLData %v expected AC0W got %s", itemCall, adi0[itemCall])
+	}
+	if adi0[itemBand] != "20M" {
+		t.Errorf("getQSLData %v expected 20M got %s", itemBand, adi0[itemBand])
+	}
+	if adi0[itemMode] != "SSB" {
+		t.Errorf("getQSLData %v expected SSB got %s", itemMode, adi0[itemMode])
+	}
+	if adi0[itemQSOTimeStamp] != "2021-08-21T19:06:00Z" {
+		t.Errorf("getQSLData %v expected 2021-08-21T19:06:00Z got %s", itemQSOTimeStamp, adi0[itemQSOTimeStamp])
+	}
+	if adi0[itemQSLrcvd] != "Y" {
+		t.Errorf("getQSLData %v expected Y got %s", itemQSLrcvd, adi0[itemQSLrcvd])
+	}
+	if adi0[itemRxQSO] != "2021-08-23 04:13:11" {
+		t.Errorf("getQSLData %v expected 2021-08-23 04:13:11 got %s", itemRxQSO, adi0[itemRxQSO])
+	}
+	if adi0[itemRxQSL] != "2021-08-23 04:13:11" {
+		t.Errorf("getQSLData %v expected 2021-08-23 04:13:11 got %s", itemRxQSL, adi0[itemRxQSL])
 	}
 }
 
