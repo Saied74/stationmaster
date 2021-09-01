@@ -11,6 +11,51 @@ import (
 	"unicode/utf8"
 )
 
+type anyWrite interface {
+	write(string, []byte) error
+	read(string) ([]byte, error)
+}
+
+type anyRead interface {
+	read(string) ([]byte, error)
+}
+
+type fileWrite struct {
+	filename string
+}
+
+type fileRead struct {
+	testBuffer string
+}
+
+func (w *fileWrite) write(filename string, c []byte) error {
+	f, err := os.Create(filename)
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *fileWrite) read(filename string) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func (r *fileRead) read(fileName string) ([]byte, error) {
+	records, err := os.ReadFile(fileName)
+	if err != nil {
+		return []byte{}, err
+	}
+	return records, nil
+}
+
+var writeControl anyWrite
+var readControl anyRead
+
 //ADIF file format can be found at https://adif.org/312/ADIF_312.htm#QSO_Fields
 //As I enhance the program (and my skills at ham radio), this will be re-written
 
@@ -33,28 +78,9 @@ func (app *application) genADIFFile(rows []LogsRow) error {
 	p := make([]byte, l)
 	b.Read(p)
 
-	err := writeADIFOutput(app.adifFile, p)
+	err := writeControl.write(app.adifFile, p)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-var testBuffer = []byte{}
-
-func writeADIFOutput(fileName string, b []byte) error {
-	switch v := cF.(type) {
-	case func(string) (*os.File, error):
-		f, err := v(fileName)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		f.Write(b)
-	case []byte:
-		testBuffer = b
-	default:
-		return fmt.Errorf("Bad type to writeADIFFile")
 	}
 	return nil
 }
@@ -160,8 +186,11 @@ var printSeq = []itemType{itemCall, itemBand, itemMode, itemQSOTimeStamp, itemQS
 
 func (app *application) getQSLData(fileName string) ([]map[itemType]string, error) {
 	output := []map[itemType]string{}
+	var records []byte
+	var err error
 	fileName = filepath.Join(app.qslDir, fileName)
-	records, err := os.ReadFile(fileName)
+	records, err = readControl.read(fileName)
+	// records, err = os.ReadFile(fileName)
 	if err != nil {
 		return []map[itemType]string{}, err
 	}

@@ -53,11 +53,11 @@ type httpClient interface {
 type createFunction interface{}
 
 var client httpClient
-var cF createFunction
 
 func init() {
 	client = &http.Client{}
-	cF = os.Create
+	writeControl = &fileWrite{}
+	readControl = &fileRead{}
 }
 
 func main() {
