@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -20,6 +21,11 @@ func newTestApp() *application {
 		logsModel:     &mockLogsModel{lastLogsErr: nil, defaultErr: nil},
 		qrzModel:      &mockQRZModel{},
 		otherModel:    &mockOtherModel{},
+		putCancel:     func(context.Context, context.CancelFunc, bool) {},
+		getCancel: func() (context.Context, context.CancelFunc, bool) {
+			ctx, cancel := context.WithCancel(context.Background())
+			return ctx, cancel, false
+		},
 	}
 }
 
