@@ -63,28 +63,30 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		dit, _ := cw.Dit.DigitalRead(ditInput)
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && debounce(cw.Dit, 0, cw.Output) {
+		if dit == 0 { //&& debounce(cw.Dit, 0, cw.Output) {
 
 			cw.emit("0")
 			setL = true
-			letterTimer = time.Now()
-			wordTimer = time.Now()
+			
 
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
-		}
-		//if dash, close contact for three dot lengths, open for one.
-		if dah == 0 && debounce(cw.Dit, 0, "7") {
-			cw.emit("1")
-			setL = true
 			letterTimer = time.Now()
 			wordTimer = time.Now()
+		}
+		//if dash, close contact for three dot lengths, open for one.
+		if dah == 0 { //&& debounce(cw.Dit, 0, "7") {
+			cw.emit("1")
+			setL = true
+			
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
+			letterTimer = time.Now()
+			wordTimer = time.Now()
 
 		}
 		//if nothing happens longer than upper letter margin,
@@ -113,8 +115,8 @@ func (cw *CwDriver) Work(ctx context.Context) {
 //See the Farnsworth reference above
 func (cw *CwDriver) calcSpacing() (uwm, ulm time.Duration) {
 	if cw.Speed >= 18.0 {
-		uwm := time.Duration(cw.WF*cw.dL*7) * time.Millisecond
-		ulm := time.Duration(cw.LF*cw.dL*3) * time.Millisecond
+		uwm := time.Duration(cw.WF*cw.dL*6) * time.Millisecond
+		ulm := time.Duration(cw.LF*cw.dL*2) * time.Millisecond
 		return uwm, ulm
 	}
 	dL := 1200 / cw.Speed
