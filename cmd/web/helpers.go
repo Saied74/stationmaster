@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -84,6 +86,7 @@ func initTemplateData() *templateData {
 		Edit:      false,
 		StopCode:  false,
 		Logger:    false,
+		Contest:   "No",
 	}
 }
 
@@ -92,6 +95,7 @@ func copyPostForm(r *http.Request) LogsRow {
 		Call:     strings.ToUpper(r.PostForm.Get("call")),
 		Sent:     r.PostForm.Get("sent"),
 		Rcvd:     r.PostForm.Get("rcvd"),
+		ExchRcvd: r.PostForm.Get("exchrcvd"),
 		Band:     strings.ToLower(r.PostForm.Get("band")),
 		Mode:     r.PostForm.Get("mode"), //m,
 		Name:     r.PostForm.Get("name"),
@@ -100,6 +104,35 @@ func copyPostForm(r *http.Request) LogsRow {
 		Lotwsent: r.PostForm.Get("lotwsent"),
 		Lotwrcvd: r.PostForm.Get("lotwrcvd"),
 	}
+}
+
+//<+++++++++++++++++++++    Default Handling   ++++++++++++++++++++++++>
+
+func (app *application) lookupDefault(def string) (string, error) {
+	v, err := app.otherModel.getDefault(def)
+	if err != nil {
+		if errors.Is(err, errNoRecord) {
+			switch def {
+			case "mode":
+				v = "USB"
+			case "band":
+				v = "20m"
+			case "contest":
+				v = "No"
+			case "contestname":
+				v = "NJQP"
+			case "sent":
+				v = "59"
+			case "exchange":
+				v = "MIDD"
+			default:
+				return "", fmt.Errorf("Bad string passed to lookupDefaults")
+			}
+		} else {
+			return "", err
+		}
+	}
+	return v, nil
 }
 
 //<+++++++++++++++++++++  Form Error Handling  ++++++++++++++++++++++++>
@@ -127,7 +160,7 @@ func (f *formData) required(fields ...string) {
 	for _, field := range fields {
 		value := f.Get(field)
 		if strings.TrimSpace(value) == "" {
-			f.Errors.add(field, "this field cannoot be blank")
+			f.Errors.add(field, "this field cannot be blank")
 		}
 	}
 }
@@ -179,6 +212,52 @@ func (f *formData) mustFloat(field string) float64 {
 		return 0
 	}
 	return num
+}
+
+func (f *formData) dateCheck(field string) {
+	value := f.Get(field)
+	bits := strings.Split(value, "-")
+	if len(bits) != 3 {
+		f.Errors.add(field, "incorrect date format")
+		return
+	}
+	if len(bits[0]) != 4 {
+		f.Errors.add(field, "incorrect year format")
+	}
+	if len(bits[1]) != 2 {
+		f.Errors.add(field, "incorrect month format")
+	}
+	if len(bits[2]) != 2 {
+		f.Errors.add(field, "incorrect day forrmat")
+	}
+	return
+}
+
+func (f *formData) timeCheck(field string) {
+	value := f.Get(field)
+	bits := strings.Split(value, ":")
+	if len(bits) != 2 {
+		f.Errors.add(field, "incorrect time format")
+		return
+	}
+	if len(bits[0]) != 2 {
+		f.Errors.add(field, "incorrect hour format")
+	}
+	if len(bits[1]) != 2 {
+		f.Errors.add(field, "incorrect minute format")
+	}
+	return
+}
+
+func (f *formData) datetimeFormat(d, t string) time.Time {
+	vD := f.Get(d)
+	vT := f.Get(t)
+	tt, err := time.Parse(time.RFC3339, vD+"T"+vT+":00Z")
+	if err != nil {
+		f.Errors.add(d, "date and time values did not yield a valid date")
+		return time.Time{}
+	}
+	return tt
 }
 
 func (f *formData) valid() bool {

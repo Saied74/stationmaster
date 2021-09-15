@@ -87,6 +87,58 @@ func (app *application) confirmQSLs(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "log.page.html", td)
 }
 
+//<---------------------------  Cabrillo ---------------------------------->
+
+func (app *application) cabrillo(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	app.render(w, r, "cabrillo.page.html", td)
+}
+
+func (app *application) genCabrillo(w http.ResponseWriter, r *http.Request) {
+	var err error
+	td := initTemplateData()
+
+	err = r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	f := newForm(r.PostForm)
+	f.required("contestname", "starttime", "startdate", "enddate", "endtime")
+	f.maxLength("contestname", 45)
+	f.dateCheck("startdate")
+	f.dateCheck("enddate")
+	f.timeCheck("starttime")
+	f.timeCheck("endtime")
+	start := f.datetimeFormat("startdate", "starttime")
+	end := f.datetimeFormat("enddate", "endtime")
+	if !f.valid() {
+		td.FormData = f
+		app.render(w, r, "cabrillo.page.html", td)
+		return
+	}
+
+	cd := &contestData{
+		filename:  "NJ_2021_QSOParty.txt",
+		name:      f.Get("contestname"),
+		startTime: start,
+		endTime:   end,
+		score:     "0",
+	}
+	rows, err := app.logsModel.getCabrilloData(cd)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.genCabrilloFile(rows, cd)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = rows
+	app.render(w, r, "cabrillo.page.html", td)
+}
+
 func (app *application) analysis(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	app.render(w, r, "analysis.page.html", td)

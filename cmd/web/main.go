@@ -158,6 +158,8 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/contacts", app.contacts)
 	mux.HandleFunc("/adif", app.adif)
 	mux.HandleFunc("/gen-adif", app.genadif)
+	mux.HandleFunc("/cabrillo", app.cabrillo)
+	mux.HandleFunc("/gencabrillo", app.genCabrillo)
 	mux.HandleFunc("/analysis", app.analysis)
 	mux.HandleFunc("/country", app.country)
 	mux.HandleFunc("/country-confirmed", app.countryConfirmed)

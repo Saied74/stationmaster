@@ -25,6 +25,7 @@
 <table class="table table-borderless table-sm">
   <thead>
     <tr>
+      {{$x := .Contest}}
       {{with .Top}}
       <th scope="col">{{.Id}}</th>
       <th scope="col">{{.Time}}</th>
@@ -36,6 +37,8 @@
     	<th scope="col">{{.Name}}</th>
     	<th scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</th>
       <th scope="col">{{.Comment}}</th>
+      <th scope="col">{{if eq $x "Yes"}}{{.ExchSent}}{{end}}</th>
+      <th scope="col">{{if eq $x "Yes"}}{{.ExchRcvd}}{{end}}</th>
       <th scope="col">{{.Lotwsent}}</th>
       <th scope="col">{{.Lotwrcvd}}</th>
     </tr>
@@ -54,6 +57,8 @@
     	<td scope="col">{{.Name}}</td>
     	<td scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</td>
       <td scope="col">{{.Comment}}</td>
+      <td scope="col">{{if eq $x "Yes"}}{{.ExchSent}}{{end}}</td>
+      <td scope="col">{{if eq $x "Yes"}}{{.ExchRcvd}}{{end}}</td>
       <td scope="col">{{.Lotwsent}}</td>
       <td scope="col">{{.Lotwrcvd}}</td>
     </tr>
@@ -125,6 +130,26 @@
   <!-- <span class="input-group-text" id="basic-addon3" >Example: 599</span> -->
   <input type="text" class="form-control" id="rcvd-signal" name="rcvd"
   value='{{if .Edit }}{{.LogEdit.Rcvd}}{{else}}{{.FormData.Get "rcvd"}}{{end}}' aria-describedby="basic-addon3">
+</div>
+
+<label for="exchsent" class="form-label">Exch sent</label>
+{{with .FormData.Errors.Get "eschsent"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <!-- <span class="input-group-text" id="basic-addon3">Example: Saied</span> -->
+  <input type="text" class="form-control" id="exchsent" name="exchsent"
+  value='{{if .Edit }}{{.LogEdit.ExchSent}}{{else}}{{.FormData.Get "exchsent"}}{{end}}' aria-describedby="basic-addon3">
+</div>
+
+<label for="exchrcvd" class="form-label">Exch Rcvd</label>
+{{with .FormData.Errors.Get "exchrcvd"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <!-- <span class="input-group-text" id="basic-addon3">Example: Saied</span> -->
+  <input type="text" class="form-control" id="exchrcvd" name="exchrcvd"
+  value='{{if .Edit }}{{.LogEdit.ExchRcvd}}{{else}}{{.FormData.Get "exchrcvd"}}{{end}}' aria-describedby="basic-addon3">
 </div>
 
 <label for="name" class="form-label">Name</label>

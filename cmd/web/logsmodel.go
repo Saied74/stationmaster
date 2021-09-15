@@ -12,7 +12,9 @@ type logsType interface {
 	getLogByID(int) (*LogsRow, error)
 	getLogsByCall(string) ([]*LogsRow, error)
 	getLatestLogs(int) ([]LogsRow, error)
+	getContestLogs(int) ([]LogsRow, error)
 	getADIFData() ([]LogsRow, error)
+	getCabrilloData(*contestData) ([]LogsRow, error)
 	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
 	getUniqueCountries() ([]LogsRow, error)
@@ -37,6 +39,10 @@ type LogsRow struct {
 	Mode        string
 	Sent        string
 	Rcvd        string
+	Contest     string
+	ContestName string
+	ExchSent    string
+	ExchRcvd    string
 	Band        string
 	Name        string
 	County      string
@@ -51,20 +57,24 @@ type LogsRow struct {
 }
 
 type headRow struct {
-	Id       string
-	Time     string
-	Call     string
-	Mode     string
-	Sent     string
-	Rcvd     string
-	Band     string
-	Name     string
-	County   string
-	Cnty     bool
-	Country  string
-	Comment  string
-	Lotwsent string
-	Lotwrcvd string
+	Id          string
+	Time        string
+	Call        string
+	Mode        string
+	Sent        string
+	Rcvd        string
+	Contest     string
+	ContestName string
+	ExchSent    string
+	ExchRcvd    string
+	Band        string
+	Name        string
+	County      string
+	Cnty        bool
+	Country     string
+	Comment     string
+	Lotwsent    string
+	Lotwrcvd    string
 }
 
 var tableHead = headRow{
@@ -74,6 +84,10 @@ var tableHead = headRow{
 	"Mode",
 	"Sent",
 	"Rcvd",
+	"",
+	"",
+	"Exch sent",
+	"Exch rcvd",
 	"Band",
 	"Name",
 	"County",
@@ -88,12 +102,14 @@ var tableHead = headRow{
 func (m *logsModel) insertLog(l *LogsRow) (int, error) {
 
 	stmt := `INSERT INTO stationlogs (time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd)
-	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+exchrcvd, contestname)
+	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := m.DB.Exec(stmt,
 		l.Call, l.Mode, l.Sent, l.Rcvd,
-		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd)
+		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd,
+		l.Contest, l.ExchSent, l.ExchRcvd, l.ContestName)
 	if err != nil {
 		return 0, err
 	}
@@ -162,8 +178,8 @@ func (m *logsModel) getLogsByCall(call string) ([]*LogsRow, error) {
 //will return the n most recently created logs
 func (m *logsModel) getLatestLogs(n int) ([]LogsRow, error) {
 	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd
-	FROM stationlogs ORDER BY time DESC LIMIT %d`, n)
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+	exchrcvd, contestname	FROM stationlogs ORDER BY time DESC LIMIT %d`, n)
 
 	rows, err := m.DB.Query(stmt)
 	if err != nil {
@@ -177,7 +193,45 @@ func (m *logsModel) getLatestLogs(n int) ([]LogsRow, error) {
 
 		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
-			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+//will return the n most recently created logs
+func (m *logsModel) getContestLogs(n int) ([]LogsRow, error) {
+	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+	exchrcvd, contestname	FROM stationlogs WHERE contest='Yes' ORDER BY time DESC LIMIT %d`, n)
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
 
 		if err != nil {
 			return nil, err
@@ -249,6 +303,39 @@ func (m *logsModel) updateLOTWSent(id int) error {
 		return err
 	}
 	return nil
+}
+
+func (m *logsModel) getCabrilloData(cd *contestData) ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+	exchrcvd, contestname FROM stationlogs
+	WHERE contest = ? AND contestname = ? AND time >= ? AND time <= ?
+	ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, "Yes", cd.name, cd.startTime, cd.endTime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tr := []LogsRow{}
+	for rows.Next() {
+		s := LogsRow{}
+		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return tr, nil
 }
 
 func (m *logsModel) getUniqueCountries() ([]LogsRow, error) {
