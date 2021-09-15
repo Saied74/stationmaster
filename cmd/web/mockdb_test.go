@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 var errTest = errors.New("error for use in testing")
 
@@ -26,6 +28,14 @@ func (f *mockLogsModel) getLatestLogs(n int) ([]LogsRow, error) {
 		return f.rows, nil
 	}
 	return []LogsRow{}, f.lastLogsErr
+}
+
+func (f *mockLogsModel) getContestLogs(n int) ([]LogsRow, error) {
+	return []LogsRow{}, f.lastLogsErr
+}
+
+func (f *mockLogsModel) getCabrilloData(cd *contestData) ([]LogsRow, error) {
+	return []LogsRow{}, nil
 }
 
 func (f *mockLogsModel) insertLog(l *LogsRow) (int, error) {
