@@ -59,7 +59,7 @@ func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 
 	td := initTemplateData()
 	td.Logger = true
-	v, err := app.otherModel.getDefault("contest")
+	v, err := app.otherModel.getDefault("contest") //Yes or No
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -80,7 +80,26 @@ func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
-
+		v, err = app.otherModel.getDefault("contestname")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		td.LogEdit.ContestName = v
+		v, err = app.otherModel.getDefault("sent")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		td.FormData.Set("sent", v)
+		td.LogEdit.ExchSent = v
+		v, err = app.otherModel.getDefault("exch")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		td.FormData.Set("exchsent", v)
+		td.LogEdit.ExchSent = v
 	}
 	v, err = app.otherModel.getDefault("band")
 	if err != nil {
@@ -95,27 +114,6 @@ func (app *application) qsolog(w http.ResponseWriter, r *http.Request) {
 	}
 	td.Mode = v
 
-	v, err = app.otherModel.getDefault("contestname")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.ContestName = v
-	v, err = app.otherModel.getDefault("sent")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.FormData.Set("sent", v)
-	td.LogEdit.ExchSent = v
-	v, err = app.otherModel.getDefault("exch")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.FormData.Set("exchsent", v)
-	td.LogEdit.ExchSent = v
-
 	app.render(w, r, "log.page.html", td)
 }
 
@@ -124,12 +122,15 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	var err error
 	td := initTemplateData()
 	td.Logger = true
-	contestOn, err := app.otherModel.getDefault("contest")
+	contestOn, err := app.otherModel.getDefault("contest") //Yes or No
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	td.Contest = contestOn
+	//   td.Contest = contestOn
+	//   tr.Contest = contestOn
+	//   td.FormData.Set("contest", contestOn)
+	// tr.Contest = contestOn
 	err = r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -137,11 +138,17 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	}
 	f := newForm(r.PostForm)
 	f.required("call", "sent", "rcvd", "band")
+	if contestOn == "Yes" {
+		f.required("exchsent", "exchrcvd")
+		//// TODO: Add max length
+	}
 	f.checkAllLogMax()
 	f.minLength("sent", 2)
 	f.minLength("rcvd", 2)
 	f.isInt("sent")
 	f.isInt("rcvd")
+
+	//<+++++++++++++++  Start of invalid forrm handling
 	if !f.valid() {
 		var err error
 		if contestOn == "No" {
@@ -163,31 +170,59 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "log.page.html", td)
 		return
 	}
+	//<++++++++++++++++ end of invalid form handling
 	tr := copyPostForm(r)
-	tr.Contest = contestOn
-	v, err := app.otherModel.getDefault("contestname")
+	//<++++++++++++++++  get defaults
+	//Band
+	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	tr.ContestName = v
-	v, err = app.otherModel.getDefault("sent")
+	//Mode
+	mode, err := app.otherModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	tr.ExchSent = v
-	v, err = app.otherModel.getDefault("exch")
+	//Sent RRST
+	sent, err := app.otherModel.getDefault("sent")
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	tr.ExchSent = v
+	//Exchange message
+	exchange, err := app.otherModel.getDefault("exch")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	name, err := app.otherModel.getDefault("contestname")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//<++++++++++++++++ end of get defaults
+	// tr.ContestName = v
+	// td.FormData.Set("sent", v)
+
+	//<++++++++++++++  Save the new log
+	if contestOn == "Yes" {
+		tr.Contest = contestOn
+		tr.ContestName = name
+	}
 	_, err = app.logsModel.insertLog(&tr)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+	//<+++++++++++++  New log saved
+
+	//<+++++++++++++  Set up the new display
+
+	td.FormData.Set("band", band)
+	td.Mode = mode
+
 	if contestOn == "No" {
 		td.Table, err = app.logsModel.getLatestLogs(app.displayLines)
 		if err != nil {
@@ -200,7 +235,12 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+		// td.FormData.Set("contestname", name)
+		tr.ExchSent = sent
+		td.FormData.Set("sent", sent)
+		td.FormData.Set("exchsent", exchange)
 	}
+	//<+++++++++++++++++  Calculate and store the number of logs with that call
 	call := f.Get("call")
 	t, err := app.logsModel.getLogsByCall(call)
 	if err != nil {
@@ -224,17 +264,20 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 				app.serverError(w, err)
 				return
 			}
+			//This is the case that this is the first contact
 			app.render(w, r, "log.page.html", td)
 			return
 		}
 		app.serverError(w, err)
 		return
 	}
+	//this is the case that this the second of more contacts
 	err = app.qrzModel.updateQSOCount(call, len(t))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+	//<+++++++++++++++  Numberr of calls updated
 	app.render(w, r, "log.page.html", td)
 }
 
@@ -499,7 +542,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "3":
 		v = "CW"
 	default:
-		v = fmt.Sprintf("A Bad Mode Choice. ")
+		v, err = app.lookupDefault("mode")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 	err = app.otherModel.updateDefault("mode", v)
 	if err != nil {
@@ -520,7 +567,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "5":
 		v = "160m"
 	default:
-		v = fmt.Sprintf("A Bad Band Choice. ")
+		v, err = app.lookupDefault("band")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 	err = app.otherModel.updateDefault("band", v)
 	if err != nil {
@@ -535,7 +586,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "2":
 		v = "No"
 	default:
-		v = fmt.Sprintf("A Bad Contest Choice. ")
+		v, err = app.lookupDefault("contest")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 	err = app.otherModel.updateDefault("contest", v)
 	if err != nil {
@@ -543,31 +598,36 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.LogEdit.Contest = v
+
+	f := newForm(r.PostForm)
 	if td.LogEdit.Contest == "Yes" {
-		cn := r.PostForm.Get("contestname")
-		if len(cn) > 100 {
-			cn = cn[0:100]
+		f.required("contestname", "rst", "exch")
+		f.maxLength("contestname", 45)
+		f.maxLength("rst", 3)
+		f.maxLength("exch", 6)
+		if !f.valid() {
+			td.FormData = f
+			app.render(w, r, "defaults.page.html", td)
+			return
 		}
+
+		cn := r.PostForm.Get("contestname")
 		err = app.otherModel.updateDefault("contestname", cn)
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
 		td.LogEdit.ContestName = cn
+
 		rst := r.PostForm.Get("rst")
-		if len(rst) > 100 {
-			rst = rst[0:100]
-		}
 		err = app.otherModel.updateDefault("sent", rst)
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
 		td.LogEdit.Sent = rst
+
 		e := r.PostForm.Get("exch")
-		if len(e) > 100 {
-			e = e[0:100]
-		}
 		err = app.otherModel.updateDefault("exch", e)
 		if err != nil {
 			app.serverError(w, err)

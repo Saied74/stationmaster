@@ -95,7 +95,6 @@ func copyPostForm(r *http.Request) LogsRow {
 		Call:     strings.ToUpper(r.PostForm.Get("call")),
 		Sent:     r.PostForm.Get("sent"),
 		Rcvd:     r.PostForm.Get("rcvd"),
-		ExchRcvd: r.PostForm.Get("exchrcvd"),
 		Band:     strings.ToLower(r.PostForm.Get("band")),
 		Mode:     r.PostForm.Get("mode"), //m,
 		Name:     r.PostForm.Get("name"),
@@ -103,6 +102,8 @@ func copyPostForm(r *http.Request) LogsRow {
 		Comment:  r.PostForm.Get("comment"),
 		Lotwsent: r.PostForm.Get("lotwsent"),
 		Lotwrcvd: r.PostForm.Get("lotwrcvd"),
+		ExchSent: r.PostForm.Get("exchsent"),
+		ExchRcvd: r.PostForm.Get("exchrcvd"),
 	}
 }
 
@@ -258,6 +259,19 @@ func (f *formData) datetimeFormat(d, t string) time.Time {
 		return time.Time{}
 	}
 	return tt
+
+}
+
+func (f *formData) fileCheck(d string) {
+	v := f.Get(d)
+	p := strings.Split(v, ".")
+	if len(p) != 2 {
+		f.Errors.add(d, "filename must be two parts seperated by .")
+		return
+	}
+	if p[1] != "txt" {
+		f.Errors.add(d, "second part of the filename must be txt")
+	}
 }
 
 func (f *formData) valid() bool {

@@ -24,6 +24,7 @@ type configType struct {
 	ConfigFile string `yaml:"configfile"`
 	ADIFFile   string `yaml:"adiffile"`
 	QSLdir     string `yaml:"qsldir"`
+	ContestDir string `yaml:"contestdir"`
 }
 
 //for injecting data into handlers
@@ -44,6 +45,7 @@ type application struct {
 	qrzpw         string
 	adifFile      string
 	qslDir        string
+	contestDir    string
 }
 
 type httpClient interface {
@@ -72,7 +74,7 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile)
 
-	var config = &configType{"", "", "", ""}
+	var config = &configType{"", "", "", "", ""}
 	configPath := os.Getenv("STATIONMASTER")
 	configData, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", configPath))
 	if err != nil {
@@ -104,7 +106,9 @@ func main() {
 
 	home := os.Getenv("HOME")
 	qslDir := strings.TrimPrefix(config.QSLdir, "$HOME/")
+	contestDir := strings.TrimPrefix(config.ContestDir, "$HOME/")
 	qslDir = filepath.Join(home, qslDir)
+	contestDir = filepath.Join(home, contestDir)
 
 	app := &application{
 		errorLog:      errorLog,
@@ -123,6 +127,7 @@ func main() {
 		qrzuser:       *qrzuser,
 		adifFile:      fmt.Sprintf("%s/%s", qslDir, config.ADIFFile),
 		qslDir:        qslDir,
+		contestDir:    contestDir,
 	}
 
 	mux := app.routes()

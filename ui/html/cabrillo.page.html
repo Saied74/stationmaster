@@ -21,6 +21,16 @@
             <input type="text" name="contestname" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
         </div>
+        <div class="col-sm-6">
+          {{with .FormData.Errors.Get "contestfile"}}
+              <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            {{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Contest File Name</span>
+            <input type="text" name="contestfile" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+        </div>
+
 
         </div>
 
@@ -55,7 +65,7 @@
             		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
             	{{end}}
           <div class="input-group mb-3">
-            <span class="input-group-text" id="inputGroup-sizing-default">End Date (yyyy-mm-dd)</span>
+            <span class="input-group-text" id="inputGroup-sizing-default">End Date (yyyy-mm-dd)   </span>
             <input type="text" name="enddate" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
           </div>
           </div>

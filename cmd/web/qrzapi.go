@@ -79,47 +79,49 @@ var noKey = errors.New("no session id")
 
 func (app *application) getHamInfo(callSign string) (*Qtype, error) {
 	key, err := app.sKey("")
-	if errors.Is(err, noKey) {
-		key, err = loginQRZ(app.qrzuser, app.qrzpw)
-		if err != nil {
-			return nil, err
-		}
-		key, err = app.sKey(key)
-		if err != nil {
-			return nil, err
-		}
-	}
 	if err != nil {
-		return nil, err
+		if errors.Is(err, noKey) {
+			key, err = loginQRZ(app.qrzuser, app.qrzpw)
+			if err != nil {
+				return &Qtype{}, err
+			}
+			key, err = app.sKey(key)
+			if err != nil {
+				return &Qtype{}, err
+			}
+		} else {
+			return &Qtype{}, err
+		}
 	}
 	url := fmt.Sprintf("https://xmldata.qrz.com/xml/current/?s=%s;callsign=%s", key, callSign)
 	result, err := getXML(url)
 	if err != nil {
-		return nil, err
+		return &Qtype{}, err
 	}
 	v := Qtype{Callsign: Ctype{}, Session: Stype{}}
 	err = xml.Unmarshal(result, &v)
 	if err != nil {
-		return nil, err
+		return &Qtype{}, err
 	}
 	//QRZ.COM does not return the key if it has expired and it must be renewed.
 	if v.Session.Key == "" {
 		key, err = loginQRZ(app.qrzuser, app.qrzpw)
 		if err != nil {
-			return nil, err
+			return &Qtype{}, err
 		}
 		key, err = app.sKey(key)
 		if err != nil {
-			return nil, err
+			return &Qtype{}, err
 		}
+		url := fmt.Sprintf("https://xmldata.qrz.com/xml/current/?s=%s;callsign=%s", key, callSign)
 		result, err := getXML(url)
 		if err != nil {
-			return nil, err
+			return &Qtype{}, err
 		}
 		v := Qtype{Callsign: Ctype{}, Session: Stype{}}
 		err = xml.Unmarshal(result, &v)
 		if err != nil {
-			return nil, err
+			return &Qtype{}, err
 		}
 	}
 	return &v, nil
