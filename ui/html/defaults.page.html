@@ -56,6 +56,9 @@
 </div>
 <br>
 <div class="row">
+  {{with .FormData.Errors.Get "contestname"}}
+      <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+    {{end}}
   <div class="col-sm-2">
   <p>Contest name</p>
   </div>
@@ -64,6 +67,9 @@
     </div>
     </div>
 <div class="row">
+  {{with .FormData.Errors.Get "rst"}}
+      <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+    {{end}}
   <div class="col-sm-2">
   <p>Contest RS(T)</p>
   </div>
@@ -72,6 +78,9 @@
     </div>
     </div>
     <div class="row">
+      {{with .FormData.Errors.Get "exch"}}
+          <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+        {{end}}
       <div class="col-sm-2">
   <p>Contest Exch</p>
   </div>

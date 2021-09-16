@@ -19,7 +19,6 @@ type qrzModel struct {
 }
 
 func (m *qrzModel) insertQRZ(c *Ctype) error {
-
 	stmt := `INSERT INTO qrztable (time, callsign, aliases, dxcc, first_name,
 		last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
 		lat, lon, grid, county, fips, land, cqzone, ituzone, geolocation, effdate,

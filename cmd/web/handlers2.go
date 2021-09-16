@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"path/filepath"
 )
 
 func (app *application) adif(w http.ResponseWriter, r *http.Request) {
@@ -104,12 +105,13 @@ func (app *application) genCabrillo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f := newForm(r.PostForm)
-	f.required("contestname", "starttime", "startdate", "enddate", "endtime")
+	f.required("contestname", "starttime", "startdate", "enddate", "endtime", "contestfile")
 	f.maxLength("contestname", 45)
 	f.dateCheck("startdate")
 	f.dateCheck("enddate")
 	f.timeCheck("starttime")
 	f.timeCheck("endtime")
+	f.fileCheck("contestfile")
 	start := f.datetimeFormat("startdate", "starttime")
 	end := f.datetimeFormat("enddate", "endtime")
 	if !f.valid() {
@@ -119,7 +121,7 @@ func (app *application) genCabrillo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cd := &contestData{
-		filename:  "NJ_2021_QSOParty.txt",
+		filename:  filepath.Join(app.contestDir, f.Get("contestfile")),
 		name:      f.Get("contestname"),
 		startTime: start,
 		endTime:   end,
