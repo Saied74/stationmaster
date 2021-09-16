@@ -7,19 +7,25 @@ Functions:
 3. Station contact logger - log editor
 4. Analysis functions to review contact progress
 5. Building ADI files for upload to the LOTW and updating logs from downloads
+6. A contest mode where all the focus is on contesting
+7. Building Cabrillo files for submitting contest logs
+
+If you want to use the keyer and tutor functionality, you need a Raspberry Pi
+and also to build the described hardware (or something like it).
+Otherwise, you can run the program on just about any Mac or Windows machine.
 
 This program for the most part follows the patterns described in Alex Edward's
 book "Let's Go".  If you are planning to deploy or modify this program, I
 recommend getting a copy and reading it through.
 
-There are plenty of resources on the web for copying code but none for
-sending code.  I hope this fills the need, it does for me.  Using the keyer
-and the tutor requires hardware and I have it running on a Raspberry Pi.  
+There are plenty of resources on the web for copying Morse code but none for
+the practice of sending Morse code.  I hope this fills the need, it does for me.  Using the keyer
+and the tutor requires hardware and I have it running on a Raspberry Pi (RPi).  
 The rest of the application can run anywhere (there are two different shell
-files for RPi and not RPi usage.   
+files for RPi (rpi.sh) and not RPi (run.sh) usage.   
 
 The Morse code subsystem uses the Farnsworth algorithm.  You can Google it and
-find the old QSL magazine article.    
+find the old QST magazine article.    
 
 I have looked around and have not found a contact manager that I liked for a Mac.  
 So, I have built this.  I plan to enhance it with a few more functions but
@@ -38,16 +44,17 @@ This is what you need to use this application:
 
 Schematic for the keyer-tutor is in the resources directory.  You can package
 it as you like, but beware that the output is a class A amplifier and gets hot.
+It is temperature compensated, but it has its limits.
 
 A few notes on the logger:
 1. The callsign search window let's you search for the call sign prior to a QSO,
-get info about a contact and find out if you have worked them before?
+get info about a contact, and find out if you have worked them before?
 2. The add button (next to the logger button) on the top ribbon is how you add
 a QSO.  You only see the add button in you are in the logger mode.
 3. If you have set the defaults (using the default button on the top ribbon),
 the band and mode show up on the add window.
 4. After you move the curser out of the call sign window, the system looks up
-the call sign from the local database or from QRZ and update the add window.
+the call sign from the local database or from QRZ.com and update the add window.
 5. You only need to add the RST sent and received and any comments.
 6. If you need to edit the entry, click on the ID link.
 7. If you need to see more detail on the contact, click on the call sign.
@@ -55,6 +62,10 @@ the call sign from the local database or from QRZ and update the add window.
 obtained from QRZ in the database.  It only displays some of that information.
 Some of it is used later in features like county summary.  The rest is just stored
 for future analysis.
+9. In the default page, in addition to the band and mode, you can set the contest
+mode, the contest name, and the contest exchanges.  When you are in contest mode,
+it will add them to the add page so you don't have to type them in.
+10. When in the contest mode, non contest logs are hidden.
 
 The analysis tab is all self explanatory.  I will be adding additional analytics
 as the needs arise.
@@ -70,7 +81,11 @@ configuration file.  The configuration chain works as follows:
 1. The program depends on the directory structure as it is laid out.
 2. The top of the configuration chain is the environment variable STATIONMASTER
 3. STATIONMASTER points to the file config.yaml.  
-4. The QSL log is referenced to the $HOME environment variable.   
+4. The QSL log is referenced to the $HOME environment variable.  
+
+The Cabrillo button brings up the Cabrillo file generation page. All the fields
+on this page are required.  All dates and times are in UTC.  The file is stored
+in the contest directory as specified in the config.yaml file.
 
 A few final notes:
 1. I am building this as a single user local application
