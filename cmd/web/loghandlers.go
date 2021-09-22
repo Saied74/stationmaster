@@ -27,6 +27,19 @@ type templateData struct {
 	StopCode  bool
 	Logger    bool
 	Contest   string
+	Stats     *Stats
+}
+
+type Stats struct {
+	Contacts          int
+	ConfirmedContacts int
+	RepeatContacts    int
+	Country           int
+	ConfirmedCountry  int
+	State             int
+	ConfirmedState    int
+	County            int
+	ConfirmedCounty   int
 }
 
 //LogType is for passing data to the add button of the logger

@@ -92,6 +92,22 @@ func (f *mockLogsModel) getConfirmedCounties() ([]LogsRow, error) {
 	return []LogsRow{}, nil
 }
 
+func (f *mockLogsModel) calcContestScore(*contestData) (int, error) {
+	return 0, nil
+}
+
+func (f *mockLogsModel) getConfirmedContacts() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) getConfirmedStates() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (f *mockLogsModel) getLogsByState(state string) ([]LogsRow, error) {
+	return []LogsRow, nil
+}
+
 type mockQRZModel struct {
 	row         LogsRow
 	rows        []LogsRow
@@ -132,6 +148,14 @@ func (f *mockQRZModel) unstashQRZdata() (*Ctype, error) {
 }
 
 func (m *mockQRZModel) getUniqueCounties() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (m *mockQRZModel) getRepeatContacts() ([]LogsRow, error) {
+	return []LogsRow{}, nil
+}
+
+func (m *mockQRZModel) getUniqueStates() ([]LogsRow, error) {
 	return []LogsRow{}, nil
 }
 

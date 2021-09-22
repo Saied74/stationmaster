@@ -36,11 +36,11 @@
     	<th scope="col">{{.Rcvd}}</th>
     	<th scope="col">{{.Name}}</th>
     	<th scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</th>
-      <th scope="col">{{.Comment}}</th>
+      <th scope="col">{{if eq $x "No"}}{{.Comment}}{{end}}</th>
       <th scope="col">{{if eq $x "Yes"}}{{.ExchSent}}{{end}}</th>
       <th scope="col">{{if eq $x "Yes"}}{{.ExchRcvd}}{{end}}</th>
-      <th scope="col">{{.Lotwsent}}</th>
-      <th scope="col">{{.Lotwrcvd}}</th>
+      <th scope="col">{{if eq $x "No"}}{{.Lotwsent}}{{end}}</th>
+      <th scope="col">{{if eq $x "No"}}{{.Lotwrcvd}}{{end}}</th>
     </tr>
     {{end}}
   </thead>
@@ -56,11 +56,11 @@
     	<td scope="col">{{.Rcvd}}</td>
     	<td scope="col">{{.Name}}</td>
     	<td scope="col">{{if .Cnty}}{{.County}}{{else}}{{.Country}}{{end}}</td>
-      <td scope="col">{{.Comment}}</td>
+      <td scope="col">{{if eq $x "No"}}{{.Comment}}{{end}}</td>
       <td scope="col">{{if eq $x "Yes"}}{{.ExchSent}}{{end}}</td>
       <td scope="col">{{if eq $x "Yes"}}{{.ExchRcvd}}{{end}}</td>
-      <td scope="col">{{.Lotwsent}}</td>
-      <td scope="col">{{.Lotwrcvd}}</td>
+      <td scope="col">{{if eq $x "No"}}{{.Lotwsent}}{{end}}</td>
+      <td scope="col">{{if eq $x "No"}}{{.Lotwrcvd}}{{end}}</td>
     </tr>
       {{end}}
   </tbody>

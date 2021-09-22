@@ -12,6 +12,8 @@ type qrzType interface {
 	stashQRZdata(*Ctype) error
 	unstashQRZdata() (*Ctype, error)
 	getUniqueCounties() ([]LogsRow, error)
+	getRepeatContacts() ([]LogsRow, error)
+	getUniqueStates() ([]LogsRow, error)
 }
 
 type qrzModel struct {
@@ -137,6 +139,77 @@ func (m *qrzModel) getUniqueCounties() ([]LogsRow, error) {
 		s := &LogsRow{}
 
 		err = rows.Scan(&s.County, &s.State)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *qrzModel) getRepeatContacts() ([]LogsRow, error) {
+
+	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
+	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
+	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
+	stationlogs.lotwrcvd, qrztable.country, qrztable.state
+	FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE qrztable.qso_count > 1
+	ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return []LogsRow{}, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Country,
+			&s.State)
+
+		if err != nil {
+			return []LogsRow{}, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return []LogsRow{}, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *qrzModel) getUniqueStates() ([]LogsRow, error) {
+	stmt := `select distinct state, country from qrztable where country = ?
+	and state <> '' order by state asc`
+	rows, err := m.DB.Query(stmt, "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.State, &s.Country)
 
 		if err != nil {
 			return nil, err
