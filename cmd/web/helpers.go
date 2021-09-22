@@ -87,6 +87,7 @@ func initTemplateData() *templateData {
 		StopCode:  false,
 		Logger:    false,
 		Contest:   "No",
+		Stats:     &Stats{},
 	}
 }
 

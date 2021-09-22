@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ const (
 
 type contestData struct {
 	filename  string
-	name      string
+	name      string //contest name
 	startTime time.Time
 	endTime   time.Time
 	score     string
@@ -25,6 +26,11 @@ type contestData struct {
 
 func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 	var b bytes.Buffer
+	score, err := app.logsModel.calcContestScore(cd)
+	if err != nil {
+		return err
+	}
+	cd.score = fmt.Sprintf("%d", score)
 	b = writeCabrilloHeader(b, cd.name, cd.score)
 	b.Write([]byte("                              --------info sent------- -------info rcvd--------\n"))
 	b.Write([]byte("QSO:  freq mo date       time call          rst exch   call          rst exch   t\n"))
@@ -45,10 +51,10 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 		b.Write(lengthNormalize(row.ExchRcvd, exchLen))
 		b.Write([]byte("o\n"))
 	}
-	b.Write([]byte("START-OF-LOG: \n"))
+	b.Write([]byte("END-OF-LOG: \n"))
 	p := make([]byte, b.Len())
 	b.Read(p)
-	err := writeCab(cd.filename, p)
+	err = writeCab(cd.filename, p)
 	if err != nil {
 		return err
 	}
@@ -103,8 +109,7 @@ func writeCabrilloHeader(b bytes.Buffer, contest, score string) bytes.Buffer {
 	b.Write([]byte("CALLSIGN: AD2CC\n"))
 	b.Write([]byte("CATEGORY-OPERATOR: SINGLE-OP\n"))
 	b.Write([]byte("CATEGORY-ASSISTED: NON-ASSISTED\n"))
-	b.Write([]byte("CATEGORY-OVERLAY: ROOKIE\n"))
-	b.Write([]byte("CATEGORY-BAND: 20M\n"))
+	b.Write([]byte("CATEGORY-BAND: All\n"))
 	b.Write([]byte("CATEGORY-POWER: LOW\n"))
 	b.Write([]byte("CATEGORY-MODE: SSB\n"))
 	b.Write([]byte("CATEGORY-STATION: FIXED\n"))

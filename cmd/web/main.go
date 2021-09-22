@@ -174,6 +174,10 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/countyselect", app.countySelect)
 	mux.HandleFunc("/repeat", app.repeat)
 	mux.HandleFunc("/confirmqsls", app.confirmQSLs)
+	mux.HandleFunc("/contacts-confirmed", app.contactsConfirmed)
+	mux.HandleFunc("/state", app.state)
+	mux.HandleFunc("/state-confirmed", app.stateConfirmed)
+	mux.HandleFunc("/stateselect", app.stateSelect)
 	return mux
 }
 

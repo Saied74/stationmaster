@@ -17,12 +17,16 @@ type logsType interface {
 	getCabrilloData(*contestData) ([]LogsRow, error)
 	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
+	calcContestScore(*contestData) (int, error)
 	getUniqueCountries() ([]LogsRow, error)
 	getConfirmedCountries() ([]LogsRow, error)
 	getLogsByCountry(string) ([]LogsRow, error)
 	getLogsByCounty(string) ([]LogsRow, error)
 	getConfirmedCounties() ([]LogsRow, error)
+	getConfirmedContacts() ([]LogsRow, error)
 	updateQSO(map[itemType]string) error
+	getConfirmedStates() ([]LogsRow, error)
+	getLogsByState(string) ([]LogsRow, error)
 }
 
 type logsModel struct {
@@ -212,6 +216,43 @@ func (m *logsModel) getLatestLogs(n int) ([]LogsRow, error) {
 	return t, nil
 }
 
+func (m *logsModel) getConfirmedContacts() ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+	exchrcvd, contestname	FROM stationlogs WHERE lotwrcvd = ? AND lotwsent = ?
+	ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, "Yes", "Yes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
 //will return the n most recently created logs
 func (m *logsModel) getContestLogs(n int) ([]LogsRow, error) {
 	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
@@ -247,6 +288,58 @@ func (m *logsModel) getContestLogs(n int) ([]LogsRow, error) {
 	}
 
 	return t, nil
+}
+
+func (m *logsModel) calcContestScore(cd *contestData) (int, error) {
+	stmt := `SELECT exchrcvd FROM stationlogs WHERE contest = ? AND
+	contestname = ? AND time >= ? AND time <= ?`
+
+	rows, err := m.DB.Query(stmt, "Yes", cd.name, cd.startTime, cd.endTime)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	tr1 := []LogsRow{}
+	for rows.Next() {
+		s := LogsRow{}
+		err := rows.Scan(&s.ExchRcvd)
+
+		if err != nil {
+			return 0, err
+		}
+		tr1 = append(tr1, s)
+
+	}
+	if err = rows.Err(); err != nil {
+		return 0, err
+	}
+
+	stmt = `SELECT DISTINCT exchrcvd FROM stationlogs WHERE contest = ? AND
+	contestname = ? AND time >= ? AND time <= ?`
+
+	rows2, err := m.DB.Query(stmt, "Yes", cd.name, cd.startTime, cd.endTime)
+	if err != nil {
+		return 0, err
+	}
+	defer rows2.Close()
+
+	tr2 := []LogsRow{}
+	for rows2.Next() {
+		s := LogsRow{}
+		err := rows2.Scan(&s.ExchRcvd)
+
+		if err != nil {
+			return 0, err
+		}
+		tr2 = append(tr2, s)
+
+	}
+	if err = rows2.Err(); err != nil {
+		return 0, err
+	}
+
+	return 2 * len(tr1) * len(tr2), nil
 }
 
 func (m *logsModel) updateLog(l *LogsRow, id int) error {
@@ -475,6 +568,46 @@ func (m *logsModel) getLogsByCounty(county string) ([]LogsRow, error) {
 	return t, nil
 }
 
+func (m *logsModel) getLogsByState(state string) ([]LogsRow, error) {
+	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
+	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
+	stationlogs.name, stationlogs.comment, stationlogs.lotwsent,
+	stationlogs.lotwrcvd, qrztable.county, qrztable.state
+	FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE qrztable.state = ? and
+	stationlogs.country = ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, state, "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
+			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County,
+			&s.State)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		item.Cnty = true
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
 func (m *logsModel) getConfirmedCounties() ([]LogsRow, error) {
 	stmt := `SELECT stationlogs.id, stationlogs.time, stationlogs.callsign,
 	stationlogs.mode, stationlogs.sent, stationlogs.rcvd,	stationlogs.band,
@@ -497,6 +630,41 @@ func (m *logsModel) getConfirmedCounties() ([]LogsRow, error) {
 		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode, &s.Sent, &s.Rcvd,
 			&s.Band, &s.Name, &s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.County,
 			&s.State)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		item.Cnty = true
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getConfirmedStates() ([]LogsRow, error) {
+	stmt := `SELECT DISTINCT qrztable.state
+	FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE stationlogs.lotwrcvd = ? and
+	stationlogs.country = ? and qrztable.state <> '' ORDER BY state ASC`
+
+	rows, err := m.DB.Query(stmt, "YES", "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.State)
 
 		if err != nil {
 			return nil, err
