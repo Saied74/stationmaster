@@ -178,6 +178,8 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/state", app.state)
 	mux.HandleFunc("/state-confirmed", app.stateConfirmed)
 	mux.HandleFunc("/stateselect", app.stateSelect)
+	mux.HandleFunc("/start-vfo", app.startVFO)
+	mux.HandleFunc("/update-vfo", app.updateVFO)
 	return mux
 }
 
