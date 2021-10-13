@@ -18,7 +18,7 @@ body {
   background-color: #FEDBD0;
 }
 
-p, h3, h4, h5, th, td, input {
+p, h2, h3, h4, h5, th, td, input, span, button {
   color: #442C2E;
 }
 
@@ -78,11 +78,11 @@ p, h3, h4, h5, th, td, input {
         </li>
 
         <li class="nav-item">
-          <a class="nav-link" style="color: white" href="/ant">Antenna</a>
+          <a class="nav-link" style="color: white" href="/start-vfo">VFO</a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link" style="color: white" href="/quit">Quit</a>
-        </li>
+        </li> -->
       </ul>
     </div>
   </div>
@@ -132,8 +132,8 @@ $(document).ready(function(){
   // let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
   // sModal.show();
 
-  $("#search-button").click(function() {
 
+  $("#search-button").click(function() {
     $.getJSON("/callsearch?call="+$("#search-call").val())
     .then(function(data){
     $("#want-update").html(data["QRZMsg"])
@@ -147,9 +147,9 @@ $(document).ready(function(){
     $("#class").text(data["Class"])
     $("#timezone").text(data["TimeZone"])
     $("#qsocount").text(data["QSOCount"])
+    });
   });
 
-  });
 
 $("#call-sign").blur(function(){
   $.getJSON("/getconn?call="+$("#call-sign").val())
@@ -161,6 +161,242 @@ $("#call-sign").blur(function(){
     // alert($("#master-mode").val());
   });
 });
+
+$("#rcv-enter").click(function(){
+  if (isNaN($("#rcv-frequency").val())) {
+    alert("entry is not a number")
+    return
+  }
+  var x = checkLimit($("#rcv-frequency").val())
+  x = normalize(x)
+  $("#rcv").text("Receive: " + x)
+  if ($("#split").html() == "Split: Off"){
+    $("#xmt").text("Transmit: " + x)
+  }
+})
+
+$("#xmt-enter").click(function(){
+  if ($("#split").html() == "Split: Off"){
+    return
+  }
+  if (isNaN($("#xmt-frequency").val())) {
+    alert("entry is not a number")
+    return
+  }
+  var x = checkLimit($("#xmt-frequency").val())
+  x = normalize(x)
+  $("#xmt").text("Transmit: " + x)
+})
+
+
+$("#rcv-1khz-up").click(function(){
+  var s = $("#rcv").html();
+  handleRcv(s, 1000, "up")
+});
+
+$("#rcv-1khz-down").click(function(){
+  var s = $("#rcv").html();
+    handleRcv(s, 1000, "down")
+});
+
+$("#rcv-100hz-up").click(function(){
+  var s = $("#rcv").html();
+    handleRcv(s, 100, "up")
+});
+
+$("#rcv-100hz-down").click(function(){
+  var s = $("#rcv").html();
+handleRcv(s, 100, "down")
+});
+
+$("#rcv-10hz-up").click(function(){
+  var s = $("#rcv").html();
+  handleRcv(s, 10, "up")
+});
+
+$("#rcv-10hz-down").click(function(){
+  var s = $("#rcv").html();
+  handleRcv(s, 10, "down")
+});
+
+$("#rcv-1hz-up").click(function(){
+  var s = $("#rcv").html();
+  handleRcv(s, 1, "up")
+});
+
+$("#rcv-1hz-down").click(function(){
+  var s = $("#rcv").html();
+  handleRcv(s, 1, "down")
+});
+
+$("#xmt-1khz-up").click(function(){
+  var s = $("#xmt").html();
+  handleXmt(s, 1000, "up")
+});
+
+$("#xmt-1khz-down").click(function(){
+  var s = $("#xmt").html();
+    handleXmt(s, 1000, "down")
+});
+
+$("#xmt-100hz-up").click(function(){
+  var s = $("#xmt").html();
+    handleXmt(s, 100, "up")
+});
+
+$("#xmt-100hz-down").click(function(){
+  var s = $("#xmt").html();
+handleXmt(s, 100, "down")
+});
+
+$("#xmt-10hz-up").click(function(){
+  var s = $("#xmt").html();
+  handleXmt(s, 10, "up")
+});
+
+$("#xmt-10hz-down").click(function(){
+  var s = $("#xmt").html();
+  handleXmt(s, 10, "down")
+});
+
+$("#xmt-1hz-up").click(function(){
+  var s = $("#xmt").html();
+  handleXmt(s, 1, "up")
+});
+
+$("#xmt-1hz-down").click(function(){
+  var s = $("#xmt").html();
+  handleXmt(s, 1, "down")
+});
+
+$("#toggle-split").click(function(){
+  if ($("#split").html() == "Split: Off"){
+    $("#split").html("Split: On");
+    // split = "On"
+  }
+  else {
+    var s = $("#xmt").html();
+    var x = s.split(": ")
+    $("#rcv").html("Receive: "+x[1]);
+    $("#split").html("Split: Off");
+    // split = "off"
+  }
+});
+
+function handleRcv(s, u, d){ //s strring, u increment d direction
+  var split = $("#split").html();
+  var x = s.split(": ");
+  if (d == "up") {
+    x[1] = (1000000*Number(x[1]) + u)/1000000;
+  }
+  else {
+    x[1] = (1000000*Number(x[1]) - u)/1000000;
+ }
+ x[1] = checkLimit(x[1])
+ x[1] = normalize(x[1])
+  s =x[0] + ": " + String(x[1]);
+  $("#rcv").html(s);
+  if (split == "Split: Off") {
+    x = s.split(": ");
+    s = "Transmit: " + x[1];
+    $("#xmt").html(s);
+  }
+  updateVFO()
+}
+
+function handleXmt(s, u, d){
+  var split = $("#split").html();
+  if (split == "Split: Off") {
+    return
+  } //s strring, u increment d direction
+  var x = s.split(": ");
+  if (d == "up") {
+  x[1] = (1000000*Number(x[1]) + u)/1000000;
+}
+else {
+  x[1] = (1000000*Number(x[1]) - u)/1000000;
+}
+x[1] = checkLimit(x[1])
+x[1] = normalize(x[1])
+  s =x[0] + ": " + String(x[1]);
+  $("#xmt").html(s);
+  updateVFO()
+}
+
+function checkLimit(x){ //accepts integer rreturrns integer
+  var upper = Number($("#upper-limit").html())
+  var lower = Number($("#lower-limit").html())
+  var cwbnd = Number($("#cw-boundary").html())
+  if (x > upper){
+    return upper
+  }
+  if (x < lower) {
+    return lower
+  }
+  if (x <= cwbnd) {
+    $("#mode").html("Mode: CW")
+    return x
+  }
+  if (x > cwbnd) {
+    var band = $("#band").html()
+    if ((band == "Band: 10m") || (band == "Band: 15m") || (band == "Band: 20m")){
+      $("#mode").html("Mode: USB")
+    }
+    else {
+      $("#mode").html("Mode: LSB")
+    }
+    return x
+  }
+  return x
+}
+
+function normalize(x) {
+  var y = String(x);
+  var z = y.split(".");
+  if (z.length == 0){
+    alert("bad input");
+    return "bad input";
+  }
+  if (z.length == 1) {
+    return y + ".000000";
+  }
+  var l = z[1].length
+  for (n=0; n < 6-l; n++){
+    z[1] = z[1] + "0";
+  }
+  return z[0] + "." + z[1]
+}
+
+function updateVFO(){
+  var m = $("#mode").html()
+  var mm = m.split(": ")
+  mode = mm[1]
+  var rf = $("#rcv").html()
+  var rff = rf.split(": ")
+  rcvFreq = rff[1]
+  var xf = $("#xmt").html()
+  var xff = xf.split(": ")
+  xmtFreq = xff[1]
+  var s = $("#split").html()
+  var ss = s.split(": ")
+  split = ss[1]
+  var vfodata = {
+    Mode: mode,
+    RFreq: rcvFreq,
+    XFreq: xmtFreq,
+    Split: split,
+  }
+  $.ajax({
+            url: "update-vfo",
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            // success: function (data) {
+            //     $('#target').html(data.msg);
+            // },
+            data: JSON.stringify(vfodata)
+        });
+}
 
 
 });
