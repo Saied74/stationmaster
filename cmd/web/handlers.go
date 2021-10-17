@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
 
-	"gobot.io/x/gobot/platforms/raspi"
+//	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
+	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
 //seed data for the keyer - tutor
@@ -98,7 +100,7 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		f.Errors.add("ktrunning", "No mode selected, set to Tutor")
 	}
 	cw := &code.CwDriver{
-		Dit:       raspi.NewAdaptor(),
+		Dit:       app.vfoAdaptor, //raspi.NewAdaptor(),
 		Speed:     s,
 		Farnspeed: fs,
 		LF:        lf,
@@ -155,16 +157,16 @@ type VFO struct {
 	CWBoundary string `json:"CWBoundary"`
 	LowerLimit string `json:"LowerLimit"`
 	Split      string `json:"Split"`
-	VFOBase    int    `json:"VFOBase"`
+	VFOBase    string `json:"VFOBase"`
 }
 
 var vfoMemory = map[string]*VFO{
-	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: 5010000},
-	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: 5010000},
-	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: 5000000},
-	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: 5000000},
-	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: 5000000},
-	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: 5000000},
+	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010000"},
+	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010000"},
+	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000000"},
+	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000000"},
+	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000"},
+	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000"},
 }
 
 func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
@@ -212,21 +214,30 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vfoSet := vfoMemory[band]
-	lowerLimit, err := strconv.Atoi(vfoSet.LowerLimit)
+	lowerLimit, err := strconv.ParseFloat(vfoSet.LowerLimit, 64)
 	if err != nil {
 		app.serverError(w, err)
 	}
-	rFreq, err := strconv.Atoi(v.RFreq)
+	rFreq, err := strconv.ParseFloat(v.RFreq, 64)
 	if err != nil {
 		app.serverError(w, err)
 	}
-	xFreq, err := strconv.Atoi(v.XFreq)
+	xFreq, err := strconv.ParseFloat(v.XFreq, 64)
 	if err != nil {
 		app.serverError(w, err)
 	}
-	xFreq = xFreq - lowerLimit + vfoSet.VFOBase
-	rFreq = rFreq - lowerLimit + vfoSet.VFOBase
-
+//	app.infoLog.Println("VFOBase: ", vfoSet.VFOBase, band, v)
+	b, err := strconv.ParseFloat(vfoSet.VFOBase, 64)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	xFreq = xFreq - lowerLimit + b
+	xPhase := (xFreq * math.Pow(2.0, 32.0))/125.0
+	xP := int(math.Round(xPhase))
+	rFreq = rFreq - lowerLimit + b
+	rPhase := (rFreq * math.Pow(2.0, 32.0))/125.0
+	rP := int(math.Round(rPhase))
+    vfo.Runvfo(app.vfoAdaptor, xP, rP)
 }
 
 func (app *application) getVFOUpdate() (*VFO, error) {

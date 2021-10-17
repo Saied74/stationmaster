@@ -173,6 +173,7 @@ $("#rcv-enter").click(function(){
   if ($("#split").html() == "Split: Off"){
     $("#xmt").text("Transmit: " + x)
   }
+  updateVFO()
 })
 
 $("#xmt-enter").click(function(){
@@ -186,6 +187,7 @@ $("#xmt-enter").click(function(){
   var x = checkLimit($("#xmt-frequency").val())
   x = normalize(x)
   $("#xmt").text("Transmit: " + x)
+  updateVFO()
 })
 
 
