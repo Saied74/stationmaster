@@ -13,6 +13,9 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-yaml/yaml"
+	"gobot.io/x/gobot/platforms/raspi"
+	
+	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
 //The design of this program is along the lines of Alex Edward's
@@ -46,6 +49,7 @@ type application struct {
 	adifFile      string
 	qslDir        string
 	contestDir    string
+	vfoAdaptor	  *raspi.Adaptor
 }
 
 type httpClient interface {
@@ -128,6 +132,7 @@ func main() {
 		adifFile:      fmt.Sprintf("%s/%s", qslDir, config.ADIFFile),
 		qslDir:        qslDir,
 		contestDir:    contestDir,
+		vfoAdaptor:    vfo.Initvfo(171798692),
 	}
 
 	mux := app.routes()
@@ -178,6 +183,8 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/state", app.state)
 	mux.HandleFunc("/state-confirmed", app.stateConfirmed)
 	mux.HandleFunc("/stateselect", app.stateSelect)
+	mux.HandleFunc("/start-vfo", app.startVFO)
+	mux.HandleFunc("/update-vfo", app.updateVFO)
 	return mux
 }
 

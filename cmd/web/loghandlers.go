@@ -28,6 +28,7 @@ type templateData struct {
 	Logger    bool
 	Contest   string
 	Stats     *Stats
+	VFO       *VFO
 }
 
 type Stats struct {
@@ -572,12 +573,14 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	case "1":
 		v = "10m"
 	case "2":
-		v = "20m"
+		v = "15m"
 	case "3":
-		v = "40m"
+		v = "20m"
 	case "4":
-		v = "80m"
+		v = "40m"
 	case "5":
+		v = "80m"
+	case "6":
 		v = "160m"
 	default:
 		v, err = app.lookupDefault("band")
