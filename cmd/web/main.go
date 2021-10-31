@@ -14,7 +14,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-yaml/yaml"
 	"gobot.io/x/gobot/platforms/raspi"
-	
+
+	"github.com/Saied74/stationmaster/pkg/bandselect"
 	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
@@ -49,7 +50,8 @@ type application struct {
 	adifFile      string
 	qslDir        string
 	contestDir    string
-	vfoAdaptor	  *raspi.Adaptor
+	vfoAdaptor    *raspi.Adaptor
+	bandData      chan bandselect.BandData
 }
 
 type httpClient interface {
@@ -133,15 +135,17 @@ func main() {
 		qslDir:        qslDir,
 		contestDir:    contestDir,
 		vfoAdaptor:    vfo.Initvfo(171798692),
+		bandData:      make(chan bandselect.BandData),
 	}
-
+	go bandselect.BandRead(app.bandData)
 	mux := app.routes()
 	srv := &http.Server{
 		Addr:     ":4000",
 		ErrorLog: errorLog,
 		Handler:  mux,
 	}
-
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 	infoLog.Printf("starting server on :4000")
 	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
@@ -185,6 +189,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/stateselect", app.stateSelect)
 	mux.HandleFunc("/start-vfo", app.startVFO)
 	mux.HandleFunc("/update-vfo", app.updateVFO)
+	mux.HandleFunc("/update-band", app.updateBand)
 	return mux
 }
 
