@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-//	"gobot.io/x/gobot/platforms/raspi"
+	//	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
 	"github.com/Saied74/stationmaster/pkg/vfo"
@@ -226,18 +226,18 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverError(w, err)
 	}
-//	app.infoLog.Println("VFOBase: ", vfoSet.VFOBase, band, v)
+	//	app.infoLog.Println("VFOBase: ", vfoSet.VFOBase, band, v)
 	b, err := strconv.ParseFloat(vfoSet.VFOBase, 64)
 	if err != nil {
 		app.serverError(w, err)
 	}
 	xFreq = xFreq - lowerLimit + b
-	xPhase := (xFreq * math.Pow(2.0, 32.0))/125.0
+	xPhase := (xFreq * math.Pow(2.0, 32.0)) / 125.0
 	xP := int(math.Round(xPhase))
 	rFreq = rFreq - lowerLimit + b
-	rPhase := (rFreq * math.Pow(2.0, 32.0))/125.0
+	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
 	rP := int(math.Round(rPhase))
-    vfo.Runvfo(app.vfoAdaptor, xP, rP)
+	vfo.Runvfo(app.vfoAdaptor, xP, rP)
 }
 
 func (app *application) getVFOUpdate() (*VFO, error) {
@@ -270,4 +270,22 @@ func (app *application) getVFOUpdate() (*VFO, error) {
 	}
 	v.Split = split
 	return v, nil
+}
+
+type BandUpdate struct {
+	Band int `json:"Band"`
+}
+
+func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
+	b := <-app.bandData
+	app.infoLog.Println("updateBand Called", b.Band)
+	update := &BandUpdate{Band: b.Band}
+	u, err := json.Marshal(update)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(u)
+
 }
