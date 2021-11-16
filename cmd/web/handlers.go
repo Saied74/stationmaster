@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -16,14 +17,14 @@ import (
 
 //seed data for the keyer - tutor
 const (
-	speed      = "15"
-	floatSpeed = 15.0
+	speed      = "20"
+	floatSpeed = 20.0
 	farnspeed  = "18"
 	floatFarn  = 18.0
-	lsm        = "1.2"
-	floatLsm   = 1.2
-	wsm        = "1.3"
-	floatWsm   = 1.3
+	lsm        = "1.0"
+	floatLsm   = 1.0
+	wsm        = "1.0"
+	floatWsm   = 1.0
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -158,13 +159,14 @@ type VFO struct {
 	LowerLimit string `json:"LowerLimit"`
 	Split      string `json:"Split"`
 	VFOBase    string `json:"VFOBase"`
+//	Offset     float64 `json:"Offset"`
 }
 
 var vfoMemory = map[string]*VFO{
 	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010000"},
 	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010000"},
 	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000000"},
-	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000000"},
+	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000200"},
 	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000"},
 	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000"},
 }
@@ -180,6 +182,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
+//	fmt.Println("Entered updateVFO")
 	var v VFO
 	err := r.ParseForm()
 	if err != nil {
@@ -222,11 +225,11 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverError(w, err)
 	}
+//	rFreq += vfoSet.Offset
 	xFreq, err := strconv.ParseFloat(v.XFreq, 64)
 	if err != nil {
 		app.serverError(w, err)
 	}
-	//	app.infoLog.Println("VFOBase: ", vfoSet.VFOBase, band, v)
 	b, err := strconv.ParseFloat(vfoSet.VFOBase, 64)
 	if err != nil {
 		app.serverError(w, err)
@@ -273,14 +276,40 @@ func (app *application) getVFOUpdate() (*VFO, error) {
 }
 
 type BandUpdate struct {
-	Band int `json:"Band"`
+	Band string `json:"Band"`
+	Mode string `json:"Mode"`
+}
+
+var switchTable = map[int]BandUpdate{
+	0: BandUpdate{Band: "10m", Mode: "USB"},
+	1: BandUpdate{Band: "15m", Mode: "USB"},
+	2: BandUpdate{Band: "Aux", Mode: "USB"},
+	3: BandUpdate{Band: "20m", Mode: "USB"},
+	4: BandUpdate{Band: "WWV", Mode: "USB"},
+	5: BandUpdate{Band: "40m", Mode: "LSB"},
+	6: BandUpdate{Band: "80m", Mode: "LSB"},
+	7: BandUpdate{Band: "160m", Mode: "LSB"},
 }
 
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	b := <-app.bandData
-	app.infoLog.Println("updateBand Called", b.Band)
-	update := &BandUpdate{Band: b.Band}
+	b := <-app.bandData.Band
+//	app.infoLog.Println("updateBand Called", b)
+	update, ok := switchTable[b]
+	if !ok {
+		app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
+		return
+	}
 	u, err := json.Marshal(update)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.otherModel.updateDefault("band", update.Band)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.otherModel.updateDefault("mode", update.Mode)
 	if err != nil {
 		app.serverError(w, err)
 		return

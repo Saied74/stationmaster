@@ -71,7 +71,7 @@ func Runvfo(ad *raspi.Adaptor, xmt, rcv int) {
 	s := serialize(number)
 
 	streamData(ad, s)
-	
+//	fmt.Println("returning from RunVFO")
 }
 
 func streamData(ad *raspi.Adaptor, d []byte) {
@@ -79,9 +79,11 @@ func streamData(ad *raspi.Adaptor, d []byte) {
 		ad.DigitalWrite(data, dd)
 		ad.DigitalWrite(wordClock, high)
 		ad.DigitalWrite(wordClock, low)
+//		fmt.Println(dd)
 	}
 	ad.DigitalWrite(freqUpdate, high)
 	ad.DigitalWrite(freqUpdate, low)
+//	fmt.Println("returning from streamData")
 }
 
 

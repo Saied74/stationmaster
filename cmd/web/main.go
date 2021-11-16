@@ -51,7 +51,7 @@ type application struct {
 	qslDir        string
 	contestDir    string
 	vfoAdaptor    *raspi.Adaptor
-	bandData      chan bandselect.BandData
+	bandData      *bandselect.BandData
 }
 
 type httpClient interface {
@@ -135,7 +135,11 @@ func main() {
 		qslDir:        qslDir,
 		contestDir:    contestDir,
 		vfoAdaptor:    vfo.Initvfo(171798692),
-		bandData:      make(chan bandselect.BandData),
+//		bandData:      make(chan int), //bandselect.BandData.Band),
+	}
+	app.bandData = &bandselect.BandData{
+		Band: make(chan int),
+		Adaptor: app.vfoAdaptor,
 	}
 	go bandselect.BandRead(app.bandData)
 	mux := app.routes()
