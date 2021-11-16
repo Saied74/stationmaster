@@ -4,18 +4,21 @@ package bandselect
 
 import (
 	"time"
+	
+	"gobot.io/x/gobot/platforms/raspi"
 )
 
 type BandData struct {
-	Band int
+	Band chan int
+	Adapter *raspi.Adaptor
 }
 
-func BandRead(b chan BandData) {
+func BandRead(bd *BandData) {
 	i := 0
 	for {
 		time.Sleep(2 * time.Second)
 
-		b <- BandData{i}
+		bd.Band <- i
 		i++
 		if i == 8 {
 			i = 0
