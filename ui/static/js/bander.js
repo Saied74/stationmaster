@@ -4,6 +4,7 @@ setInterval(function(){
     if (this.readyState == 4 && this.status == 200) {
       var data = JSON.parse(xhttp.responseText);
       postMessage(data["Band"]);
+
     }
   };
   xhttp.open("GET", "/update-band", true);

@@ -194,6 +194,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/start-vfo", app.startVFO)
 	mux.HandleFunc("/update-vfo", app.updateVFO)
 	mux.HandleFunc("/update-band", app.updateBand)
+	mux.HandleFunc("/update-dx", app.updateDX)
 	return mux
 }
 
