@@ -135,26 +135,50 @@ $(document).ready(function(){
 
   // let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
   // sModal.show();
+  
 
   var title = $("title").text()
+  
   if (title == "VFO Control"){
-    var bander = new Worker("/static/js/bander.js")
-    bander.onmessage = function(reply){
-        $("#test").html(reply.data);
-    };
-    
-  }
+    setInterval(function(){
+       $.getJSON("/update-band")
+    .then(function(data){
+     
+ $("#test").html(data["Band"]);
+    });
   
-  
-setInterval(function(){
     var band = $("#band").html()
     var testBand = $("#test").html()
     if (!(band.includes(testBand))) {
+      
       window.location = "http://localhost:4000/start-vfo";
- //     load()
     };
-}, 1000)
+}, 2000)
+  }
+  
+  if (title == "VFO Control") {
+    setInterval(function(){
+      $.getJSON("/update-dx").then(function(data){
+        //alert(data.DXTable[0].DE)
+        //{{with .VFO }}
+        //{{range $i, $val := .DX}}
+        for (i = 0; i < data.DXTable.length; i++) {
+          $("#de"+i).html(data.DXTable[i].DE);
+          $("#dx"+i).html(data["DXTable"][i].DX);
+          $("#country"+i).html(data["DXTable"][i].Country);
 
+          //var s = data["DXTable"][i].Frequency;
+          //var f = dxFreq(s)
+          //f = normalize(f)
+          $("#frequency"+i).html(data["DXTable"][i].Frequency);
+          $("#need"+i).html(data["DXTable"][i].Need);
+        }
+        //{{end}}
+        //{{end}}
+      })
+      }, 30000)
+    }  
+  
   $("#search-button").click(function() {
     $.getJSON("/callsearch?call="+$("#search-call").val())
     .then(function(data){
@@ -421,14 +445,33 @@ function updateVFO(){
             data: JSON.stringify(vfodata)
         });
 }
+{{with .VFO}}
+{{range $nn, $val := .DX}}
+$("#frequency{{$nn}}").click(function(){
+  var s = $("#frequency{{$nn}}").html();
+  var f = dxFreq(s)
+  f = normalize(f)
+  dxSend(f)
+});
+{{end}}
+{{end}}
 
 
+function dxFreq(f) {
+  var y = f.split(".")
+  y[0] = Number(y[0]/1000)
+  return y[0]+y[1]
+};
+
+function dxSend(f) {
+  $("#rcv").text("Receive: " + f)
+  if ($("#split").html() == "Split: Off"){
+    $("#xmt").text("Transmit: " + f)
+  }
+  updateVFO()
+};
 
 });
-
-// let sModal = new bootstrap.Modal(document.getElementById("searchModal"), {});
-// sModal.show();
-
 
 
 </script>

@@ -108,6 +108,10 @@ func (f *mockLogsModel) getLogsByState(state string) ([]LogsRow, error) {
 	return []LogsRow, nil
 }
 
+func (f *mockLogsModel) findNeed(dx []DXClusters) ([]DXClusters, error) {
+	return []DXClusters{}, nil
+}
+
 type mockQRZModel struct {
 	row         LogsRow
 	rows        []LogsRow
