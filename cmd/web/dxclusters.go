@@ -6,13 +6,15 @@ Call^Frequency^Date/Time^Spotter^Comment^LoTW user^eQSL user^Continent^Band^Coun
 */
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
+//	"log"
 	"net/http"
 //	"os"
 	"strconv"
 	"strings"
+	"time"
 //	"text/tabwriter"
 	"unicode/utf8"
 )
@@ -60,6 +62,8 @@ type DXClusters struct {
 	Frequency string
 	Need string
 }
+
+var errNoDXSpots = errors.New("no dx spots")
 
 var scanList = []dxItemType{dxItemSpotter, dxItemFreq, dxItemCall, dxItemComment, dxItemDate,
 	dxItemLOTW, dxItemEQSL, dxItemBand, dxItemContinent, dxItemCountry, dxItemADIFCountry}
@@ -171,10 +175,13 @@ func munchNumbers(l *dxLexer) dxStateFn {
 //}
 
 func getCluster(url string) ([]byte, error) {
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 1200 * time.Millisecond,
+		}
 	resp, err := client.Get(url)
 	if err != nil {
-		return []byte{}, fmt.Errorf("GET error: %v", err)
+		fmt.Println("Error from hamqth", err)
+		return []byte{}, errNoDXSpots
 	}
 	defer resp.Body.Close()
 
@@ -199,7 +206,7 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 	
 	data, err := getCluster(url)
 	if err != nil {
-		log.Fatal(err)
+		return []DXClusters{}, err
 	}
 	// fmt.Println(data)
 //	output := []map[dxItemType]string{}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -186,6 +187,10 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	td.VFO = v
 	dx, err := clusters(v.Band, dxLines)
 	if err != nil {
+		if errors.Is(err, errNoDXSpots) {
+			app.render(w, r, "vfo.page.html", td) //data)
+			return
+		}	
 		app.serverError(w, err)
 	}
 	dx, err = app.pickZone(cqZone, dx)
@@ -317,6 +322,9 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	}
 	dx, err := clusters(band, dxLines)
 	if err != nil {
+		if errors.Is(err, errNoDXSpots) {
+			return
+		}	
 		app.serverError(w, err)
 		return
 	}
