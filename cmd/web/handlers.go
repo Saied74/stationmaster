@@ -163,8 +163,8 @@ type VFO struct {
 	LowerLimit string `json:"LowerLimit"`
 	Split      string `json:"Split"`
 	VFOBase    string `json:"VFOBase"`
-	DX		  []DXClusters
-//	Offset     float64 `json:"Offset"`
+	DX         []DXClusters
+	//	Offset     float64 `json:"Offset"`
 }
 
 var vfoMemory = map[string]*VFO{
@@ -183,6 +183,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	v, err := app.getVFOUpdate()
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	td.VFO = v
 	dx, err := clusters(v.Band, dxLines)
@@ -190,7 +191,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, errNoDXSpots) {
 			app.render(w, r, "vfo.page.html", td) //data)
 			return
-		}	
+		}
 		app.serverError(w, err)
 	}
 	dx, err = app.pickZone(cqZone, dx)
@@ -207,7 +208,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
-//	fmt.Println("Entered updateVFO")
+	//	fmt.Println("Entered updateVFO")
 	var v VFO
 	err := r.ParseForm()
 	if err != nil {
@@ -250,7 +251,7 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverError(w, err)
 	}
-//	rFreq += vfoSet.Offset
+	//	rFreq += vfoSet.Offset
 	xFreq, err := strconv.ParseFloat(v.XFreq, 64)
 	if err != nil {
 		app.serverError(w, err)
@@ -268,11 +269,9 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	vfo.Runvfo(app.vfoAdaptor, xP, rP)
 }
 
-
-
 type BandUpdate struct {
-	Band string `json:"Band"`
-	Mode string `json:"Mode"`
+	Band    string `json:"Band"`
+	Mode    string `json:"Mode"`
 	DXTable []DXClusters
 }
 
@@ -294,7 +293,7 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
 		return
 	}
-	
+
 	u, err := json.Marshal(update)
 	if err != nil {
 		app.serverError(w, err)
@@ -324,7 +323,7 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			return
-		}	
+		}
 		app.serverError(w, err)
 		return
 	}

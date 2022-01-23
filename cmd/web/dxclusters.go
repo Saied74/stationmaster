@@ -9,13 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-//	"log"
+	"net"
+
+	//	"log"
 	"net/http"
-//	"os"
+	//	"os"
 	"strconv"
 	"strings"
 	"time"
-//	"text/tabwriter"
+
+	//	"text/tabwriter"
 	"unicode/utf8"
 )
 
@@ -27,11 +30,11 @@ type dxItem struct {
 }
 
 type dxLexer struct {
-	name  string    // used only for error reports.
-	input string    // the string being scanned.
-	start int       // start position of this item.
-	pos   int       // current position in the input.
-	width int       // width of last rune read from input.
+	name  string      // used only for error reports.
+	input string      // the string being scanned.
+	start int         // start position of this item.
+	pos   int         // current position in the input.
+	width int         // width of last rune read from input.
 	field dxItemType  //field to emit into the chanel
 	items chan dxItem // channel of scanned items.
 }
@@ -56,11 +59,11 @@ const (
 type dxStateFn func(*dxLexer) dxStateFn
 
 type DXClusters struct {
-	DE string
+	DE        string
 	DXStation string
-	Country string
+	Country   string
 	Frequency string
-	Need string
+	Need      string
 }
 
 var errNoDXSpots = errors.New("no dx spots")
@@ -140,7 +143,7 @@ func dxLexText(l *dxLexer) dxStateFn {
 	// Correctly reached EOF.
 	l.field = dxItemEOF
 	l.emit(dxItemEOF) // Useful to make EOF a token.
-	return nil      // Stop the run loop.
+	return nil        // Stop the run loop.
 }
 
 func munchNumbers(l *dxLexer) dxStateFn {
@@ -170,18 +173,21 @@ func munchNumbers(l *dxLexer) dxStateFn {
 }
 
 //type clustersData struct {
-	//data chan []byte
-	//ctx context.Context
+//data chan []byte
+//ctx context.Context
 //}
 
 func getCluster(url string) ([]byte, error) {
 	client := &http.Client{
-		Timeout: 1200 * time.Millisecond,
-		}
+		Timeout: 2 * time.Second,
+	}
 	resp, err := client.Get(url)
 	if err != nil {
-		fmt.Println("Error from hamqth", err)
-		return []byte{}, errNoDXSpots
+		if e, ok := err.(net.Error); ok && e.Timeout() {
+			fmt.Println("This was a timeout")
+			return []byte{}, errNoDXSpots
+		}
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 
@@ -200,17 +206,17 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 	url := fmt.Sprintf("https://www.hamqth.com/dxc_csv.php?limit=%d&band=%s", lines, band)
 	//dxctx, dxCancel := context.WithCancel(context.Background())
 	//cData := clustersData{
-		//data: make(chan []byte),
-		//ctx: dxctx,
+	//data: make(chan []byte),
+	//ctx: dxctx,
 	//}
-	
+
 	data, err := getCluster(url)
 	if err != nil {
 		return []DXClusters{}, err
 	}
 	// fmt.Println(data)
-//	output := []map[dxItemType]string{}
-//	outputLine := map[dxItemType]string{}
+	//	output := []map[dxItemType]string{}
+	//	outputLine := map[dxItemType]string{}
 	outputItem := DXClusters{}
 	outputTable := []DXClusters{}
 	var b bool
@@ -221,14 +227,14 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 		case dxItemEOR:
 			outputTable = append(outputTable, outputItem)
 			outputItem = DXClusters{}
-//			output = append(output, outputLine)
-//			outputLine = map[dxItemType]string{}
+			//			output = append(output, outputLine)
+			//			outputLine = map[dxItemType]string{}
 		case dxItemEOF:
 			b = true
 			break
 		case dxItemError:
 			return []DXClusters{}, fmt.Errorf("error from scanner %v", dxItemError)
-//			log.Fatal("Error from the scanner")
+			//			log.Fatal("Error from the scanner")
 		case dxItemSpotter:
 			outputItem.DE = strings.TrimLeft(d.val, " ")
 			outputItem.DE = strings.TrimLeft(d.val, "\n")
@@ -249,21 +255,22 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 	}
 	return outputTable, nil
 }
-	//printTable := []string{}
-	//for _, line := range output {
-		//printRow := ""
-		//for _, index := range scanList {
-			//printRow += fmt.Sprintf("%s\t", line[index])
-		//}
-		//// printRow = strings.TrimRight(printRow, "\t")
-		//printTable = append(printTable, printRow)
-	//}
-	//w := new(tabwriter.Writer)
-	//w.Init(os.Stdout, 14, 8, 0, '\t', 0)
-	//fmt.Fprintln(w, "Spotter\tDX\tSpotter\tComment\tDate\tLOTW\tEQSL\tContinent\tBand\tCountry\tADIFCountry")
-	//for _, row := range printTable {
-		//fmt.Fprintln(w, row)
-	//}
 
-	//w.Flush()
+//printTable := []string{}
+//for _, line := range output {
+//printRow := ""
+//for _, index := range scanList {
+//printRow += fmt.Sprintf("%s\t", line[index])
+//}
+//// printRow = strings.TrimRight(printRow, "\t")
+//printTable = append(printTable, printRow)
+//}
+//w := new(tabwriter.Writer)
+//w.Init(os.Stdout, 14, 8, 0, '\t', 0)
+//fmt.Fprintln(w, "Spotter\tDX\tSpotter\tComment\tDate\tLOTW\tEQSL\tContinent\tBand\tCountry\tADIFCountry")
+//for _, row := range printTable {
+//fmt.Fprintln(w, row)
+//}
+
+//w.Flush()
 //}
