@@ -8,7 +8,8 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-//	"os"
+
+	//	"os"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
@@ -354,29 +355,34 @@ func saveId() (putId putIdFunc, getId getIdFunc) {
 func (app *application) getVFOUpdate() (*VFO, error) {
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
+		fmt.Println("1")
 		return &VFO{}, err
 	}
 	v := vfoMemory[band]
 	v.Band = band
 	mode, err := app.otherModel.getDefault("mode")
 	if err != nil {
+		fmt.Println("2")
 		return &VFO{}, err
 	}
 	v.Mode = mode
 	x := band + "xfreq"
 	xfreq, err := app.otherModel.getDefault(x)
 	if err != nil {
+		fmt.Println(x, "3")
 		return &VFO{}, err
 	}
 	v.XFreq = xfreq
 	r := band + "rfreq"
 	rfreq, err := app.otherModel.getDefault(r)
 	if err != nil {
+		fmt.Println("4")
 		return &VFO{}, err
 	}
 	v.RFreq = rfreq
 	split, err := app.otherModel.getDefault("split")
 	if err != nil {
+		fmt.Println("5")
 		return &VFO{}, err
 	}
 	v.Split = split
@@ -388,31 +394,31 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 	i := 0
 	j := 0
 	for _, dx := range dxData {
-		
+
 		//q, err := app.getHamInfo(dxItem.DE)
 		//if err != nil {
-			//continue
+		//continue
 		//}
 		//app.infoLog.Println(j, i, dx.DE)
 		inUS := strings.HasPrefix(dx.DE, "K") ||
-		strings.HasPrefix(dx.DE, "W") ||
-		strings.HasPrefix(dx.DE, "N") ||
-		strings.HasPrefix(dx.DE, "A")
-		
+			strings.HasPrefix(dx.DE, "W") ||
+			strings.HasPrefix(dx.DE, "N") ||
+			strings.HasPrefix(dx.DE, "A")
+
 		inZone := strings.Contains(dx.DE, "1") ||
-		strings.Contains(dx.DE, "2") ||
-		strings.Contains(dx.DE, "3") ||
-		strings.Contains(dx.DE, "4")
-	//	app.infoLog.Println("InZone", inZone)
-		if  inUS && inZone {
+			strings.Contains(dx.DE, "2") ||
+			strings.Contains(dx.DE, "3") ||
+			strings.Contains(dx.DE, "4")
+			//	app.infoLog.Println("InZone", inZone)
+		if inUS && inZone {
 			newData = append(newData, dx)
 			i++
 		}
-		if i == maxDXLines - 1 {
+		if i == maxDXLines-1 {
 			break
 		}
 		j++
 	}
-	return newData, nil	
-	
+	return newData, nil
+
 }
