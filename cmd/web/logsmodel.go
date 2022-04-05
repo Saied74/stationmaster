@@ -27,7 +27,7 @@ type logsType interface {
 	updateQSO(map[itemType]string) error
 	getConfirmedStates() ([]LogsRow, error)
 	getLogsByState(string) ([]LogsRow, error)
-	findNeed([]DXClusters) ([]DXClusters, error) 
+	findNeed([]DXClusters) ([]DXClusters, error)
 }
 
 type logsModel struct {
@@ -734,7 +734,7 @@ func (m *logsModel) updateQSO(row map[itemType]string) error {
 func (m *logsModel) findNeed(dx []DXClusters) ([]DXClusters, error) {
 	newDX := []DXClusters{}
 	stmt := `SELECT DISTINCT country FROM stationlogs where lotwrcvd = ? and country = ?`
-	for _, d := range dx{
+	for _, d := range dx {
 		row := m.DB.QueryRow(stmt, "YES", d.Country)
 		s := &LogsRow{}
 		err := row.Scan(&s.Call)
@@ -744,7 +744,7 @@ func (m *logsModel) findNeed(dx []DXClusters) ([]DXClusters, error) {
 				newDX = append(newDX, d)
 				continue
 			} else {
-			return nil, err
+				return nil, err
 			}
 		}
 		d.Need = "No"

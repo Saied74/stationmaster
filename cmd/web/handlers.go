@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	//"time"
 
 	//	"gobot.io/x/gobot/platforms/raspi"
 
@@ -186,7 +187,12 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.VFO = v
-	dx, err := clusters(v.Band, dxLines)
+	band, err := app.otherModel.getDefault("band")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	dx, err := clusters(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			app.render(w, r, "vfo.page.html", td) //data)
@@ -208,7 +214,6 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
-	//	fmt.Println("Entered updateVFO")
 	var v VFO
 	err := r.ParseForm()
 	if err != nil {
@@ -266,6 +271,7 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	rFreq = rFreq - lowerLimit + b
 	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
 	rP := int(math.Round(rPhase))
+	//fmt.Println("before runvfo", band, xf, rf)
 	vfo.Runvfo(app.vfoAdaptor, xP, rP)
 }
 
@@ -287,24 +293,45 @@ var switchTable = map[int]BandUpdate{
 }
 
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	b := <-app.bandData.Band
-	update, ok := switchTable[b]
-	if !ok {
-		app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
+	var b int
+	update := BandUpdate{}
+	mode, err := app.otherModel.getDefault("mode")
+	if err != nil {
+		app.serverError(w, err)
 		return
+	}
+	band, err := app.otherModel.getDefault("band")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	select {
+	case b = <-app.bandData.Band:
+		update, ok := switchTable[b]
+		if !ok {
+			app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
+			return
+		}
+		if mode != "FT8" {
+			err = app.otherModel.updateDefault("mode", update.Mode)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		}
+		err = app.otherModel.updateDefault("band", update.Band)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}	
+	default:
+		update = BandUpdate{
+			Mode: mode,
+			Band: band,
+		}
 	}
 
 	u, err := json.Marshal(update)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	err = app.otherModel.updateDefault("band", update.Band)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	err = app.otherModel.updateDefault("mode", update.Mode)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -345,7 +372,6 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	app.infoLog.Printf("<-------------- DX------------>\n\n")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
 }

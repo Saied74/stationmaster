@@ -159,24 +159,20 @@ $(document).ready(function(){
   if (title == "VFO Control") {
     setInterval(function(){
       $.getJSON("/update-dx").then(function(data){
-        //alert(data.DXTable[0].DE)
-        //{{with .VFO }}
-        //{{range $i, $val := .DX}}
+        
+        
+        if (data.DXTable[0].DE != "") {
         for (i = 0; i < data.DXTable.length; i++) {
           $("#de"+i).html(data.DXTable[i].DE);
           $("#dx"+i).html(data["DXTable"][i].DX);
           $("#country"+i).html(data["DXTable"][i].Country);
-
-          //var s = data["DXTable"][i].Frequency;
-          //var f = dxFreq(s)
-          //f = normalize(f)
           $("#frequency"+i).html(data["DXTable"][i].Frequency);
           $("#need"+i).html(data["DXTable"][i].Need);
         }
-        //{{end}}
-        //{{end}}
+      }
+        
       })
-      }, 30000)
+      },30000)
     }  
   
   $("#search-button").click(function() {
@@ -434,6 +430,7 @@ function updateVFO(){
     XFreq: xmtFreq,
     Split: split,
   }
+ // alert("ajax call before")
   $.ajax({
             url: "update-vfo",
             type: 'post',

@@ -172,11 +172,6 @@ func munchNumbers(l *dxLexer) dxStateFn {
 	return nil
 }
 
-//type clustersData struct {
-//data chan []byte
-//ctx context.Context
-//}
-
 func getCluster(url string) ([]byte, error) {
 	client := &http.Client{
 		Timeout: 2 * time.Second,
@@ -184,7 +179,7 @@ func getCluster(url string) ([]byte, error) {
 	resp, err := client.Get(url)
 	if err != nil {
 		if e, ok := err.(net.Error); ok && e.Timeout() {
-			fmt.Println("This was a timeout")
+			//fmt.Println("This was a timeout")
 			return []byte{}, errNoDXSpots
 		}
 		return []byte{}, err
@@ -203,20 +198,13 @@ func getCluster(url string) ([]byte, error) {
 }
 
 func clusters(band string, lines int) ([]DXClusters, error) {
+
 	url := fmt.Sprintf("https://www.hamqth.com/dxc_csv.php?limit=%d&band=%s", lines, band)
-	//dxctx, dxCancel := context.WithCancel(context.Background())
-	//cData := clustersData{
-	//data: make(chan []byte),
-	//ctx: dxctx,
-	//}
 
 	data, err := getCluster(url)
 	if err != nil {
 		return []DXClusters{}, err
 	}
-	// fmt.Println(data)
-	//	output := []map[dxItemType]string{}
-	//	outputLine := map[dxItemType]string{}
 	outputItem := DXClusters{}
 	outputTable := []DXClusters{}
 	var b bool
@@ -227,14 +215,11 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 		case dxItemEOR:
 			outputTable = append(outputTable, outputItem)
 			outputItem = DXClusters{}
-			//			output = append(output, outputLine)
-			//			outputLine = map[dxItemType]string{}
 		case dxItemEOF:
 			b = true
 			break
 		case dxItemError:
 			return []DXClusters{}, fmt.Errorf("error from scanner %v", dxItemError)
-			//			log.Fatal("Error from the scanner")
 		case dxItemSpotter:
 			outputItem.DE = strings.TrimLeft(d.val, " ")
 			outputItem.DE = strings.TrimLeft(d.val, "\n")
@@ -246,8 +231,6 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 			outputItem.Frequency = strings.TrimLeft(d.val, " ")
 		default:
 			continue
-			//outputLine[d.typ] = strings.TrimLeft(d.val, " ")
-			// fmt.Printf("%d:%s\t", d.typ, d.val)
 		}
 		if b {
 			break
@@ -255,22 +238,3 @@ func clusters(band string, lines int) ([]DXClusters, error) {
 	}
 	return outputTable, nil
 }
-
-//printTable := []string{}
-//for _, line := range output {
-//printRow := ""
-//for _, index := range scanList {
-//printRow += fmt.Sprintf("%s\t", line[index])
-//}
-//// printRow = strings.TrimRight(printRow, "\t")
-//printTable = append(printTable, printRow)
-//}
-//w := new(tabwriter.Writer)
-//w.Init(os.Stdout, 14, 8, 0, '\t', 0)
-//fmt.Fprintln(w, "Spotter\tDX\tSpotter\tComment\tDate\tLOTW\tEQSL\tContinent\tBand\tCountry\tADIFCountry")
-//for _, row := range printTable {
-//fmt.Fprintln(w, row)
-//}
-
-//w.Flush()
-//}
