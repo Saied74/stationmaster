@@ -135,13 +135,15 @@ func main() {
 		qslDir:        qslDir,
 		contestDir:    contestDir,
 		vfoAdaptor:    vfo.Initvfo(171798692),
-//		bandData:      make(chan int), //bandselect.BandData.Band),
+
+		//		bandData:      make(chan int), //bandselect.BandData.Band),
 	}
 	app.bandData = &bandselect.BandData{
-		Band: make(chan int),
+		Band:    make(chan int),
 		Adaptor: app.vfoAdaptor,
 	}
 	go bandselect.BandRead(app.bandData)
+
 	mux := app.routes()
 	srv := &http.Server{
 		Addr:     ":4000",

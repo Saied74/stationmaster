@@ -110,6 +110,7 @@
   <option {{if .Edit}}{{if eq .LogEdit.Mode "USB"}}selected value="USB" {{end}}{{else}}{{if eq .Mode "USB"}}selected value="USB" {{end}}{{end}}>USB</option>
   <option {{if .Edit}}{{if eq .LogEdit.Mode "LSB"}}selected value="LSB" {{end}}{{else}}{{if eq .Mode "LSB"}}selected value="LSB" {{end}}{{end}}}>LSB</option>
   <option {{if .Edit}}{{if eq .LogEdit.Mode "CW" }}selected value="CW"  {{end}}{{else}}{{if eq .Mode "CW" }}selected value="CW"  {{end}}{{end}}}>CW</option>
+    <option {{if .Edit}}{{if eq .LogEdit.Mode "FT8" }}selected value="FT8"  {{end}}{{else}}{{if eq .Mode "FT8" }}selected value="FT8"  {{end}}{{end}}}>FT8</option>
 </select>
 
 <label for="sent-signal" class="form-label">Sent</label>
