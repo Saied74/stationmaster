@@ -162,7 +162,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 	f.isInt("sent")
 	f.isInt("rcvd")
 
-	//<+++++++++++++++  Start of invalid forrm handling
+	//<+++++++++++++++  Start of invalid form handling
 	if !f.valid() {
 		var err error
 		if contestOn == "No" {
@@ -199,7 +199,7 @@ func (app *application) addlog(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	//Sent RRST
+	//Sent RST
 	sent, err := app.otherModel.getDefault("sent")
 	if err != nil {
 		app.serverError(w, err)

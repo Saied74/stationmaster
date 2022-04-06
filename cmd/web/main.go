@@ -143,6 +143,7 @@ func main() {
 		Adaptor: app.vfoAdaptor,
 	}
 	go bandselect.BandRead(app.bandData)
+	go app.wsjtxServe()
 
 	mux := app.routes()
 	srv := &http.Server{
