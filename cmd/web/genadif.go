@@ -129,6 +129,8 @@ func normalizeMode(s string) string {
 		return "SSB"
 	case "CW":
 		return "CW"
+	case "FT8":
+		return "FT8"
 	default:
 		return "SSB"
 	}

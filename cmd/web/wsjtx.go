@@ -7,7 +7,7 @@ import (
 	"os"
 	"reflect"
 	"runtime/debug"
-	"time"
+//	"time"
 
 	"github.com/k0swe/wsjtx-go/v4"
 )
@@ -35,7 +35,7 @@ func (app *application) wsjtxServe() {
 				break
 			}
 		default:
-			time.Sleep(3000*time.Millisecond)
+			//time.Sleep(3000*time.Millisecond)
 		}
 	}
 }
@@ -48,6 +48,17 @@ func (app *application)handleServerMessage(message interface{}) error {
 	case wsjtx.StatusMessage:
 		//log.Println("Status:", message)
 	case wsjtx.DecodeMessage:
+		//m := message.(wsjtx.DecodeMessage)
+		//log.Println("ID:", m.Id)
+		//log.Println("New: ", m.New)
+		//log.Println("Time: ", m.Time)
+		//log.Println("SNR: ", m.Snr)
+		//log.Println("DT: ", m.DeltaTimeSec)
+		//log.Println("DF: ", m.DeltaFrequencyHz)
+		//log.Println("Mode: ", m.Mode)
+		//log.Println("Message: ", m.Message)
+		//log.Println("Low Conf: ", m.LowConfidence)
+		//log.Println("OffAir: ", m.OffAir)
 		//log.Println("Decode:", message)
 	case wsjtx.ClearMessage:
 		//log.Println("Clear:", message)

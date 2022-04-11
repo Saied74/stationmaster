@@ -21,6 +21,136 @@ type qrzModel struct {
 }
 
 func (m *qrzModel) insertQRZ(c *Ctype) error {
+	if c.Call == "" {
+		return nil
+	}
+	if len(c.Call) > 20 {
+		c.Call = c.Call[0:20]
+	}
+	if len(c.Aliases) > 50 {
+		c.Aliases = c.Aliases[0:50]
+	}
+	if len(c.Dxcc) > 5 {
+		c.Dxcc = c.Dxcc[0:5]
+	}
+	if len(c.Fname) > 100 {
+		c.Fname = c.Fname[0:100]
+	}
+	if len(c.Lname) > 100 {
+		c.Lname = c.Lname[0:100]
+	}
+	if len(c.NickName) > 50 {
+		c.NickName = c.NickName[0:50]
+	}
+	if len(c.Born) > 5 {
+		c.Born = c.Born[0:5]
+	}
+	if len(c.Addr1) > 50 {
+		c.Addr1 = c.Addr1[0:50]
+	}
+	if len(c.Addr2) > 50 {
+		c.Addr2 = c.Addr2[0:50]
+	}
+	if len(c.State) > 20 {
+		c.State = c.State[0:20]
+	}
+	if len(c.Zip) > 10 {
+		c.Zip = c.Zip[0:10]
+	}
+	if len(c.Country) > 50 {
+		c.Country = c.Country[0:50]
+	}
+	if len(c.CountryCode) > 5 {
+		c.CountryCode = c.CountryCode[0:5]
+	}
+	if len(c.Lat) > 15 {
+		c.Lat = c.Lat[0:15]
+	}
+	if len(c.Long) > 15 {
+		c.Long = c.Long[0:15]
+	}
+	if len(c.Grid) > 10 {
+		c.Grid = c.Grid[0:10]
+	}
+	if len(c.County) > 50 {
+		c.County = c.County[0:50]
+	}
+	if len(c.FIPS) > 10 {
+		c.FIPS = c.FIPS[0:10]
+	}
+	if len(c.Land) > 50 {
+		c.Land = c.Land[0:50]
+	}
+	if len(c.CQzone) > 5 {
+		c.CQzone = c.CQzone[0:5]
+	}
+	if len(c.ITUzone) > 5 {
+		c.ITUzone = c.ITUzone[0:5]
+	}
+	if len(c.GeoLocation) > 10 {
+		c.GeoLocation = c.GeoLocation[0:10]
+	}
+	if len(c.EffDate) > 10 {
+		c.EffDate = c.EffDate[0:10]
+	}
+	if len(c.ExpDate) > 10 {
+		c.ExpDate = c.ExpDate[0:10]
+	}
+	if len(c.PrevCall) > 10 {
+		c.PrevCall = c.PrevCall[0:10]
+	}
+	if len(c.Class) > 5 {
+		c.Class = c.Class[0:5]
+	}
+	if len(c.Codes) > 5 {
+		c.Codes = c.Codes[0:5]
+	}
+	if len(c.QSLMgr) > 100 {
+		c.QSLMgr = c.QSLMgr[0:100]
+	}
+	if len(c.Email) > 50 {
+		c.Email = c.Email[0:50]
+	}
+	if len(c.URL) > 50 {
+		c.URL = c.URL[0:50]
+	}
+	if len(c.Views) > 20 {
+		c.Views = c.Views[0:20]
+	}
+	if len(c.Bio) > 50 {
+		c.Bio = c.Bio[0:50]
+	}
+	if len(c.Image) > 150 {
+		c.Image = c.Image[0:150]
+	}
+	if len(c.ModDate) > 30 {
+		c.ModDate = c.ModDate[0:30]
+	}
+	if len(c.MSA) > 5 {
+		c.MSA = c.MSA[0:5]
+	}
+	if len(c.AreaCode) > 5 {
+		c.AreaCode = c.AreaCode[0:5]
+	}
+	if len(c.TimeZone) > 20 {
+		c.TimeZone = c.TimeZone[0:20]
+	}
+	if len(c.GMTOffset) > 5 {
+		c.GMTOffset = c.GMTOffset[0:5]
+	}
+	if len(c.DST) > 3 {
+		c.DST = c.DST[0:3]
+	}
+	if len(c.EQSL) > 3 {
+		c.EQSL = c.EQSL[0:3]
+	}
+	if len(c.MQSL) > 3 {
+		c.MQSL = c.MQSL[0:3]
+	}
+	if len(c.Attn) > 100 {
+		c.Attn = c.Attn[0:100]
+	}
+	
 	stmt := `INSERT INTO qrztable (time, callsign, aliases, dxcc, first_name,
 		last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
 		lat, lon, grid, county, fips, land, cqzone, ituzone, geolocation, effdate,
