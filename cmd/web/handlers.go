@@ -170,10 +170,10 @@ type VFO struct {
 
 var vfoMemory = map[string]*VFO{
 	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010000"},
-	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010000"},
+	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010382"},
 	"Aux":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.000000"},
-	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000300"},
-	"WWV":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.000000"},
+	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000305"},
+	"WWV":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.011585"},
 	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000200"},
 	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000"},
 	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000"},
@@ -198,7 +198,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 			app.render(w, r, "vfo.page.html", td) //data)
 			return
 		}
-		app.serverError(w, err)
+		app.infoLog.Printf("error from calling clusters in startVFO %v\n", err)
 	}
 	dx, err = app.pickZone(cqZone, dx)
 	if err != nil {
@@ -351,7 +351,7 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, errNoDXSpots) {
 			return
 		}
-		app.serverError(w, err)
+		app.infoLog.Printf("error from calling clusters in updateDX %v\n", err)
 		return
 	}
 	dx, err = app.pickZone(cqZone, dx)

@@ -37,10 +37,10 @@ import (
 )
 
 const(
-reset = "36"
-wordClock = "37"
-freqUpdate = "38"
-data = "40"
+reset = "26"
+wordClock = "24"
+freqUpdate = "18"
+data = "22"
 high = byte(1)
 low = byte(0)
 )

@@ -18,8 +18,8 @@ const (
 	lineLength   = 100  //number of letters and spaces per printed line
 	ditInput     = "3"  // GPIO physical input pin 11
 	dahInput     = "7"  // GPIO physical input pin 7
-	TutorOutput  = "10" // GPIO physical output pin 10
-	KeyerOutput  = "8"  //GPIO Pin 8
+	TutorOutput  = "16" // GPIO physical output pin 10
+	KeyerOutput  = "12"  //GPIO Pin 8
 	debounceTime = 2    //in milliseconds
 )
 

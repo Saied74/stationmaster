@@ -105,6 +105,15 @@ var tableHead = headRow{
 
 //will insert a new record into the stationlogs table
 func (m *logsModel) insertLog(l *LogsRow) (int, error) {
+	if len(l.Name) > 100 {
+		l.Name = l.Name[0:100]
+	}
+	if len(l.Country) > 100 {
+		l.Country = l.Country[0:100]
+	}
+	if len(l.Comment) > 100 {
+		l.Comment = l.Comment[0:100]
+	}
 
 	stmt := `INSERT INTO stationlogs (time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,

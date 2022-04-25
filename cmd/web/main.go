@@ -52,6 +52,9 @@ type application struct {
 	contestDir    string
 	vfoAdaptor    *raspi.Adaptor
 	bandData      *bandselect.BandData
+	cqStat		  [wsjtBuffer]int
+	qsoStat		  [wsjtBuffer]int
+	wsjtPntr	  int
 }
 
 type httpClient interface {
@@ -135,6 +138,9 @@ func main() {
 		qslDir:        qslDir,
 		contestDir:    contestDir,
 		vfoAdaptor:    vfo.Initvfo(171798692),
+		cqStat:        [wsjtBuffer]int{},
+		qsoStat:       [wsjtBuffer]int{},
+		wsjtPntr:      0,
 
 		//		bandData:      make(chan int), //bandselect.BandData.Band),
 	}
