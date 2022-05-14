@@ -377,10 +377,18 @@ function checkLimit(x){ //accepts integer rreturrns integer
   if (x < lower) {
     return lower
   }
+  mode = $("#mode").html()
+  if (mode == "Mode: FT8") {
+    return x
+  }
+  if (mode == "Mode: FT4") {
+    return x
+  }
   if (x <= cwbnd) {
     $("#mode").html("Mode: CW")
     return x
   }
+
   if (x > cwbnd) {
     var band = $("#band").html()
     if ((band == "Band: 10m") || (band == "Band: 15m") || (band == "Band: 20m")){

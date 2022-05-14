@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	//"time"
 
 	//	"gobot.io/x/gobot/platforms/raspi"
@@ -192,6 +193,17 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	//mode, err := app.otherModel.getDefault("mode")
+	//if err != nil {
+		//app.serverError(w, err)
+		//return
+	//}
+	//fmt.Println("x",  mode)
+	noDXData := strings.Contains(band, "Aux") || strings.Contains(band, "WWV")
+	if noDXData {
+		app.render(w, r, "vfo.page.html", td)
+		return
+	}
 	dx, err := clusters(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
@@ -207,8 +219,15 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)
+		app.render(w, r, "vfo.page.html", td)
 		return
 	}
+	//mode, err = app.otherModel.getDefault("mode")
+	//if err != nil {
+		//app.serverError(w, err)
+		//return
+	//}
+	//fmt.Println("y",  mode)
 	td.VFO.DX = dx
 	app.render(w, r, "vfo.page.html", td) //data)
 }
@@ -312,13 +331,13 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
 			return
 		}
-		if mode != "FT8" {
-			err = app.otherModel.updateDefault("mode", update.Mode)
-			if err != nil {
-				app.serverError(w, err)
-				return
-			}
-		}
+		//if mode != "FT8" || mode != "FT4" {
+			//err = app.otherModel.updateDefault("mode", update.Mode)
+			//if err != nil {
+				//app.serverError(w, err)
+				//return
+			//}
+		//}
 		err = app.otherModel.updateDefault("band", update.Band)
 			if err != nil {
 				app.serverError(w, err)
