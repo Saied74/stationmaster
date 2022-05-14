@@ -557,6 +557,8 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		v = "CW"
 	case "4":
 		v = "FT8"
+	case "5":
+		v = "FT4"
 	default:
 		v, err = app.lookupDefault("mode")
 		if err != nil {
