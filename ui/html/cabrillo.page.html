@@ -1,0 +1,132 @@
+{{template "base" .}}
+
+{{define "title"}}Cabrillo{{end}}
+
+
+{{define "main"}}
+
+<div class="row">
+  <h5>All dates and times are in UTC</h5>
+  <div class="row">
+      <form class="row g-3" method="POST" action="/gencabrillo">
+
+      <div class="row">
+
+        <div class="col-sm-6">
+          {{with .FormData.Errors.Get "contestname"}}
+              <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            {{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Contest Name</span>
+            <input type="text" name="contestname" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+        </div>
+        <div class="col-sm-6">
+          {{with .FormData.Errors.Get "contestfile"}}
+              <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            {{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Contest File Name</span>
+            <input type="text" name="contestfile" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+        </div>
+
+
+        </div>
+
+        <div class="row">
+
+          <div class="col-sm-6">
+            {{with .FormData.Errors.Get "startdate"}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            	{{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Start Date (yyyy-mm-dd)</span>
+            <input type="text" name="startdate" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+          </div>
+
+          <div class="col-sm-6">
+            {{with .FormData.Errors.Get "starttime"}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            	{{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">Start Time (hh:mm)</span>
+            <input type="text" name="starttime" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="col-sm-6">
+            {{with .FormData.Errors.Get "enddate"}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            	{{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">End Date (yyyy-mm-dd)   </span>
+            <input type="text" name="enddate" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+          </div>
+
+          <div class="col-sm-6">
+            {{with .FormData.Errors.Get "endtime"}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            	{{end}}
+          <div class="input-group mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-default">End Time (hh:mm)</span>
+            <input type="text" name="endtime" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+          </div>
+          </div>
+
+        </div>
+
+        <div class="row">
+          <button type="submit" class="btn mb-3" style="background-color: #9FE1EA">Generate Cabrillo File</button>
+        </div>
+
+  </form>
+  </div>
+</div>
+<hr>
+<table class="table table-borderless table-sm">
+  <thead>
+    <tr>
+      {{with .Top}}
+      <th scope="col">{{.Id}}</th>
+      <th scope="col">{{.Time}}</th>
+    	<th scope="col">{{.Call}}</th>
+      <th scope="col">{{.Band}}</th>
+    	<th scope="col">{{.Mode}}</th>
+    	<th scope="col">{{.Sent}}</th>
+    	<th scope="col">{{.Rcvd}}</th>
+    	<th scope="col">{{.Name}}</th>
+    	<th scope="col">{{.Country}}</th>
+      <!-- <th scope="col">{{.Comment}}</th> -->
+      <th scope="col">{{.ExchSent}}</th>
+      <th scope="col">{{.ExchRcvd}}</th>
+    </tr>
+    {{end}}
+  </thead>
+  <tbody>
+    {{range .Table}}
+    <tr>
+      <td scope="col">{{.Id}}</td>
+    	<td scope="col">{{.Time.Format "Jan 2 2006 15:04:05"}}</td>
+    	<td scope="col">{{.Call}}</td>
+      <td scope="col">{{.Band}}</td>
+    	<td scope="col">{{.Mode}}</td>
+    	<td scope="col">{{.Sent}}</td>
+    	<td scope="col">{{.Rcvd}}</td>
+    	<td scope="col">{{.Name}}</td>
+    	<td scope="col">{{.Country}}</td>
+      <!-- <td scope="col">{{.Comment}}</td> -->
+      <td scope="col">{{.ExchSent}}</td>
+      <td scope="col">{{.ExchRcvd}}</td>
+    </tr>
+      {{end}}
+  </tbody>
+</table>
+
+{{end}}
