@@ -65,7 +65,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		//if dot, close contact one dot length, open one dot length
 		if dit == 0 && debounce(cw.Dit, 0, cw.Output) {
 
-			cw.emit("0")
+			//cw.emit("0")
 			setL = true
 			
 
@@ -78,7 +78,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		}
 		//if dash, close contact for three dot lengths, open for one.
 		if dah == 0 && debounce(cw.Dit, 0, "7") {
-			cw.emit("1")
+			//cw.emit("1")
 			setL = true
 			
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
@@ -92,14 +92,14 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		//if nothing happens longer than upper letter margin,
 		//emit the letter
 		if time.Now().After(letterTimer.Add(ulm)) && setL {
-			cw.emit("L")
+			//cw.emit("L")
 			setL = false
 			setW = true
 		}
 		//if nothing happens longer than upper word margin,
 		//emit the word
 		if time.Now().After(wordTimer.Add(uwm)) && setW {
-			cw.emit("W")
+			//cw.emit("W")
 			setW = false
 		}
 		//if the Done channel of the context is closed, return
