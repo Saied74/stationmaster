@@ -63,7 +63,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		dit, _ := cw.Dit.DigitalRead(ditInput)
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && debounce(cw.Dit, 0, cw.Output) {
+		if dit == 0 && { //debounce(cw.Dit, 0, cw.Output) {
 
 			//cw.emit("0")
 			setL = true
@@ -77,7 +77,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 			wordTimer = time.Now()
 		}
 		//if dash, close contact for three dot lengths, open for one.
-		if dah == 0 && debounce(cw.Dit, 0, "7") {
+		if dah == 0 { //&& debounce(cw.Dit, 0, "7") {
 			//cw.emit("1")
 			setL = true
 			
