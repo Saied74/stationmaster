@@ -63,7 +63,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		dit, _ := cw.Dit.DigitalRead(ditInput)
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && { //debounce(cw.Dit, 0, cw.Output) {
+		if dit == 0 { //&& debounce(cw.Dit, 0, cw.Output) {
 
 			//cw.emit("0")
 			setL = true
