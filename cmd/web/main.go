@@ -15,6 +15,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"gobot.io/x/gobot/platforms/raspi"
 
+	"github.com/Saied74/stationmaster/pkg/code"
 	"github.com/Saied74/stationmaster/pkg/bandselect"
 	"github.com/Saied74/stationmaster/pkg/vfo"
 )
@@ -69,6 +70,9 @@ func init() {
 	client = &http.Client{}
 	writeControl = &fileWrite{}
 	readControl = &fileRead{}
+	littleCW := &code.CwDriver{Output: code.TutorOutput, Low: byte(1),
+		Dit: raspi.NewAdaptor()}
+	littleCW.BeSilent()
 }
 
 func main() {
