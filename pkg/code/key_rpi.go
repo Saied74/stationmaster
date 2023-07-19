@@ -37,6 +37,12 @@ type CwDriver struct {
 	Low       byte
 }
 
+	var didaCh chan int = make(chan int)
+	
+func (cw *CwDriver) BeSilent() {
+	cw.Dit.DigitalWrite(cw.Output, cw.Low)
+}
+
 func (cw *CwDriver) Work(ctx context.Context) {
 	//the next few lines and the method "calcSpacing implement
 	//the Farnsworth code speed model which can be found here:
@@ -54,54 +60,56 @@ func (cw *CwDriver) Work(ctx context.Context) {
 	fmt.Printf("DL: %f, uwm: %v, ulm: %v\n", cw.dL, uwm, ulm)
 
 	cw.Dit.DigitalWrite(cw.Output, cw.Low)
-	letterTimer := time.Now()
-	wordTimer := time.Now()
-	setL := false
-	setW := false
+	//letterTimer := time.Now()
+	//wordTimer := time.Now()
+	//setL := false
+	//setW := false
+	//go cw.keyReader(cw.dL)
 	for {
+		
 		//read the paddle - note dots take precedent
 		dit, _ := cw.Dit.DigitalRead(ditInput)
 		dah, _ := cw.Dit.DigitalRead(dahInput)
 		//if dot, close contact one dot length, open one dot length
-		if dit == 0 && { //debounce(cw.Dit, 0, cw.Output) {
+		if dit == 0 {
 
 			//cw.emit("0")
-			setL = true
+			//setL = true
 			
 
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
-			letterTimer = time.Now()
-			wordTimer = time.Now()
+			//letterTimer = time.Now()
+			//wordTimer = time.Now()
 		}
 		//if dash, close contact for three dot lengths, open for one.
-		if dah == 0 { //&& debounce(cw.Dit, 0, "7") {
+		if dah == 0 {
 			//cw.emit("1")
-			setL = true
+			//setL = true
 			
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
-			letterTimer = time.Now()
-			wordTimer = time.Now()
+			//letterTimer = time.Now()
+			//wordTimer = time.Now()
 
 		}
 		//if nothing happens longer than upper letter margin,
 		//emit the letter
-		if time.Now().After(letterTimer.Add(ulm)) && setL {
+		//if time.Now().After(letterTimer.Add(ulm)) && setL {
 			//cw.emit("L")
-			setL = false
-			setW = true
-		}
+			//setL = false
+			//setW = true
+		//}
 		//if nothing happens longer than upper word margin,
 		//emit the word
-		if time.Now().After(wordTimer.Add(uwm)) && setW {
+		//if time.Now().After(wordTimer.Add(uwm)) && setW {
 			//cw.emit("W")
-			setW = false
-		}
+			//setW = false
+		//}
 		//if the Done channel of the context is closed, return
 		select {
 		case <-ctx.Done():
@@ -111,6 +119,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		}
 	}
 }
+
 
 //See the Farnsworth reference above
 func (cw *CwDriver) calcSpacing() (uwm, ulm time.Duration) {

@@ -371,19 +371,29 @@ function checkLimit(x){ //accepts integer rreturrns integer
   var upper = Number($("#upper-limit").html())
   var lower = Number($("#lower-limit").html())
   var cwbnd = Number($("#cw-boundary").html())
+  var ft8freq = Number($("#ft8-frequency").html())
+  var ft4freq = Number($("#ft4-frequency").html())
   if (x > upper){
     return upper
   }
   if (x < lower) {
     return lower
   }
-  mode = $("#mode").html()
-  if (mode == "Mode: FT8") {
+  //mode = $("#mode").html()
+  //if (mode == "Mode: FT8") {
+  //  return x
+  //}
+  if (x == ft8freq) {
+    $("#mode").html("Mode: FT8")
     return x
   }
-  if (mode == "Mode: FT4") {
+  if (x == ft4freq) {
+    $("#mode").html("mode: FT4")
     return x
   }
+  //if (mode == "Mode: FT4") {
+  //  return x
+  //}
   if (x <= cwbnd) {
     $("#mode").html("Mode: CW")
     return x

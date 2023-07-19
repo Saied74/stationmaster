@@ -71,6 +71,7 @@ type Ctype struct {
 //Stype is the validation part of the QRZ API
 type Stype struct {
 	Key   string `xml:"Key"`
+	Error string `xml: "Error"`
 	Count string `xml:"Count"`
 	Time  string `xml:"GMTime"`
 }
