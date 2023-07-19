@@ -422,3 +422,66 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 	return newData, nil
 
 }
+
+func (app * application)getUpdateBand() (*BandUpdate, error){
+	var b int
+	select {
+	case b = <-app.bandData.Band:
+		update, ok := switchTable[b]
+		if !ok {
+			return &BandUpdate{}, fmt.Errorf("bad data from the switch %d", b)
+		}
+		err := app.otherModel.updateDefault("band", update.Band)
+			if err != nil {
+				return &BandUpdate{}, err
+			}
+		return &update, nil	
+	default:
+		band, err := app.otherModel.getDefault("band")
+		if err != nil {
+			return &BandUpdate{}, err
+		}
+		return &BandUpdate{Band: band}, nil
+	}
+}
+
+func (app *application)getUpdateMode(p *BandUpdate) error{
+	
+	xf := p.Band + "xfreq"
+	xFreq, err := app.otherModel.getDefault(xf)
+	if err != nil {
+		return err
+	}
+	if xFreq <= vfoMemory[p.Band].CWBoundary {
+		switch xFreq {
+			case vfoMemory[p.Band].FT4Freq:
+				p.Mode = "FT4"
+			case vfoMemory[p.Band].FT8Freq:
+				p.Mode = "FT8"
+			default:
+				p.Mode = "CW"
+			}
+		} else {
+		switch p.Band {
+			case "10m":
+				p.Mode = "USB"
+			case "15m":
+				p.Mode = "USB"
+			case "20m":
+				p.Mode = "USB"
+			case "40m":
+				p.Mode = "LSB"
+			case "80m":
+				p.Mode = "LSB"
+			case "160m":
+				p.Mode = "LSB"
+			default:
+				p.Mode = "No transmission"
+			}
+		}
+	err = app.otherModel.updateDefault("mode", p.Mode)
+	if err != nil {
+		return err
+	}
+	return nil
+}

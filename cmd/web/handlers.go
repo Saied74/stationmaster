@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	//"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -163,6 +163,8 @@ type VFO struct {
 	UpperLimit string `json:"UpperLimit"`
 	CWBoundary string `json:"CWBoundary"`
 	LowerLimit string `json:"LowerLimit"`
+	FT8Freq    string `json:"FT8Freq"`
+	FT4Freq    string `json:"FT4Freq"`
 	Split      string `json:"Split"`
 	VFOBase    string `json:"VFOBase"`
 	DX         []DXClusters
@@ -170,14 +172,14 @@ type VFO struct {
 }
 
 var vfoMemory = map[string]*VFO{
-	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010847"},
-	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010382"},
-	"Aux":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.000000"},
-	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000305"},
-	"WWV":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.011585"},
-	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000200"},
-	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000"},
-	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000"},
+	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010847", FT8Freq: "28.074000", FT4Freq: "28.180000"},
+	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010382", FT8Freq: "21.074000", FT4Freq: "21.140000"},
+	"Aux":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
+	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000305", FT8Freq: "14.074000", FT4Freq: "14.080000"},
+	"WWV":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.011585", FT8Freq: "", FT4Freq: ""},
+	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000200", FT8Freq: "7.074000", FT4Freq: "7.047500"},
+	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000", FT8Freq: "3.573000", FT4Freq: "3.575000"},
+	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
 }
 
 func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
@@ -193,12 +195,6 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	//mode, err := app.otherModel.getDefault("mode")
-	//if err != nil {
-		//app.serverError(w, err)
-		//return
-	//}
-	//fmt.Println("x",  mode)
 	noDXData := strings.Contains(band, "Aux") || strings.Contains(band, "WWV")
 	if noDXData {
 		app.render(w, r, "vfo.page.html", td)
@@ -222,12 +218,6 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-	//mode, err = app.otherModel.getDefault("mode")
-	//if err != nil {
-		//app.serverError(w, err)
-		//return
-	//}
-	//fmt.Println("y",  mode)
 	td.VFO.DX = dx
 	app.render(w, r, "vfo.page.html", td) //data)
 }
@@ -311,46 +301,20 @@ var switchTable = map[int]BandUpdate{
 	7: BandUpdate{Band: "160m", Mode: "LSB"},
 }
 
+//triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	var b int
-	update := BandUpdate{}
-	mode, err := app.otherModel.getDefault("mode")
+	
+	update, err := app.getUpdateBand() //reads the band switch and updates DB
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	band, err := app.otherModel.getDefault("band")
+	err = app.getUpdateMode(update) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	select {
-	case b = <-app.bandData.Band:
-		update, ok := switchTable[b]
-		if !ok {
-			app.serverError(w, fmt.Errorf("bad data from the switch %d", b))
-			return
-		}
-		//if mode != "FT8" || mode != "FT4" {
-			//err = app.otherModel.updateDefault("mode", update.Mode)
-			//if err != nil {
-				//app.serverError(w, err)
-				//return
-			//}
-		//}
-		err = app.otherModel.updateDefault("band", update.Band)
-			if err != nil {
-				app.serverError(w, err)
-				return
-			}	
-	default:
-		update = BandUpdate{
-			Mode: mode,
-			Band: band,
-		}
-	}
-
-	u, err := json.Marshal(update)
+	u, err := json.Marshal(*update)
 	if err != nil {
 		app.serverError(w, err)
 		return
