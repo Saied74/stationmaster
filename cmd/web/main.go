@@ -53,6 +53,7 @@ type application struct {
 	contestDir    string
 	vfoAdaptor    *raspi.Adaptor
 	bandData      *bandselect.BandData
+	cw			  *code.CwDriver
 	cqStat		  [wsjtBuffer]int
 	qsoStat		  [wsjtBuffer]int
 	wsjtPntr	  int
@@ -152,6 +153,7 @@ func main() {
 		Band:    make(chan int),
 		Adaptor: app.vfoAdaptor,
 	}
+	app.cw = &code.CwDriver{Dit: app.vfoAdaptor}
 	go bandselect.BandRead(app.bandData)
 	go app.wsjtxServe()
 
