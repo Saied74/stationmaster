@@ -58,7 +58,7 @@ func Initvfo(n int) *raspi.Adaptor{
 	ad.DigitalWrite(reset, byte(1))
 	time.Sleep(time.Duration(1)*time.Microsecond)
 	ad.DigitalWrite(reset, byte(0))
-	s := serialize(n)
+	s := serialize(int32(n))
     streamData(ad, s)
     streamData(ad, s)
 	return ad
@@ -68,9 +68,9 @@ func Initvfo(n int) *raspi.Adaptor{
 func Runvfo(ad *raspi.Adaptor, xFreq, rFreq float64) {
 	//These two lines commented until I implement the split feature
 	//xPhase := (xFreq * math.Pow(2.0, 32.0)) / 125.0
-	//xP := int(math.Round(xPhase))
+	//xP := int32(xPhase)
 	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
-	rP := int(math.Round(rPhase))
+	rP := int32(rPhase)
 	//number := rcv
 	s := serialize(rP)
 
@@ -96,8 +96,8 @@ func streamData(ad *raspi.Adaptor, d []byte) {
 //zero of the slice.  The first 32 enteries will be the binary digits
 //of the decimal number.  The last byte will  be the control byte that
 //will be returned as all zeros
-func serialize(n int) []byte {
-	var y int 
+func serialize(n int32) []byte {
+	var y int32 
 	d := make([]byte, 40)
 	for i := range d {
 		y = n & 0x1

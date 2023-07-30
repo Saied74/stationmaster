@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 	
-	"github.com/Saied74/stationmaster/pkg/vfo"
+	//"github.com/Saied74/stationmaster/pkg/vfo"
 	"gobot.io/x/gobot/platforms/raspi"
 )
 
@@ -41,7 +41,7 @@ type CwDriver struct {
 }
 
 	var didaCh chan int = make(chan int)
-	var offset float64 = -0.000750
+	//var offset float64 = 0.000500
 	
 func (cw *CwDriver) BeSilent() {
 	cw.Dit.DigitalWrite(cw.Output, cw.Low)
@@ -71,12 +71,12 @@ func (cw *CwDriver) Work(ctx context.Context) {
 	//setL := false
 	//setW := false
 	//go cw.keyReader(cw.dL)
-	decay := 0
+	//decay := 0
 	for {
 		//offset per the Ten Tec manual CW section
-		if cw.Band == "10m" || cw.Band == "15m" || cw.Band == "20m" {
-			offset = -offset
-		} 
+		//if cw.Band == "10m" || cw.Band == "15m" || cw.Band == "20m" {
+			//offset = -offset
+		//} 
 		
 		
 		//read the paddle - note dots take precedent
@@ -87,11 +87,11 @@ func (cw *CwDriver) Work(ctx context.Context) {
 
 			//cw.emit("0")
 			//setL = true
-			decay += 10
-			if decay > 0 {
-				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
-			}
-
+			//if decay == 0 {
+				//decay += 5
+				//vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
+			//}
+			//fmt.Println("dit")
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
@@ -103,10 +103,11 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		if dah == 0 {
 			//cw.emit("1")
 			//setL = true
-			decay += 10
-			if decay > 0 {
-				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
-			}
+			//if decay == 0 {
+				//decay += 5
+				//vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
+			//}
+			//fmt.Println("dah")
 
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
@@ -137,10 +138,10 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		default:
 			continue
 		}
-		decay--
-		if decay == 0 {
-				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq)
-			}
+		//decay--
+		//if decay == 0 {
+				//vfo.Runvfo(cw.Dit, cw.RcvFreq, cw.RcvFreq)
+			//}
 
 	}
 }
