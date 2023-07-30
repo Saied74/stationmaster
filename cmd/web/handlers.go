@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	//"fmt"
-	"math"
+	//"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -106,18 +106,15 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		td.Mode = "Tutor"
 		f.Errors.add("ktrunning", "No mode selected, set to Tutor")
 	}
-	cw := &code.CwDriver{
-		Dit:       app.vfoAdaptor, //raspi.NewAdaptor(),
-		Speed:     s,
-		Farnspeed: fs,
-		LF:        lf,
-		WF:        wf,
-		Output:    whichOutput,
-		Hi:        hi,
-		Low:       low,
-	}
+	app.cw.Speed = s
+	app.cw.Farnspeed = fs
+	app.cw.LF = lf
+	app.cw.WF = wf
+	app.cw.Output = whichOutput
+	app.cw.Hi = hi
+	app.cw.Low = low
 
-	go cw.Work(ctx)
+	go app.cw.Work(ctx)
 
 	td.Speed = speedX
 	td.FarnSpeed = fspeedX
@@ -275,13 +272,11 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 	xFreq = xFreq - lowerLimit + b
-	xPhase := (xFreq * math.Pow(2.0, 32.0)) / 125.0
-	xP := int(math.Round(xPhase))
 	rFreq = rFreq - lowerLimit + b
-	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
-	rP := int(math.Round(rPhase))
-	//fmt.Println("before runvfo", band, xf, rf)
-	vfo.Runvfo(app.vfoAdaptor, xP, rP)
+	//fmt.Println("before runvfo", band, rFreq)
+	app.cw.RcvFreq = rFreq
+	app.cw.Band = band
+	vfo.Runvfo(app.vfoAdaptor, xFreq, rFreq)
 }
 
 type BandUpdate struct {
@@ -319,6 +314,7 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	app.cw.Band = update.Band
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
 }

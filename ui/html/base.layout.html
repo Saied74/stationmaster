@@ -327,6 +327,50 @@ $("#toggle-split").click(function(){
   }
 });
 
+if (title == "VFO Control") {
+  var oldRcvVal = 0;
+  $("#rcv-range").on("input", function(){
+    var split = $("#split").html();
+    var s = $("#rcv").html();
+    var x = s.split(": ");
+    var newRcvVal = Number(this.value)-oldRcvVal;
+    oldRcvVal = this.value;
+    x[1] = (1000000*Number(x[1]) + newRcvVal)/1000000;
+    x[1] = checkLimit(x[1])
+    x[1] = normalize(x[1])
+    s =x[0] + ": " + String(x[1]);
+    
+    $("#rcv").html(s);
+    if (split == "Split: Off") {
+      s = "Tramsmit: " + String(x[1]);
+      $("#xmt").html(s);
+    }
+    updateVFO()
+    });
+
+};
+
+if (title == "VFO Control"){
+
+  var oldXmtVal = 0;
+    $("#xmt-range").on("input", function() {
+    var split = $("#split").html();
+    if (split == "Split: Off") {
+      return
+    }
+    var s = $("#xmt").html();
+    var x = s.split(": ");
+    var newXmtVal = this.value-oldXmtVal;
+    oldXmtVal = this.value;
+    x[1] = (1000000*Number(x[1]) + newXmtVal)/1000000;
+    x[1] = checkLimit(x[1])
+    x[1] = normalize(x[1])
+    s =x[0] + ": " + String(x[1]);
+    $("#xmt").html(s);
+    updateVFO()
+  });
+};
+
 function handleRcv(s, u, d){ //s strring, u increment d direction
   var split = $("#split").html();
   var x = s.split(": ");

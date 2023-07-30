@@ -54,7 +54,7 @@
 </table>
   </div>
   <div class="col-sm-3">
-    <h2 id="rcv">Rceive: {{.RFreq}}</h2>
+    <h2 id="rcv">Receive: {{.RFreq}}</h2>
     <div class="row">
       <div class="col-sm-6">
         <div class="d-grid">
@@ -229,5 +229,14 @@
   <div class="col-sm-3"></div>
 </div>
 {{end}}
+
+<div class="row">
+  <label for="rcv-range" class="form-label"><h4 class="text-center">+/- 750 Hz Adjustment in 5 Hz Increments</h4></label>
+  <input type="range" class="form-range" style="background-color: #9FE1EA" min="-750" max="750" step="5" id="rcv-range">
+
+  <label for="xmt-range" class="form-label"><h4 class="text-center">Transmit (when split is on)</h4></label>
+  <input type="range" class="form-range" style="background-color: #9FE1EA" min="-750" max="750" step="5" id="xmt-range">
+  
+</div>
 
 {{end}}

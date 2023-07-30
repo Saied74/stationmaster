@@ -6,7 +6,8 @@ import (
 	"context"
 	"fmt"
 	"time"
-
+	
+	"github.com/Saied74/stationmaster/pkg/vfo"
 	"gobot.io/x/gobot/platforms/raspi"
 )
 
@@ -35,15 +36,20 @@ type CwDriver struct {
 	Output    string
 	Hi        byte
 	Low       byte
+	RcvFreq	  float64
+	Band      string
 }
 
 	var didaCh chan int = make(chan int)
+	var offset float64 = -0.000750
 	
 func (cw *CwDriver) BeSilent() {
 	cw.Dit.DigitalWrite(cw.Output, cw.Low)
 }
 
 func (cw *CwDriver) Work(ctx context.Context) {
+
+	
 	//the next few lines and the method "calcSpacing implement
 	//the Farnsworth code speed model which can be found here:
 	//http://www.arrl.org/files/file/Technology/x9004008.pdf
@@ -65,7 +71,13 @@ func (cw *CwDriver) Work(ctx context.Context) {
 	//setL := false
 	//setW := false
 	//go cw.keyReader(cw.dL)
+	decay := 0
 	for {
+		//offset per the Ten Tec manual CW section
+		if cw.Band == "10m" || cw.Band == "15m" || cw.Band == "20m" {
+			offset = -offset
+		} 
+		
 		
 		//read the paddle - note dots take precedent
 		dit, _ := cw.Dit.DigitalRead(ditInput)
@@ -75,7 +87,10 @@ func (cw *CwDriver) Work(ctx context.Context) {
 
 			//cw.emit("0")
 			//setL = true
-			
+			decay += 10
+			if decay > 0 {
+				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
+			}
 
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL) * time.Millisecond)
@@ -88,7 +103,11 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		if dah == 0 {
 			//cw.emit("1")
 			//setL = true
-			
+			decay += 10
+			if decay > 0 {
+				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq+offset)
+			}
+
 			cw.Dit.DigitalWrite(cw.Output, cw.Hi)
 			time.Sleep(time.Duration(cw.dL*3) * time.Millisecond)
 			cw.Dit.DigitalWrite(cw.Output, cw.Low)
@@ -97,6 +116,7 @@ func (cw *CwDriver) Work(ctx context.Context) {
 			//wordTimer = time.Now()
 
 		}
+		
 		//if nothing happens longer than upper letter margin,
 		//emit the letter
 		//if time.Now().After(letterTimer.Add(ulm)) && setL {
@@ -117,6 +137,11 @@ func (cw *CwDriver) Work(ctx context.Context) {
 		default:
 			continue
 		}
+		decay--
+		if decay == 0 {
+				vfo.Runvfo(cw.Dit, cw.RcvFreq+offset, cw.RcvFreq)
+			}
+
 	}
 }
 

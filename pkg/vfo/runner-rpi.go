@@ -30,7 +30,7 @@ package vfo
 import (
 //	"context"
 //	"fmt"
-
+	"math"
 	"time"
 
 	"gobot.io/x/gobot/platforms/raspi"
@@ -65,10 +65,14 @@ func Initvfo(n int) *raspi.Adaptor{
 }
 
 
-func Runvfo(ad *raspi.Adaptor, xmt, rcv int) {
-	
-	number := rcv
-	s := serialize(number)
+func Runvfo(ad *raspi.Adaptor, xFreq, rFreq float64) {
+	//These two lines commented until I implement the split feature
+	//xPhase := (xFreq * math.Pow(2.0, 32.0)) / 125.0
+	//xP := int(math.Round(xPhase))
+	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
+	rP := int(math.Round(rPhase))
+	//number := rcv
+	s := serialize(rP)
 
 	streamData(ad, s)
 //	fmt.Println("returning from RunVFO")
