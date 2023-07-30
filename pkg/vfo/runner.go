@@ -19,6 +19,6 @@ func Initvfo(n int) *raspi.Adaptor {
 	return raspi.NewAdaptor()
 }
 
-func Runvfo(ad *raspi.Adaptor, xmt, rcv int) {
+func Runvfo(ad *raspi.Adaptor, xFreq, rFreq float64) {
 	return
 }
