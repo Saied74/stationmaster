@@ -4,3 +4,7 @@
   adiffile: "adif.txt"
   qsldir: "$HOME/Documents/hamradio/lotwqsl"
   contestdir: "$HOME/Documents/hamradio/contest"
+  spider0: "dxc.w1nr.net:23"
+  spider1: "dxc.ww1r.com 7300"
+  spider2: "coax.w1wra.net:7300"
+  spider3: "usdx.w1nr.net:23"

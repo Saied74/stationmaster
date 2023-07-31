@@ -28,7 +28,7 @@ const (
 	floatLsm   = 1.0
 	wsm        = "1.0"
 	floatWsm   = 1.0
-	dxLines    = 200
+	dxLines    = 20
 	cqZone     = "5" //Eastern US
 	maxDXLines = 20
 )
@@ -197,7 +197,8 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-	dx, err := clusters(band, dxLines)
+	
+	dx, err := app.getSpider(band, dxLines) //clusters(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			app.render(w, r, "vfo.page.html", td) //data)
@@ -205,10 +206,10 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		}
 		app.infoLog.Printf("error from calling clusters in startVFO %v\n", err)
 	}
-	dx, err = app.pickZone(cqZone, dx)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	//dx, err = app.pickZone(cqZone, dx)
+	//if err != nil {
+		//app.serverError(w, err)
+	//}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)
@@ -325,7 +326,7 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	dx, err := clusters(band, dxLines)
+	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			return
@@ -333,11 +334,12 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 		app.infoLog.Printf("error from calling clusters in updateDX %v\n", err)
 		return
 	}
-	dx, err = app.pickZone(cqZone, dx)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
+	//TODO:  Will not need pickZone, so take it out
+	//dx, err = app.pickZone(cqZone, dx)
+	//if err != nil {
+		//app.serverError(w, err)
+		//return
+	//}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)

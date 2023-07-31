@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+//	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,6 +31,10 @@ type configType struct {
 	ADIFFile   string `yaml:"adiffile"`
 	QSLdir     string `yaml:"qsldir"`
 	ContestDir string `yaml:"contestdir"`
+	Spider0	   string `yaml:"spider0"` //also the default on flag
+	Spider1    string `yaml:"spider1"`
+	Spider2    string `yaml:"spider2"`
+	Spider3    string `yaml:"spider3"`
 }
 
 //for injecting data into handlers
@@ -57,6 +62,9 @@ type application struct {
 	cqStat		  [wsjtBuffer]int
 	qsoStat		  [wsjtBuffer]int
 	wsjtPntr	  int
+	call		  string //user call sign, over ridden by call flag
+	dxspider      string //<ip address>:<port number>
+	sp			  spider
 }
 
 type httpClient interface {
@@ -78,17 +86,18 @@ func init() {
 
 func main() {
 	var err error
-
 	sqlpw := flag.String("sqlpw", "", "MySQL Password")
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
 	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
+	dxSpider := flag.String("spider", "dxc.w1nr.net:23", "dxspider server ip:port address")
+	myCall := flag.String("call", "AD2CC", "your call sign")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile)
 
-	var config = &configType{"", "", "", "", ""}
+	var config = &configType{} //{"", "", "", "", ""}
 	configPath := os.Getenv("STATIONMASTER")
 	configData, err := os.ReadFile(fmt.Sprintf("%s/config.yaml", configPath))
 	if err != nil {
@@ -146,9 +155,17 @@ func main() {
 		cqStat:        [wsjtBuffer]int{},
 		qsoStat:       [wsjtBuffer]int{},
 		wsjtPntr:      0,
+		call: 		   *myCall,
+		dxspider:      *dxSpider,
 
 		//		bandData:      make(chan int), //bandselect.BandData.Band),
 	}
+	sp, err := app.initSpider()
+	if err != nil {
+		log.Fatal("failed spider lognin: ", err)
+	}
+	app.sp = sp
+	
 	app.bandData = &bandselect.BandData{
 		Band:    make(chan int),
 		Adaptor: app.vfoAdaptor,

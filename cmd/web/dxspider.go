@@ -2,107 +2,97 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 //    "os"
 	"strings"
-	"time"
+//	"time"
 )
 
-var filters = []string{
-	"reject/spot 0 on hf/rtty",
-	"reject/spot 1 on hf/sstv",
-	"reject/spot 2 not by_state nj,ny,pa",
-}
+//var filters = []string{
+	//"reject/spot 0 on hf/rtty",
+	//"reject/spot 1 on hf/sstv",
+	//"reject/spot 2 not by_state nj,ny,pa",
+//}
 
 type spider struct {
 	r *bufio.Reader
 	w *bufio.Writer
 }
 
-func getSpider() {
-	//program flags
-	dxspider := flag.String("spider", "dxc.ww1r.com:7300", "dxspider server ip:port address")
-	call := flag.String("call", "AD2CC", "your call sign")
-	flag.Parse()
+func (app *application)initSpider() (spider, error){
 
-	b := make([]byte, 500)
-
-	c, err := net.Dial("tcp", *dxspider)
+	c, err := net.Dial("tcp", app.dxspider)
 	if err != nil {
-		log.Fatal(err)
+		return spider{}, err
 	}
-
-	defer c.Close()
+	//defer c.Close()
 
 	dx := spider{
 		r: bufio.NewReader(c),
 		w: bufio.NewWriter(c),
 	}
-	err = dx.logIn(c, *call)
+	err = dx.logIn(c, app.call)
 	if err != nil {
-		log.Fatal(err)
+		return spider{}, err
 	}
+	return dx, nil
+}
 
-	_, err = dx.w.WriteString("accept/spot 4 on 20m \n")
+func (app * application)getSpider(band string, lineCnt int) ([]DXClusters, error) {
+	b := make([]byte, 500)
+	
+	_, err := app.sp.w.WriteString(fmt.Sprintf("accept/spot 4 on %s \n", band))
 	if err != nil {
-		log.Fatal(err)
+		return []DXClusters{}, err
 	}
-	err = dx.w.Flush()
+	err = app.sp.w.Flush()
 	if err != nil {
-		log.Fatal(err)
+		return []DXClusters{}, err
 	}
 
 	b = []byte{}
 
 	for {
-		bb, err := dx.r.ReadByte()
+		bb, err := app.sp.r.ReadByte()
 		if err != nil || err == io.EOF {
 			break
 		}
 		b = append(b, bb)
-		if strings.Contains(string(b), "ad2cc") {
+		if strings.Contains(string(b), "ad2cc") { //to do: fix this
 			break
 		}
 	}
-	for i := 0; i < 20; i++ {
-		_, err = dx.w.WriteString("show/dx 20 filter \n")
+		_, err = app.sp.w.WriteString(fmt.Sprintf("show/dx %d filter \n", lineCnt))
 		if err != nil {
-			log.Fatal(err)
+			return []DXClusters{}, err
 		}
-		err = dx.w.Flush()
+		err = app.sp.w.Flush()
 		if err != nil {
-			log.Fatal(err)
+			return []DXClusters{}, err
 		}
 
 		b = []byte{}
 
 		for {
-			bb, err := dx.r.ReadByte()
+			bb, err := app.sp.r.ReadByte()
 			if err != nil || err == io.EOF {
 				break
 			}
 			b = append(b, bb)
-			if strings.Contains(string(b), "ad2cc") {
+			if strings.Contains(string(b), "ad2cc") { //to do: fix this
 				break
 			}
 		}
 		//fmt.Printf("Start Result \n%s\nEnd Result\n", string(b))
-       	lexResults(string(b))
+       	dxData, err := lexResults(string(b))
+       	if err != nil {
+			return []DXClusters{}, err
+		}
         //os.Exit(1)
-        time.Sleep(time.Duration(3)*time.Second)
-	}
-	_, err = dx.w.WriteString("bye\n")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = dx.w.Flush()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return dxData, nil
 }
 
 func (s *spider) logIn(c net.Conn, call string) error {
@@ -145,33 +135,33 @@ func (s *spider) logIn(c net.Conn, call string) error {
 	return nil
 }
 
-func (s *spider) setFilters() error {
-	var err error
+//func (s *spider) setFilters() error {
+	//var err error
 
-	b := make([]byte, 300)
+	//b := make([]byte, 300)
 
-	for _, filter := range filters {
-		_, err = s.w.WriteString(filter + "\n")
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = s.w.Flush()
-		if err != nil {
-			return err
-		}
-		time.Sleep(time.Duration(3000) * time.Millisecond)
+	//for _, filter := range filters {
+		//_, err = s.w.WriteString(filter + "\n")
+		//if err != nil {
+			//log.Fatal(err)
+		//}
+		//err = s.w.Flush()
+		//if err != nil {
+			//return err
+		//}
+		//time.Sleep(time.Duration(3000) * time.Millisecond)
 
-		for {
-			bb, err := s.r.ReadByte()
-			if err != nil || err == io.EOF {
-				break
-			}
-			b = append(b, bb)
-			if strings.Contains(string(b), "ad2cc") {
-				break
-			}
-		}
-		fmt.Println(string(b))
-	}
-	return nil
-}
+		//for {
+			//bb, err := s.r.ReadByte()
+			//if err != nil || err == io.EOF {
+				//break
+			//}
+			//b = append(b, bb)
+			//if strings.Contains(string(b), "ad2cc") {
+				//break
+			//}
+		//}
+		//fmt.Println(string(b))
+	//}
+	//return nil
+//}

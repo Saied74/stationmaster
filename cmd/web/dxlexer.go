@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
+//	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -35,25 +35,25 @@ var pattern = `AD2CC de W1NR 28-Jul-2023 2108Z dxspider >
 AD2CC de W1NR 28-Jul-2023 2108Z dxspider >`
 */
 
-type itemType int
+type dxItemType int
 
-type item struct {
-	typ itemType
+type dxItem struct {
+	typ dxItemType
 	val string
 }
 
 const (
-	itemError itemType = iota
-	itemEOF
-	itemBegin
-	itemEnd
-	itemText
-	itemFreq
-	itemDX
-	itemDate
-	itemTime
-	itemInfo
-	itemDE
+	dxItemError dxItemType = iota
+	dxItemEOF
+	dxItemBegin
+	dxItemEnd
+	dxItemText
+	dxItemFreq
+	dxItemDX
+	dxItemDate
+	dxItemTime
+	dxItemInfo
+	dxItemDE
 )
 
 const (
@@ -62,25 +62,25 @@ const (
 	deStart      = "<"
 	deEnd        = ">"
 	myCall       = "ad2cc"
-	eof          = -1
+	dxeof          = -1
 )
 
-type lexer struct {
+type dxLexer struct {
 	name  string    // used only for error reports.
 	input string    // the string being scanned.
 	start int       // start position of this item.
 	pos   int       // current position in the input.
 	width int       // width of last rune read from input.
-	items chan item // channel of scanned items.
+	dxItems chan dxItem // channel of scanned items.
 }
 
-type stateFn func(*lexer) stateFn
+type dxStateFn func(*dxLexer) dxStateFn
 
-func (i item) String() string {
+func (i dxItem) String() string {
 	switch i.typ {
-	case itemEOF:
+	case dxItemEOF:
 		return "EOF"
-	case itemError:
+	case dxItemError:
 		return i.val
 	}
 	if len(i.val) > 10 {
@@ -89,33 +89,33 @@ func (i item) String() string {
 	return fmt.Sprintf("%q", i.val)
 }
 
-func (l *lexer) run() {
-	for state := lexPreFreq; state != nil; {
+func (l *dxLexer) run() {
+	for state := dxLexPreFreq; state != nil; {
 		state = state(l)
 	}
-	close(l.items) // No more tokens will be delivered.
+	close(l.dxItems) // No more tokens will be delivered.
 }
 
-func lex(name, input string) (*lexer, chan item) {
-	l := &lexer{
+func dxLex(name, input string) (*dxLexer, chan dxItem) {
+	l := &dxLexer{
 		name:  name,
 		input: input,
-		items: make(chan item),
+		dxItems: make(chan dxItem),
 	}
 	go l.run() // Concurrently run state machine.
-	return l, l.items
+	return l, l.dxItems
 }
 
-func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.input[l.start:l.pos]}
+func (l *dxLexer) emit(t dxItemType) {
+	l.dxItems <- dxItem{t, l.input[l.start:l.pos]}
 	l.start = l.pos
 }
 
 // next returns the next rune in the input.
-func (l *lexer) next() (r rune) {
+func (l *dxLexer) next() (r rune) {
 	if l.pos >= len(l.input) {
 		l.width = 0
-		return eof
+		return dxeof
 	}
 	r, l.width = utf8.DecodeRuneInString(l.input[l.pos:])
 	l.pos += l.width
@@ -123,21 +123,21 @@ func (l *lexer) next() (r rune) {
 }
 
 // ignore skips over the pending input before this point.
-func (l *lexer) ignore() {
+func (l *dxLexer) ignore() {
 	l.start = l.pos
 }
 
 // backup steps back one rune.
 // Can be called only once per call of next.
-func (l *lexer) backup() {
+func (l *dxLexer) backup() {
 	l.pos -= l.width
 }
 
 // error returns an error token and terminates the scan
 // by passing back a nil pointer that will be the next
 // state, terminating l.run.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, fmt.Sprintf(format, args...)}
+func (l *dxLexer) errorf(format string, args ...interface{}) dxStateFn {
+	l.dxItems <- dxItem{dxItemError, fmt.Sprintf(format, args...)}
 	return nil
 }
 
@@ -193,45 +193,45 @@ func isCall(r rune) bool {
 }
 
 // look for the start pattern (end of the dxspiders prompt + newline)
-func lexText(l *lexer) stateFn {
+func dxLexText(l *dxLexer) dxStateFn {
 	for {
 		if strings.HasPrefix(l.input[l.pos:], startPattern) {
 			if l.pos > l.start {
-				l.emit(itemBegin)
+				l.emit(dxItemBegin)
 			}
-			return lexPreFreq // Next state.
+			return dxLexPreFreq // Next state.
 		}
-		if l.next() == eof {
+		if l.next() == dxeof {
 			break
 		}
 	}
 	// Correctly reached EOF.
 	if l.pos > l.start {
-		l.emit(itemText)
+		l.emit(dxItemText)
 	}
-	l.emit(itemEOF) // Useful to make EOF a token.
+	l.emit(dxItemEOF) // Useful to make EOF a token.
 	return nil      // Stop the run loop.
 
 }
 
 // skip spaces before frequency
-func lexPreFreq(l *lexer) stateFn {
+func dxLexPreFreq(l *dxLexer) dxStateFn {
 	for {
 		if strings.HasPrefix(l.input[l.pos:], myCall) {
 			if l.pos > l.start {
-				l.emit(itemEOF)
+				l.emit(dxItemEOF)
 				return nil
 			}
 		}
 
 		switch r := l.next(); {
-		case r == eof: // || r == '\n':
+		case r == dxeof: // || r == '\n':
 			return l.errorf("no frequency field")
 		case isSpace(r):
 			l.ignore()
 		case isNumber(r):
 			l.backup()
-			return lexFreq
+			return dxLexFreq
 		default:
 			continue
 		}
@@ -241,15 +241,15 @@ func lexPreFreq(l *lexer) stateFn {
 
 // Frequency is composed of numbers and a dot
 // munch numbers (includes dot) until space, emit frequency
-func lexFreq(l *lexer) stateFn {
+func dxLexFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no frequency field")
 		case isSpace(r):
 			l.backup()
-			l.emit(itemFreq)
-			return lexPostFreq
+			l.emit(dxItemFreq)
+			return dxLexPostFreq
 		case isNumber(r):
 			continue
 		default:
@@ -260,16 +260,16 @@ func lexFreq(l *lexer) stateFn {
 }
 
 // skip over spaces until alphanumeric
-func lexPostFreq(l *lexer) stateFn {
+func dxLexPostFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no DX call field")
 		case isSpace(r):
 			l.ignore()
 		case isCall(r):
 			l.backup()
-			return lexDX
+			return dxLexDX
 		default:
 			return l.errorf("fell out of the bottom of lexPostFreq")
 		}
@@ -279,15 +279,15 @@ func lexPostFreq(l *lexer) stateFn {
 
 // call sign is alphanumerics
 // munch alphanumerics until space, emit DX call
-func lexDX(l *lexer) stateFn {
+func dxLexDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no DX call field")
 		case isSpace(r):
 			l.backup()
-			l.emit(itemDX)
-			return lexPostDX
+			l.emit(dxItemDX)
+			return dxLexPostDX
 		case isCall(r):
 			continue
 		default:
@@ -298,16 +298,16 @@ func lexDX(l *lexer) stateFn {
 }
 
 // skip over space until reach alphanumeric
-func lexPostDX(l *lexer) stateFn {
+func dxLexPostDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no date field")
 		case isSpace(r):
 			l.ignore()
 		case isDate(r):
 			l.backup()
-			return lexDate
+			return dxLexDate
 		default:
 			return l.errorf("fell out of the bottom of lexPostDX")
 		}
@@ -317,15 +317,15 @@ func lexPostDX(l *lexer) stateFn {
 
 // date is alphanumeric + "-"
 // munch date elements until reach space, thene emit date
-func lexDate(l *lexer) stateFn {
+func dxLexDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no date field")
 		case isSpace(r):
 			l.backup()
-			l.emit(itemDate)
-			return lexPostDate
+			l.emit(dxItemDate)
+			return dxLexPostDate
 		case isDate(r):
 			continue
 		default:
@@ -337,16 +337,16 @@ func lexDate(l *lexer) stateFn {
 }
 
 // skip over space until reach time element
-func lexPostDate(l *lexer) stateFn {
+func dxLexPostDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no time field")
 		case isSpace(r):
 			l.ignore()
 		case isTime(r):
 			l.backup()
-			return lexTime
+			return dxLexTime
 		default:
 			return l.errorf("fell out of the bottom of lexPostDate")
 		}
@@ -356,15 +356,15 @@ func lexPostDate(l *lexer) stateFn {
 
 // time is numeric + Z
 // munch time elements until space, emit time
-func lexTime(l *lexer) stateFn {
+func dxLexTime(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == eof || r == '\n':
+		case r == dxeof || r == '\n':
 			return l.errorf("no time field")
 		case isSpace(r):
 			l.backup()
-			l.emit(itemTime)
-			return lexInfo
+			l.emit(dxItemTime)
+			return dxLexInfo
 		case isTime(r):
 			continue
 		default:
@@ -375,90 +375,109 @@ func lexTime(l *lexer) stateFn {
 }
 
 // much everything until reach deStart which is <; emit info
-func lexInfo(l *lexer) stateFn {
+func dxLexInfo(l *dxLexer) dxStateFn {
 	for {
 		if strings.HasPrefix(l.input[l.pos:], deStart) {
 			if l.pos > l.start {
-				l.emit(itemInfo)
+				l.emit(dxItemInfo)
 			}
-			return lexDE // Next state.
+			return dxLexDE // Next state.
 		}
-		if l.next() == eof {
+		if l.next() == dxeof {
 			break
 		}
 	}
 	// Correctly reached EOF.
 	if l.pos > l.start {
-		l.emit(itemText)
+		l.emit(dxItemText)
 	}
-	l.emit(itemEOF) // Useful to make EOF a token.
+	l.emit(dxItemEOF) // Useful to make EOF a token.
 	return nil      // Stop the run loop.
 
 }
 
 // munch everything until read deEnd which is >; emit DE call.
 // then jump to lexPreFreq to start processing the next line
-func lexDE(l *lexer) stateFn {
+func dxLexDE(l *dxLexer) dxStateFn {
 	for {
 		if strings.HasPrefix(l.input[l.pos:], deEnd) {
 			if l.pos > l.start {
 				l.start++
-				l.emit(itemDE)
+				l.emit(dxItemDE)
 			}
-			return lexPreFreq // Next state.
+			return dxLexPreFreq // Next state.
 		}
-		if l.next() == eof {
+		if l.next() == dxeof {
 			break
 		}
 	}
 	// Correctly reached EOF.
 	if l.pos > l.start {
-		l.emit(itemText)
+		l.emit(dxItemText)
 	}
-	l.emit(itemEOF)
+	l.emit(dxItemEOF)
 	return nil
 }
 
-type lineType struct {
-	dxCall string
-	freq   string
-	date   string
-	time   string
-	info   string
-	deCall string
+type DXClusters struct {
+	DE        string
+	DXStation string
+	Country   string
+	Frequency string
+	Date	  string
+	Time	  string
+	Info	  string
+	Need      string
 }
 
-func lexResults(pattern string) {
-	_, c := lex("dxspiders", pattern)
-	l := lineType{}
+
+//type lineType struct {
+	//dxCall string
+	//freq   string
+	//date   string
+	//time   string
+	//info   string
+	//deCall string
+//}
+
+func lexResults(pattern string) ([]DXClusters, error) {
+	dx := []DXClusters{}
+	l := DXClusters{}
+	_, c := dxLex("dxspiders", pattern)
+	//l := lineType{}
     b := false
 	for {
 		d := <-c
 		switch d.typ {
-		case itemError:
-			fmt.Println("Error: ", d.val)
-			os.Exit(1)
-		case itemText:
-			fmt.Println("Text: ", d.val)
-		case itemBegin:
-			fmt.Println("Item Begin: ", d.val)
-		case itemEnd:
-			fmt.Println("END")
-		case itemFreq:
-			l.freq = d.val
-		case itemDX:
-			l.dxCall = d.val
-		case itemDate:
-			l.date = d.val
-		case itemTime:
-			l.time = d.val
-		case itemInfo:
-			l.info = d.val
-		case itemDE:
-			l.deCall = d.val
-			fmt.Printf("DX Call: %s Freq: %s Date: %s Time: %s Info: %s DE Call: %s\n",
-				l.dxCall, l.freq, l.date, l.time, l.info, l.deCall)
-		case itemEOF:
+		case dxItemError:
+			return []DXClusters{}, errNoDXSpots
+			//fmt.Println("Error: ", d.val)
+			//os.Exit(1)
+		case dxItemText:
+			continue
+			//fmt.Println("Text: ", d.val)
+		case dxItemBegin:
+			continue
+			//fmt.Println("Item Begin: ", d.val)
+		case dxItemEnd:
+			return dx, nil
+			//fmt.Println("END")
+		case dxItemFreq:
+			l.Frequency = d.val
+		case dxItemDX:
+			l.DXStation = d.val
+		case dxItemDate:
+			l.Date = d.val
+		case dxItemTime:
+			l.Time = d.val
+		case dxItemInfo:
+			l.Info = d.val
+		case dxItemDE:
+			l.DE = d.val
+			dx = append(dx, l)
+			//fmt.Printf("DX Call: %s Freq: %s Date: %s Time: %s Info: %s DE Call: %s\n",
+				//l.dxCall, l.freq, l.date, l.time, l.info, l.deCall)
+		case dxItemEOF:
             b = true
 			break
 		default:
@@ -466,4 +485,5 @@ func lexResults(pattern string) {
 		}
         if b {break}
 	}
+	return dx, nil
 }
