@@ -6,7 +6,7 @@ package main
 //*/
 
 import (
-	"errors"
+	//"errors"
 	//"fmt"
 	//"io/ioutil"
 	//"net"
@@ -66,7 +66,7 @@ import (
 	////Need      string
 ////}
 
-var errNoDXSpots = errors.New("no dx spots")
+//var errNoDXSpots = errors.New("no dx spots")
 
 //var scanList = []dxItemType{dxItemSpotter, dxItemFreq, dxItemCall, dxItemComment, dxItemDate,
 	//dxItemLOTW, dxItemEQSL, dxItemBand, dxItemContinent, dxItemCountry, dxItemADIFCountry}

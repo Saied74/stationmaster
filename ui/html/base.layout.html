@@ -142,19 +142,40 @@ $(document).ready(function(){
   if (title == "VFO Control"){
     setInterval(function(){
        $.getJSON("/update-band")
-    .then(function(data){
+          .then(function(data){
      
- $("#test").html(data["Band"]);
-    });
+       $("#test").html(data["Band"]);
   
-    var band = $("#band").html()
-    var testBand = $("#test").html()
-    if (!(band.includes(testBand))) {
+       var band = $("#band").html()
+       var testBand = $("#test").html()
+       if (!(band.includes(testBand))) {
+      //alert(band)
+      //alert(testBand)
+      $("#upper-limit").html(data["UpperLimit"])
+      $("#lower-limit").html(data["LowerLimit"])
+      $("#cw-boundary").html(data["CWBoundary"])
+      $("#ft8-frequency").html(data["FT8Freq"])
+      $("#ft4-frequency").html(data["FT4Freq"])
+      $("#band").html("Band: " + data["Band"])
+      $("#mode").html("Mode: " + data["Mode"])
+      $("#rcv").html("Receive: " + data["RFreq"])
+      $("#xmt").html("Transmit: " + data["XFreq"])
+      if (data.DX[0].DE != "") {
+        for (i = 0; i < data.DX.length; i++) {
+          $("#de"+i).html(data.DX[i].DE);
+          $("#dx"+i).html(data.DX[i].DXStation);
+          $("#country"+i).html(data.DX[i].Country);
+          $("#frequency"+i).html(data.DX[i].Frequency);
+          $("#need"+i).html(data.DX[i].Need);
+        }
+      }
       
-      window.location = "http://localhost:4000/start-vfo";
-    };
-}, 1000)
-  }
+      
+      //window.location = "http://localhost:4000/start-vfo";
+      }
+      });
+  }, 1000);
+ }
   
   if (title == "VFO Control") {
     setInterval(function(){
@@ -172,8 +193,7 @@ $(document).ready(function(){
       }
         
       })
-      },30000)
-    }  
+      },60000)};  
   
   $("#search-button").click(function() {
     $.getJSON("/callsearch?call="+$("#search-call").val())
@@ -380,8 +400,9 @@ function handleRcv(s, u, d){ //s strring, u increment d direction
   else {
     x[1] = (1000000*Number(x[1]) - u)/1000000;
  }
- x[1] = checkLimit(x[1])
- x[1] = normalize(x[1])
+
+  x[1] = checkLimit(x[1])
+  x[1] = normalize(x[1])
   s =x[0] + ": " + String(x[1]);
   $("#rcv").html(s);
   if (split == "Split: Off") {

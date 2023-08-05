@@ -179,6 +179,8 @@ var vfoMemory = map[string]*VFO{
 	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
 }
 
+//var bandUpdateError error
+
 func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	v, err := app.getVFOUpdate()
@@ -192,31 +194,31 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
 	noDXData := strings.Contains(band, "Aux") || strings.Contains(band, "WWV")
 	if noDXData {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-	
+
 	dx, err := app.getSpider(band, dxLines) //clusters(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			app.render(w, r, "vfo.page.html", td) //data)
+			app.infoLog.Printf("error no DX Spots from getSpider %v\n", err)
 			return
 		}
 		app.infoLog.Printf("error from calling clusters in startVFO %v\n", err)
 	}
-	//dx, err = app.pickZone(cqZone, dx)
-	//if err != nil {
-		//app.serverError(w, err)
-	//}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
+	td.VFO.Band = band
 	td.VFO.DX = dx
+	//app.infoLog.Printf("Band: %s\tMode: %s\n", td.VFO.Band, td.VFO.Mode)
 	app.render(w, r, "vfo.page.html", td) //data)
 }
 
@@ -232,6 +234,7 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
@@ -277,13 +280,14 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println("before runvfo", band, rFreq)
 	app.cw.RcvFreq = rFreq
 	app.cw.Band = band
+	//app.infoLog.Printf("Freq: %f\tBand: %s\n", app.cw.RcvFreq, app.cw.Band)
 	vfo.Runvfo(app.vfoAdaptor, xFreq, rFreq)
 }
 
 type BandUpdate struct {
 	Band    string `json:"Band"`
 	Mode    string `json:"Mode"`
-	DXTable []DXClusters
+	DXTable []DXClusters `json:"DXTable"`
 }
 
 var switchTable = map[int]BandUpdate{
@@ -299,23 +303,23 @@ var switchTable = map[int]BandUpdate{
 
 //triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	
-	update, err := app.getUpdateBand() //reads the band switch and updates DB
+	v, err := app.getUpdateBand() //reads the band switch and updates DB
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	err = app.getUpdateMode(update) //calculates mode from band and xmit freq, updates DB
+	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	u, err := json.Marshal(*update)
+	u, err := json.Marshal(*v)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	app.cw.Band = update.Band
+	app.cw.Band = v.Band
+	//app.infoLog.Printf("Update Band VFO Lower Limit %s\n", v.LowerLimit)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
 }
@@ -331,18 +335,10 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, errNoDXSpots) {
 			return
 		}
-		app.infoLog.Printf("error from calling clusters in updateDX %v\n", err)
-		return
-	}
-	//TODO:  Will not need pickZone, so take it out
-	//dx, err = app.pickZone(cqZone, dx)
-	//if err != nil {
-		//app.serverError(w, err)
-		//return
-	//}
-	dx, err = app.logsModel.findNeed(dx)
-	if err != nil {
-		app.serverError(w, err)
+		if errors.Is(err, errTimeout) {
+			app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
+		}
+		app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
 		return
 	}
 	update := BandUpdate{

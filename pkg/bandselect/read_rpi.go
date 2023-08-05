@@ -1,22 +1,24 @@
+//go:build rpi
 // +build rpi
 
 package bandselect
 
 import (
-"time"
+	"time"
 
-"gobot.io/x/gobot/platforms/raspi"
+	"gobot.io/x/gobot/platforms/raspi"
 )
 
 const (
-	sw2 = "40"
-	sw1 = "38"
-	sw0 = "36"
+	sw2          = "40"
+	sw1          = "38"
+	sw0          = "36"
+	debounceCnt  = 10
+	debounceTime = 1 //in milliseconds
 )
 
-
 type BandData struct {
-	Band chan int
+	Band    chan int
 	Adaptor *raspi.Adaptor
 }
 
@@ -32,6 +34,6 @@ func BandRead(bd *BandData) {
 		i, _ = bd.Adaptor.DigitalRead(sw0)
 		n += i
 		bd.Band <- n
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
 }

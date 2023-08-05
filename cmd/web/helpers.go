@@ -423,29 +423,78 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 
 }
 
-func (app * application)getUpdateBand() (*BandUpdate, error){
+var noBandUpdate = errors.New("no band update")
+
+func (app * application)getUpdateBand() (*VFO, error){
 	var b int
+	
+	v, err := app.getVFOUpdate() //populate VFO from dB
+	if err != nil {
+		return &VFO{}, err
+	}
+	
 	select {
 	case b = <-app.bandData.Band:
 		update, ok := switchTable[b]
 		if !ok {
-			return &BandUpdate{}, fmt.Errorf("bad data from the switch %d", b)
+			return &VFO{}, fmt.Errorf("bad data from the switch %d", b)
 		}
-		err := app.otherModel.updateDefault("band", update.Band)
+		
+		if v.Band != update.Band {
+			err = app.otherModel.updateDefault("band", update.Band)
 			if err != nil {
-				return &BandUpdate{}, err
+				return v, err
 			}
-		return &update, nil	
-	default:
-		band, err := app.otherModel.getDefault("band")
-		if err != nil {
-			return &BandUpdate{}, err
-		}
-		return &BandUpdate{Band: band}, nil
+			app.infoLog.Printf("setting the new band %s\n", update.Band)
+			err = app.changeBand(update.Band)
+			if err != nil {
+				return &VFO{}, err
+			}
+			app.infoLog.Printf("Called changeBand New: %s\tOld: %s\n", update.Band, v.Band)
+			
+			dx, err := app.getSpider(update.Band, dxLines)
+			if err != nil {
+				if errors.Is(err, errNoDXSpots) {
+				return &VFO{}, err
+			}
+				if errors.Is(err, errTimeout) {
+				app.infoLog.Printf("timeout error from calling getSpider in getUpdateBand %v\n", err)
+				return &VFO{}, err
+			}
+				app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
+				return &VFO{}, err
+			}
+			app.infoLog.Printf("Called getSpider New: %s\tOld: %s\n", update.Band, v.Band)
+			v, err := app.getVFOUpdate() //populate VFO from dB
+	if err != nil {
+		return &VFO{}, err
 	}
+	
+			v.DX = dx
+			v.Band = update.Band
+			v.Mode = update.Mode
+			
+		return v, nil	
+	}
+	default:
+		//band, err := app.otherModel.getDefault("band")
+		//if err != nil {
+			//return &VFO{}, err
+		//}
+		//mode, err := app.otherModel.getDefault("mode")
+		//if err != nil {
+			//return &VFO{}, err
+		//}
+		//v.Band = band
+		//v.Mode = mode
+		
+		//app.infoLog.Printf("no db update %s\n", band)
+		return v, nil
+	}
+	return v, nil
 }
 
-func (app *application)getUpdateMode(p *BandUpdate) error{
+func (app *application)getUpdateMode(p *VFO) error{
 	
 	xf := p.Band + "xfreq"
 	xFreq, err := app.otherModel.getDefault(xf)

@@ -9,32 +9,6 @@ import (
 	"unicode/utf8"
 )
 
-/*
-var pattern = `AD2CC de W1NR 28-Jul-2023 2108Z dxspider >
-
-  14043.0 KE0YDN      28-Jul-2023 2100Z CW                             <KC3M>
-  14042.7 WB9HFK      28-Jul-2023 2059Z CW                             <KC3M>
-  14037.0 KV0I        28-Jul-2023 2058Z CW                             <KC3M>
-  21260.0 PR6T        28-Jul-2023 2058Z SA080 Tinhare Is.            <KA2NUE>
-  14033.1 N7AUE       28-Jul-2023 2057Z CW                             <KC3M>
-  14031.4 AA2IL       28-Jul-2023 2057Z CW                             <KC3M>
-  14041.7 DL4CF       28-Jul-2023 2054Z CW                             <KC3M>
-  14030.8 KR2Q        28-Jul-2023 2052Z CW                             <KC3M>
-  14240.0 S51DX       28-Jul-2023 2039Z 59 in EPA                    <KC3UTT>
-  14035.7 VE6RST      28-Jul-2023 2029Z CW                             <KC3M>
-  14029.3 KG5U        28-Jul-2023 2026Z CW                             <KC3M>
-  50313.0 KB9NKM      28-Jul-2023 2023Z FT8 FN20wt -> EN70            <AC2PB>
-  18069.1 OK1WQ       28-Jul-2023 1957Z Lot of CQ little listening :-(<K8WHA>
-  14031.1 9A/S54W     28-Jul-2023 1953Z CW                             <KC3M>
-  18117.0 MI0TLG      28-Jul-2023 1951Z                                <KX3C>
-  18077.6 HB9CVQ      28-Jul-2023 1945Z Big sig Grid FN20             <K8WHA>
-  14041.0 KW5CW       28-Jul-2023 1931Z POTA TX                       <KG2GL>
-  14197.0 W9ISF       28-Jul-2023 1920Z op Ken S/E   Human decode    <KA2NUE>
-  14197.0 W9ISF       28-Jul-2023 1907Z                               <W2EJR>
-  21301.5 1A0C        28-Jul-2023 1858Z Good signal NY                 <N2KI>
-AD2CC de W1NR 28-Jul-2023 2108Z dxspider >`
-*/
-
 type dxItemType int
 
 type dxItem struct {
@@ -57,12 +31,12 @@ const (
 )
 
 const (
-	dtLength     = 17
+	infoMin     = 25
 	startPattern = "ad2cc"
 	deStart      = "<"
 	deEnd        = ">"
 	myCall       = "ad2cc"
-	dxeof          = -1
+	dxeof        = -1
 )
 
 type dxLexer struct {
@@ -225,8 +199,8 @@ func dxLexPreFreq(l *dxLexer) dxStateFn {
 		}
 
 		switch r := l.next(); {
-		case r == dxeof: // || r == '\n':
-			return l.errorf("no frequency field")
+		case r == dxeof:
+			return l.errorf("no frequency field %v", r)
 		case isSpace(r):
 			l.ignore()
 		case isNumber(r):
@@ -244,8 +218,8 @@ func dxLexPreFreq(l *dxLexer) dxStateFn {
 func dxLexFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no frequency field")
+		case r == dxeof:
+			return l.errorf("no frequency field %v", r)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemFreq)
@@ -263,15 +237,15 @@ func dxLexFreq(l *dxLexer) dxStateFn {
 func dxLexPostFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no DX call field")
+		case r == dxeof:
+			return l.errorf("no DX call field %v", r)
 		case isSpace(r):
 			l.ignore()
 		case isCall(r):
 			l.backup()
 			return dxLexDX
 		default:
-			return l.errorf("fell out of the bottom of lexPostFreq")
+			return l.errorf("fell out of the bottom of lexPostFreq %v", r)
 		}
 	}
 	return nil
@@ -282,8 +256,8 @@ func dxLexPostFreq(l *dxLexer) dxStateFn {
 func dxLexDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no DX call field")
+		case r == dxeof:
+			return l.errorf("no DX call field %v", r)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemDX)
@@ -291,7 +265,7 @@ func dxLexDX(l *dxLexer) dxStateFn {
 		case isCall(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of lexDX")
+			return l.errorf("fell out of the bottom of lexDX %v", r)
 		}
 	}
 	return nil
@@ -301,15 +275,15 @@ func dxLexDX(l *dxLexer) dxStateFn {
 func dxLexPostDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no date field")
+		case r == dxeof:
+			return l.errorf("no date field %v", r)
 		case isSpace(r):
 			l.ignore()
 		case isDate(r):
 			l.backup()
 			return dxLexDate
 		default:
-			return l.errorf("fell out of the bottom of lexPostDX")
+			return l.errorf("fell out of the bottom of lexPostDX %v", r)
 		}
 	}
 	return nil
@@ -320,8 +294,8 @@ func dxLexPostDX(l *dxLexer) dxStateFn {
 func dxLexDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no date field")
+		case r == dxeof:
+			return l.errorf("no date field %v", r)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemDate)
@@ -329,7 +303,7 @@ func dxLexDate(l *dxLexer) dxStateFn {
 		case isDate(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of lexDate")
+			return l.errorf("fell out of the bottom of lexDate %v", r)
 		}
 	}
 	return nil
@@ -340,15 +314,15 @@ func dxLexDate(l *dxLexer) dxStateFn {
 func dxLexPostDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no time field")
+		case r == dxeof:
+			return l.errorf("no time field %v", r)
 		case isSpace(r):
 			l.ignore()
 		case isTime(r):
 			l.backup()
 			return dxLexTime
 		default:
-			return l.errorf("fell out of the bottom of lexPostDate")
+			return l.errorf("fell out of the bottom of lexPostDate %v", r)
 		}
 	}
 	return nil
@@ -359,8 +333,8 @@ func dxLexPostDate(l *dxLexer) dxStateFn {
 func dxLexTime(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
-		case r == dxeof || r == '\n':
-			return l.errorf("no time field")
+		case r == dxeof:
+			return l.errorf("no time field %v", r)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemTime)
@@ -368,7 +342,7 @@ func dxLexTime(l *dxLexer) dxStateFn {
 		case isTime(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of LexTime")
+			return l.errorf("fell out of the bottom of LexTime %v", r)
 		}
 	}
 	return nil
@@ -376,6 +350,7 @@ func dxLexTime(l *dxLexer) dxStateFn {
 
 // much everything until reach deStart which is <; emit info
 func dxLexInfo(l *dxLexer) dxStateFn {
+	l.pos+= infoMin
 	for {
 		if strings.HasPrefix(l.input[l.pos:], deStart) {
 			if l.pos > l.start {
@@ -419,9 +394,10 @@ func dxLexDE(l *dxLexer) dxStateFn {
 	return nil
 }
 
+
 type DXClusters struct {
 	DE        string
-	DXStation string
+	DXStation string 
 	Country   string
 	Frequency string
 	Date	  string
@@ -450,7 +426,7 @@ func lexResults(pattern string) ([]DXClusters, error) {
 		d := <-c
 		switch d.typ {
 		case dxItemError:
-			return []DXClusters{}, errNoDXSpots
+			return []DXClusters{}, fmt.Errorf("%v", d.val)
 			//fmt.Println("Error: ", d.val)
 			//os.Exit(1)
 		case dxItemText:
@@ -476,7 +452,7 @@ func lexResults(pattern string) ([]DXClusters, error) {
 			l.DE = d.val
 			dx = append(dx, l)
 			//fmt.Printf("DX Call: %s Freq: %s Date: %s Time: %s Info: %s DE Call: %s\n",
-				//l.dxCall, l.freq, l.date, l.time, l.info, l.deCall)
+				//l.DXStation, l.Frequency, l.Date, l.Time, l.Info, l.DE)
 		case dxItemEOF:
             b = true
 			break
