@@ -445,12 +445,12 @@ func (app * application)getUpdateBand() (*VFO, error){
 			if err != nil {
 				return v, err
 			}
-			app.infoLog.Printf("setting the new band %s\n", update.Band)
+			//app.infoLog.Printf("setting the new band %s\n", update.Band)
 			err = app.changeBand(update.Band)
 			if err != nil {
 				return &VFO{}, err
 			}
-			app.infoLog.Printf("Called changeBand New: %s\tOld: %s\n", update.Band, v.Band)
+			//app.infoLog.Printf("Called changeBand New: %s\tOld: %s\n", update.Band, v.Band)
 			
 			dx, err := app.getSpider(update.Band, dxLines)
 			if err != nil {
@@ -464,7 +464,6 @@ func (app * application)getUpdateBand() (*VFO, error){
 				app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
 				return &VFO{}, err
 			}
-			app.infoLog.Printf("Called getSpider New: %s\tOld: %s\n", update.Band, v.Band)
 			v, err := app.getVFOUpdate() //populate VFO from dB
 	if err != nil {
 		return &VFO{}, err
@@ -477,18 +476,6 @@ func (app * application)getUpdateBand() (*VFO, error){
 		return v, nil	
 	}
 	default:
-		//band, err := app.otherModel.getDefault("band")
-		//if err != nil {
-			//return &VFO{}, err
-		//}
-		//mode, err := app.otherModel.getDefault("mode")
-		//if err != nil {
-			//return &VFO{}, err
-		//}
-		//v.Band = band
-		//v.Mode = mode
-		
-		//app.infoLog.Printf("no db update %s\n", band)
 		return v, nil
 	}
 	return v, nil

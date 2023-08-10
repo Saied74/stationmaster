@@ -32,7 +32,7 @@ const (
 
 const (
 	infoMin     = 25
-	startPattern = "ad2cc"
+	startPattern = "filter"
 	deStart      = "<"
 	deEnd        = ">"
 	myCall       = "ad2cc"
@@ -200,7 +200,7 @@ func dxLexPreFreq(l *dxLexer) dxStateFn {
 
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no frequency field %v", r)
+			return l.errorf("no frequency field %v", l.input)
 		case isSpace(r):
 			l.ignore()
 		case isNumber(r):
@@ -219,7 +219,7 @@ func dxLexFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no frequency field %v", r)
+			return l.errorf("no frequency field %v", l.input)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemFreq)
@@ -227,7 +227,7 @@ func dxLexFreq(l *dxLexer) dxStateFn {
 		case isNumber(r):
 			continue
 		default:
-			return l.errorf("bad item in freq field %v", r)
+			return l.errorf("bad item in freq field %v", l.input)
 		}
 	}
 	return nil
@@ -238,14 +238,14 @@ func dxLexPostFreq(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no DX call field %v", r)
+			return l.errorf("no DX call field %v", l.input)
 		case isSpace(r):
 			l.ignore()
 		case isCall(r):
 			l.backup()
 			return dxLexDX
 		default:
-			return l.errorf("fell out of the bottom of lexPostFreq %v", r)
+			return l.errorf("fell out of the bottom of lexPostFreq %v", l.input)
 		}
 	}
 	return nil
@@ -257,7 +257,7 @@ func dxLexDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no DX call field %v", r)
+			return l.errorf("no DX call field %v", l.input)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemDX)
@@ -265,7 +265,7 @@ func dxLexDX(l *dxLexer) dxStateFn {
 		case isCall(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of lexDX %v", r)
+			return l.errorf("fell out of the bottom of lexDX %v", l.input)
 		}
 	}
 	return nil
@@ -276,14 +276,14 @@ func dxLexPostDX(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no date field %v", r)
+			return l.errorf("no date field %v", l.input)
 		case isSpace(r):
 			l.ignore()
 		case isDate(r):
 			l.backup()
 			return dxLexDate
 		default:
-			return l.errorf("fell out of the bottom of lexPostDX %v", r)
+			return l.errorf("fell out of the bottom of lexPostDX %v", l.input)
 		}
 	}
 	return nil
@@ -295,7 +295,7 @@ func dxLexDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no date field %v", r)
+			return l.errorf("no date field %v", l.input)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemDate)
@@ -303,7 +303,7 @@ func dxLexDate(l *dxLexer) dxStateFn {
 		case isDate(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of lexDate %v", r)
+			return l.errorf("fell out of the bottom of lexDate %v", l.input)
 		}
 	}
 	return nil
@@ -315,14 +315,14 @@ func dxLexPostDate(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no time field %v", r)
+			return l.errorf("no time field %v", l.input)
 		case isSpace(r):
 			l.ignore()
 		case isTime(r):
 			l.backup()
 			return dxLexTime
 		default:
-			return l.errorf("fell out of the bottom of lexPostDate %v", r)
+			return l.errorf("fell out of the bottom of lexPostDate %v", l.input)
 		}
 	}
 	return nil
@@ -334,7 +334,7 @@ func dxLexTime(l *dxLexer) dxStateFn {
 	for {
 		switch r := l.next(); {
 		case r == dxeof:
-			return l.errorf("no time field %v", r)
+			return l.errorf("no time field %v", l.input)
 		case isSpace(r):
 			l.backup()
 			l.emit(dxItemTime)
@@ -342,7 +342,7 @@ func dxLexTime(l *dxLexer) dxStateFn {
 		case isTime(r):
 			continue
 		default:
-			return l.errorf("fell out of the bottom of LexTime %v", r)
+			return l.errorf("fell out of the bottom of LexTime %v", l.input)
 		}
 	}
 	return nil
@@ -407,15 +407,6 @@ type DXClusters struct {
 }
 
 
-//type lineType struct {
-	//dxCall string
-	//freq   string
-	//date   string
-	//time   string
-	//info   string
-	//deCall string
-//}
-
 func lexResults(pattern string) ([]DXClusters, error) {
 	dx := []DXClusters{}
 	l := DXClusters{}
@@ -427,17 +418,12 @@ func lexResults(pattern string) ([]DXClusters, error) {
 		switch d.typ {
 		case dxItemError:
 			return []DXClusters{}, fmt.Errorf("%v", d.val)
-			//fmt.Println("Error: ", d.val)
-			//os.Exit(1)
 		case dxItemText:
 			continue
-			//fmt.Println("Text: ", d.val)
 		case dxItemBegin:
 			continue
-			//fmt.Println("Item Begin: ", d.val)
 		case dxItemEnd:
 			return dx, nil
-			//fmt.Println("END")
 		case dxItemFreq:
 			l.Frequency = d.val
 		case dxItemDX:

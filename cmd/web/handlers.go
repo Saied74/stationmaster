@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	//"fmt"
-	//"math"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	//"time"
 
 	//	"gobot.io/x/gobot/platforms/raspi"
 
@@ -201,7 +198,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dx, err := app.getSpider(band, dxLines) //clusters(band, dxLines)
+	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
 			app.render(w, r, "vfo.page.html", td) //data)
@@ -218,7 +215,6 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	}
 	td.VFO.Band = band
 	td.VFO.DX = dx
-	//app.infoLog.Printf("Band: %s\tMode: %s\n", td.VFO.Band, td.VFO.Mode)
 	app.render(w, r, "vfo.page.html", td) //data)
 }
 
@@ -277,10 +273,8 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	}
 	xFreq = xFreq - lowerLimit + b
 	rFreq = rFreq - lowerLimit + b
-	//fmt.Println("before runvfo", band, rFreq)
 	app.cw.RcvFreq = rFreq
 	app.cw.Band = band
-	//app.infoLog.Printf("Freq: %f\tBand: %s\n", app.cw.RcvFreq, app.cw.Band)
 	vfo.Runvfo(app.vfoAdaptor, xFreq, rFreq)
 }
 

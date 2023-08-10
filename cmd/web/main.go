@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-//	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -90,6 +89,7 @@ func main() {
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
 	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
+	//dxSpider := flag.String("spider", "dxc.ww1r.com:7300", "dxspider server ip:port address")
 	dxSpider := flag.String("spider", "dxc.w1nr.net:23", "dxspider server ip:port address")
 	myCall := flag.String("call", "AD2CC", "your call sign")
 	flag.Parse()
@@ -162,7 +162,7 @@ func main() {
 	}
 	sp, err := app.initSpider()
 	if err != nil {
-		log.Fatal("failed spider lognin: ", err)
+		app.errorLog.Fatal("failed spider lognin: ", err)
 	}
 	app.sp = sp
 	
