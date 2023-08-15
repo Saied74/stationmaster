@@ -81,7 +81,7 @@ func (app *application) changeBand(band string) error {
 
 func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error) {
 	b := make([]byte, 500)
-
+    var sB string
 	_, err := app.sp.w.WriteString(fmt.Sprintf("show/dx %d filter\n", lineCnt))
 	if err != nil {
 		if e, ok := err.(net.Error); ok && e.Timeout() {
@@ -108,12 +108,14 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 			return []DXClusters{}, err
 		}
 		b = append(b, bb)
-		if strings.Contains(string(b), myCall) {
+		sB = string(b)
+		
+		if strings.Contains(sB, myCall) {
 			break
 		}
 	}
-	//fmt.Printf("Start Result\n%s\nEnd Result\n", string(b))
-	dxData, err := lexResults(string(b))
+	//fmt.Printf("%s", string(b))
+	dxData, err := lexResults(sB)
 	if err != nil {
 		return []DXClusters{}, err
 	}

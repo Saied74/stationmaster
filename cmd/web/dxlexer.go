@@ -32,7 +32,7 @@ const (
 
 const (
 	infoMin     = 25
-	startPattern = "filter"
+	startPattern = "ad2cc"
 	deStart      = "<"
 	deEnd        = ">"
 	myCall       = "ad2cc"
@@ -64,7 +64,7 @@ func (i dxItem) String() string {
 }
 
 func (l *dxLexer) run() {
-	for state := dxLexPreFreq; state != nil; {
+	for state := dxLexText; state != nil; {
 		state = state(l)
 	}
 	close(l.dxItems) // No more tokens will be delivered.
@@ -166,23 +166,58 @@ func isCall(r rune) bool {
 	return false
 }
 
+func isFreq(l *dxLexer) bool {
+	pos := l.pos
+	var r rune
+	next := func() rune {
+		if pos >= len(l.input) {
+			return eof
+		}
+		r, l.width = utf8.DecodeRuneInString(l.input[pos:])
+		pos += l.width
+		return r
+	}
+	for i := 0; i < 5; i++ {
+		r = next()
+		if r == eof {
+			return false
+		}
+		if !isNumber(r) {
+			return false
+		}
+	}
+	return true
+}
+
 // look for the start pattern (end of the dxspiders prompt + newline)
 func dxLexText(l *dxLexer) dxStateFn {
 	for {
-		if strings.HasPrefix(l.input[l.pos:], startPattern) {
-			if l.pos > l.start {
-				l.emit(dxItemBegin)
-			}
-			return dxLexPreFreq // Next state.
+		if isFreq(l) {
+			l.emit(dxItemText)
+			return dxLexPreFreq
 		}
-		if l.next() == dxeof {
+		if r := l.next(); r == eof {
 			break
 		}
 	}
-	// Correctly reached EOF.
-	if l.pos > l.start {
-		l.emit(dxItemText)
-	}
+	
+	//for {
+		//if strings.HasPrefix(l.input[l.pos:], startPattern) {
+			//if l.pos > l.start {
+				//l.emit(dxItemBegin)
+				////l.pos += len(startPattern)
+				////l.emit(dxItemBegin)
+			//}
+			//return dxLexPreFreq // Next state.
+		//}
+		//if l.next() == dxeof {
+			//break
+		//}
+	//}
+	//// Correctly reached EOF.
+	//if l.pos > l.start {
+		//l.emit(dxItemText)
+	//}
 	l.emit(dxItemEOF) // Useful to make EOF a token.
 	return nil      // Stop the run loop.
 
