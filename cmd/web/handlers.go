@@ -302,6 +302,11 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	dx, err := app.getSpider(v.Band, dxLines)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	v.DX = dx
 	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
 		app.serverError(w, err)
@@ -313,6 +318,7 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.cw.Band = v.Band
+	
 	//app.infoLog.Printf("Update Band VFO Lower Limit %s\n", v.LowerLimit)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)

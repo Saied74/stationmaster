@@ -79,7 +79,7 @@ func init() {
 	writeControl = &fileWrite{}
 	readControl = &fileRead{}
 	littleCW := &code.CwDriver{Output: code.TutorOutput, Low: byte(1),
-		Dit: raspi.NewAdaptor()}
+	Dit: raspi.NewAdaptor()}
 	littleCW.BeSilent()
 }
 
@@ -171,7 +171,7 @@ func main() {
 		Adaptor: app.vfoAdaptor,
 	}
 	app.cw = &code.CwDriver{Dit: app.vfoAdaptor}
-	go bandselect.BandRead(app.bandData)
+	//go bandselect.BandRead(app.bandData)
 	go app.wsjtxServe()
 
 	mux := app.routes()

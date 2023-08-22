@@ -4,6 +4,7 @@
 package bandselect
 
 import (
+//	"fmt"
 	"time"
 
 	"gobot.io/x/gobot/platforms/raspi"
@@ -22,8 +23,40 @@ type BandData struct {
 	Adaptor *raspi.Adaptor
 }
 
-func BandRead(bd *BandData) {
+func BandRead(bd *BandData) int {
+	var n1, n2, n3 int
 	for {
+		tStart := time.Now()
+		n1 = readOnce(bd)
+		time.Sleep(time.Duration(200)*time.Millisecond)
+		n2 = readOnce(bd)
+		time.Sleep(time.Duration(200)*time.Millisecond)
+		n3 = readOnce(bd)
+		time.Sleep(time.Duration(200)*time.Millisecond)
+		if n1 == n2 && n2 == n3 {
+			//fmt.Println("N1: ", n1)
+			return n1
+		}
+		tEnd := time.Now()
+		if tEnd.Sub(tStart) > time.Duration(900)*time.Millisecond {
+			return n3
+		}
+		//n := 0
+		//i, _ := bd.Adaptor.DigitalRead(sw2)
+		//n = i
+		//n *= 2
+		//i, _ = bd.Adaptor.DigitalRead(sw1)
+		//n += i
+		//n *= 2
+		//i, _ = bd.Adaptor.DigitalRead(sw0)
+		//n += i
+			//bd.Band <- n1
+		//}
+		//time.Sleep(time.Duration(500) * time.Millisecond)
+	}
+}
+
+func readOnce(bd *BandData) int {
 		n := 0
 		i, _ := bd.Adaptor.DigitalRead(sw2)
 		n = i
@@ -33,7 +66,6 @@ func BandRead(bd *BandData) {
 		n *= 2
 		i, _ = bd.Adaptor.DigitalRead(sw0)
 		n += i
-		bd.Band <- n
-		time.Sleep(time.Duration(500) * time.Millisecond)
-	}
+		return n
 }
+	
