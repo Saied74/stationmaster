@@ -114,7 +114,7 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 	m := 0
 	for {
 		m++
-		if m >= 4096 {
+		if m >= 4095 {
 			break
 		}
 		bb, err := app.sp.r.ReadByte()
@@ -126,8 +126,8 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 		}
 		b = append(b, bb)
 		sB = string(b)
-		
-		if strings.Contains(sB, myCall) && len(sB) >= msgLength {
+
+		if strings.HasSuffix(sB, myCall) && len(sB) >= msgLength  {
 			break
 		}
 		if strings.Contains(sB, disconnect) {

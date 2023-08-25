@@ -4,7 +4,6 @@
 package bandselect
 
 import (
-//	"fmt"
 	"time"
 
 	"gobot.io/x/gobot/platforms/raspi"
@@ -34,25 +33,12 @@ func BandRead(bd *BandData) int {
 		n3 = readOnce(bd)
 		time.Sleep(time.Duration(200)*time.Millisecond)
 		if n1 == n2 && n2 == n3 {
-			//fmt.Println("N1: ", n1)
 			return n1
 		}
 		tEnd := time.Now()
 		if tEnd.Sub(tStart) > time.Duration(900)*time.Millisecond {
 			return n3
 		}
-		//n := 0
-		//i, _ := bd.Adaptor.DigitalRead(sw2)
-		//n = i
-		//n *= 2
-		//i, _ = bd.Adaptor.DigitalRead(sw1)
-		//n += i
-		//n *= 2
-		//i, _ = bd.Adaptor.DigitalRead(sw0)
-		//n += i
-			//bd.Band <- n1
-		//}
-		//time.Sleep(time.Duration(500) * time.Millisecond)
 	}
 }
 

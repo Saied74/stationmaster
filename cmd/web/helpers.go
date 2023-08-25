@@ -444,13 +444,12 @@ func (app *application) getUpdateBand() (*VFO, error) {
 	}
 
 	if v.Band != update.Band {
-		app.infoLog.Printf("setting the new band  v.Band: %s\tupdate.Band: %s\n", v.Band, update.Band)
+		//app.infoLog.Printf("setting the new band  v.Band: %s\tupdate.Band: %s\n", v.Band, update.Band)
 		err = app.otherModel.updateDefault("band", update.Band)
 		if err != nil {
 			return v, err
 		}
 
-		//app.infoLog.Printf("setting the new band %s\n", update.Band)
 		err = app.changeBand(update.Band)
 		if err != nil {
 			return &VFO{}, err
