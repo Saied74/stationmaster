@@ -25,6 +25,7 @@ const (
 
 var errNoDXSpots = errors.New("no dx spots")
 var errTimeout = errors.New("dx spider timeout error")
+var errDisconnect = errors.New("dx spider disconnected")
 
 func (app *application) initSpider() (spider, error) {
 	
@@ -114,7 +115,7 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 	m := 0
 	for {
 		m++
-		if m >= 4095 {
+		if m == 2048 {
 			break
 		}
 		bb, err := app.sp.r.ReadByte()
@@ -131,8 +132,7 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 			break
 		}
 		if strings.Contains(sB, disconnect) {
-			app.sp.logIn(app.call)
-			
+			return []DXClusters{}, errDisconnect
 		}
 	}
 	

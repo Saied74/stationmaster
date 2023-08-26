@@ -297,18 +297,36 @@ var switchTable = map[int]BandUpdate{
 
 //triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	//app.infoLog.Println("in updateBand")
+	var dx = []DXClusters{}
+	var validDX = true
 	v, err := app.getUpdateBand() //reads the band switch and updates DB
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	//app.infoLog.Println("out of getUpdateBand")
-	//dx, err := app.getSpider(v.Band, dxLines)
-	//if err != nil {
-		//app.serverError(w, err)
-	//}
-	//v.DX = dx
+	dx, err = app.getSpider(v.Band, dxLines)
+	if err != nil {
+		if errors.Is(err, errNoDXSpots) {
+			validDX = false
+		}
+		if errors.Is(err, errTimeout) {
+			app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
+			validDX = false
+		}
+		if errors.Is(err, errDisconnect) {
+			app.sp.logIn(app.call)
+			dx, err = app.getSpider(band, dxLines)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			validDX = true
+		}
+		app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
+		validDX = false
+	}
+	if validDX {
+		v.DX = dx
+	}
 	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
 		app.serverError(w, err)
@@ -320,14 +338,13 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.cw.Band = v.Band
-	
-	//app.infoLog.Printf("Update Band VFO Lower Limit %s\n", v.LowerLimit)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
-	//app.infoLog.Println("finished")
 }
 
 func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
+	update := BandUpdate{}
+	var validDX bool
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
@@ -336,16 +353,25 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
 		if errors.Is(err, errNoDXSpots) {
-			return
+			validDX = false
 		}
 		if errors.Is(err, errTimeout) {
 			app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
+			validDX = false
+		}
+		if errors.Is(err, errDisconnect) {
+			app.sp.logIn(app.call)
+			dx, err = app.getSpider(band, dxLines)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			validDX = true
 		}
 		app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
-		return
+		validDX = false
 	}
-	update := BandUpdate{
-		DXTable: dx,
+	if validDX {
+		update.DXTable = dx
 	}
 	u, err := json.Marshal(update)
 	if err != nil {

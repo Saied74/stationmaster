@@ -434,9 +434,6 @@ func (app *application) getUpdateBand() (*VFO, error) {
 	if err != nil {
 		return &VFO{}, err
 	}
-
-	//select {
-	//case b = <-app.bandData.Band:
 	b = bandselect.BandRead(app.bandData)
 	update, ok := switchTable[b]
 	if !ok {
@@ -444,7 +441,6 @@ func (app *application) getUpdateBand() (*VFO, error) {
 	}
 
 	if v.Band != update.Band {
-		//app.infoLog.Printf("setting the new band  v.Band: %s\tupdate.Band: %s\n", v.Band, update.Band)
 		err = app.otherModel.updateDefault("band", update.Band)
 		if err != nil {
 			return v, err
@@ -454,34 +450,14 @@ func (app *application) getUpdateBand() (*VFO, error) {
 		if err != nil {
 			return &VFO{}, err
 		}
-		//app.infoLog.Printf("Called changeBand New: %s\tOld: %s\n", update.Band, v.Band)
-
-		//dx, err := app.getSpider(update.Band, dxLines)
-		//if err != nil {
-			//if errors.Is(err, errNoDXSpots) {
-				//return &VFO{}, err
-			//}
-			//if errors.Is(err, errTimeout) {
-				//app.infoLog.Printf("timeout error from calling getSpider in getUpdateBand %v\n", err)
-				//return &VFO{}, err
-			//}
-			//app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
-			//return &VFO{}, err
-		//}
 		v, err := app.getVFOUpdate() //populate VFO from dB
 		if err != nil {
 			return &VFO{}, err
 		}
 
-		//v.DX = dx
 		v.Band = update.Band
-		//v.Mode = update.Mode
-
 		return v, nil
 	}
-	//default:
-	//return v, nil
-	//}
 	return v, nil
 }
 
