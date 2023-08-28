@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
-//	"os"
 	"strings"
-//	"text/tabwriter"
+	"syscall"
 	"time"
 )
-
 
 type spider struct {
 	r *bufio.Reader
@@ -19,7 +17,7 @@ type spider struct {
 
 const (
 	lineLength = 74
-	msgLength = lineLength * dxLines
+	msgLength  = lineLength * dxLines
 	disconnect = "disconnected"
 )
 
@@ -28,16 +26,13 @@ var errTimeout = errors.New("dx spider timeout error")
 var errDisconnect = errors.New("dx spider disconnected")
 
 func (app *application) initSpider() (spider, error) {
-	
+
 	dlr := net.Dialer{
-		Timeout: time.Duration(2)*time.Second,
+		Timeout: time.Duration(2) * time.Second,
 	}
 
 	c, err := dlr.Dial("tcp", app.dxspider)
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return spider{}, errTimeout
-		}
 		return spider{}, err
 	}
 
@@ -45,7 +40,7 @@ func (app *application) initSpider() (spider, error) {
 		r: bufio.NewReader(c),
 		w: bufio.NewWriter(c),
 	}
-	err = dx.logIn(/*c, */app.call)
+	err = dx.logIn( /*c, */ app.call)
 	if err != nil {
 		return spider{}, err
 	}
@@ -60,57 +55,39 @@ func (app *application) changeBand(band string) error {
 
 	_, err := app.sp.w.WriteString(fmt.Sprintf("accept/spot 4 on %s\n", band))
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return errTimeout
-		}
 		return err
 	}
 	err = app.sp.w.Flush()
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return errTimeout
-		}
 		return err
 	}
-
 	b = []byte{}
 
 	for {
 		bb, err := app.sp.r.ReadByte()
 		if err != nil {
-			if e, ok := err.(net.Error); ok && e.Timeout() {
-				return errTimeout
-			}
 			return err
 		}
 		b = append(b, bb)
-		if strings.Contains(string(b), myCall) { //to do: fix this
+		if strings.Contains(string(b), myCall) {
 			break
 		}
 	}
-	//app.infoLog.Printf("%s", string(b))
 	return nil
 }
 
 func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error) {
 	b := make([]byte, 500)
-    
+
 	_, err := app.sp.w.WriteString(fmt.Sprintf("show/dx %d filter\n", lineCnt))
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			fmt.Println("Timed Out")
-			return []DXClusters{}, errTimeout
-		}
 		return []DXClusters{}, err
 	}
 	err = app.sp.w.Flush()
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return []DXClusters{}, errTimeout
-		}
 		return []DXClusters{}, err
 	}
-	
+
 	var sB string
 	m := 0
 	for {
@@ -120,25 +97,21 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 		}
 		bb, err := app.sp.r.ReadByte()
 		if err != nil {
-			if e, ok := err.(net.Error); ok && e.Timeout() {
-				return []DXClusters{}, errTimeout
-			}
 			return []DXClusters{}, err
 		}
 		b = append(b, bb)
 		sB = string(b)
 
-		if strings.HasSuffix(sB, myCall) && len(sB) >= msgLength  {
+		if strings.HasSuffix(sB, myCall) && len(sB) >= msgLength {
 			break
 		}
 		if strings.Contains(sB, disconnect) {
 			return []DXClusters{}, errDisconnect
 		}
 	}
-	
 	var splitLines = []string{}
 	lines := strings.Split(sB, "\n")
-	
+
 	for _, line := range lines {
 		if len(line) > 70 {
 			splitLines = append(splitLines, strings.TrimSpace(line))
@@ -164,7 +137,7 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 		line = strings.TrimPrefix(line, l.DXStation)
 		line = strings.TrimSpace(line)
 		n = strings.Index(line, " ")
-		if n  == -1 {
+		if n == -1 {
 			continue
 		}
 		l.Date = line[:n]
@@ -191,28 +164,17 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 		l.DE = strings.TrimPrefix(l.DE, "<")
 		dx = append(dx, l)
 	}
-	//app.infoLog.Printf("\nReturn:\n%s\n", sB)
-	//fmt.Printf("\n")
-	//w := new(tabwriter.Writer)
-	//w.Init(os.Stdout, 8, 8, 0, '\t', 0)
-	//fmt.Fprintf(w, "DX Call\tFrequency\tDate\tTime\tInfo\tDE Call\n")
-	//for _, line := range dx {
-		//fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", line.DXStation, line.Frequency, line.Date, line.Time, line.Info, line.DE)
-	//}
-	//w.Flush()
+
 	return dx, nil
 }
 
-func (s *spider) logIn(/*c net.Conn, */call string) error {
+func (s *spider) logIn(call string) error {
 	var err error
 	b := make([]byte, 2000)
 
 	for {
 		bb, err := s.r.ReadByte()
 		if err != nil {
-			if e, ok := err.(net.Error); ok && e.Timeout() {
-				return errTimeout
-			}
 			return err
 		}
 		if bb == 32 {
@@ -225,24 +187,15 @@ func (s *spider) logIn(/*c net.Conn, */call string) error {
 
 	_, err = s.w.WriteString(call + "\n")
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return errTimeout
-		}
 		return err
 	}
 	err = s.w.Flush()
 	if err != nil {
-		if e, ok := err.(net.Error); ok && e.Timeout() {
-			return errTimeout
-		}
 		return err
 	}
 	for {
 		bb, err := s.r.ReadByte()
 		if err != nil {
-			if e, ok := err.(net.Error); ok && e.Timeout() {
-				return errTimeout
-			}
 			return err
 		}
 		b = append(b, bb)
@@ -255,4 +208,29 @@ func (s *spider) logIn(/*c net.Conn, */call string) error {
 	return nil
 }
 
-
+func (app *application) spiderError(err error) error {
+	if errors.Is(err, errTimeout) {
+		app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
+		err = app.sp.logIn(app.call)
+		if err != nil {
+			return err
+		}
+	}
+	if errors.Is(err, errDisconnect) {
+		err = app.sp.logIn(app.call)
+		if err != nil {
+			return err
+		}
+	}
+	if errors.Is(err, syscall.EPIPE) {
+		err = app.sp.logIn(app.call)
+		if err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		fmt.Errorf("error from calling spiderError %v\n", err)
+		return err
+	}
+	return nil
+}

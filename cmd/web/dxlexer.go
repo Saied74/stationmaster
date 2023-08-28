@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-//	"os"
+	//	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -31,7 +31,7 @@ const (
 )
 
 const (
-	infoMin     = 25
+	infoMin      = 25
 	startPattern = "ad2cc"
 	deStart      = "<"
 	deEnd        = ">"
@@ -40,11 +40,11 @@ const (
 )
 
 type dxLexer struct {
-	name  string    // used only for error reports.
-	input string    // the string being scanned.
-	start int       // start position of this item.
-	pos   int       // current position in the input.
-	width int       // width of last rune read from input.
+	name    string      // used only for error reports.
+	input   string      // the string being scanned.
+	start   int         // start position of this item.
+	pos     int         // current position in the input.
+	width   int         // width of last rune read from input.
 	dxItems chan dxItem // channel of scanned items.
 }
 
@@ -72,8 +72,8 @@ func (l *dxLexer) run() {
 
 func dxLex(name, input string) (*dxLexer, chan dxItem) {
 	l := &dxLexer{
-		name:  name,
-		input: input,
+		name:    name,
+		input:   input,
 		dxItems: make(chan dxItem),
 	}
 	go l.run() // Concurrently run state machine.
@@ -200,26 +200,26 @@ func dxLexText(l *dxLexer) dxStateFn {
 			break
 		}
 	}
-	
+
 	//for {
-		//if strings.HasPrefix(l.input[l.pos:], startPattern) {
-			//if l.pos > l.start {
-				//l.emit(dxItemBegin)
-				////l.pos += len(startPattern)
-				////l.emit(dxItemBegin)
-			//}
-			//return dxLexPreFreq // Next state.
-		//}
-		//if l.next() == dxeof {
-			//break
-		//}
+	//if strings.HasPrefix(l.input[l.pos:], startPattern) {
+	//if l.pos > l.start {
+	//l.emit(dxItemBegin)
+	////l.pos += len(startPattern)
+	////l.emit(dxItemBegin)
+	//}
+	//return dxLexPreFreq // Next state.
+	//}
+	//if l.next() == dxeof {
+	//break
+	//}
 	//}
 	//// Correctly reached EOF.
 	//if l.pos > l.start {
-		//l.emit(dxItemText)
+	//l.emit(dxItemText)
 	//}
 	l.emit(dxItemEOF) // Useful to make EOF a token.
-	return nil      // Stop the run loop.
+	return nil        // Stop the run loop.
 
 }
 
@@ -385,7 +385,7 @@ func dxLexTime(l *dxLexer) dxStateFn {
 
 // much everything until reach deStart which is <; emit info
 func dxLexInfo(l *dxLexer) dxStateFn {
-	l.pos+= infoMin
+	l.pos += infoMin
 	for {
 		if strings.HasPrefix(l.input[l.pos:], deStart) {
 			if l.pos > l.start {
@@ -402,7 +402,7 @@ func dxLexInfo(l *dxLexer) dxStateFn {
 		l.emit(dxItemText)
 	}
 	l.emit(dxItemEOF) // Useful to make EOF a token.
-	return nil      // Stop the run loop.
+	return nil        // Stop the run loop.
 
 }
 
@@ -429,25 +429,23 @@ func dxLexDE(l *dxLexer) dxStateFn {
 	return nil
 }
 
-
 type DXClusters struct {
 	DE        string
-	DXStation string 
+	DXStation string
 	Country   string
 	Frequency string
-	Date	  string
-	Time	  string
-	Info	  string
+	Date      string
+	Time      string
+	Info      string
 	Need      string
 }
-
 
 func lexResults(pattern string) ([]DXClusters, error) {
 	dx := []DXClusters{}
 	l := DXClusters{}
 	_, c := dxLex("dxspiders", pattern)
 	//l := lineType{}
-    b := false
+	b := false
 	for {
 		d := <-c
 		switch d.typ {
@@ -473,14 +471,16 @@ func lexResults(pattern string) ([]DXClusters, error) {
 			l.DE = d.val
 			dx = append(dx, l)
 			//fmt.Printf("DX Call: %s Freq: %s Date: %s Time: %s Info: %s DE Call: %s\n",
-				//l.DXStation, l.Frequency, l.Date, l.Time, l.Info, l.DE)
+			//l.DXStation, l.Frequency, l.Date, l.Time, l.Info, l.DE)
 		case dxItemEOF:
-            b = true
+			b = true
 			break
 		default:
 			break
 		}
-        if b {break}
+		if b {
+			break
+		}
 	}
 	return dx, nil
 }

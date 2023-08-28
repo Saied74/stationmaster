@@ -3,13 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
-
-	//	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
 	"github.com/Saied74/stationmaster/pkg/vfo"
@@ -200,12 +197,18 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 
 	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
-		if errors.Is(err, errNoDXSpots) {
-			app.render(w, r, "vfo.page.html", td) //data)
-			app.infoLog.Printf("error no DX Spots from getSpider %v\n", err)
+		err = app.spiderError(err)
+		if err != nil {
+			app.serverError(w, err)
+			app.render(w, r, "vfo.page.html", td)
 			return
 		}
-		app.infoLog.Printf("error from calling clusters in startVFO %v\n", err)
+		dx, err = app.getSpider(band, dxLines)
+		if err != nil {
+			app.serverError(w, err)
+			app.render(w, r, "vfo.page.html", td)
+			return
+		}
 	}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
@@ -230,7 +233,7 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	
+
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
@@ -279,8 +282,8 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 }
 
 type BandUpdate struct {
-	Band    string `json:"Band"`
-	Mode    string `json:"Mode"`
+	Band    string       `json:"Band"`
+	Mode    string       `json:"Mode"`
 	DXTable []DXClusters `json:"DXTable"`
 }
 
@@ -297,45 +300,26 @@ var switchTable = map[int]BandUpdate{
 
 //triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	var dx = []DXClusters{}
-	var validDX = true
-	v, err := app.getUpdateBand() //reads the band switch and updates DB
+	var err error
+	var v = &VFO{}
+	var badV = false
+	v, err = app.getUpdateBand() //reads the band switch and updates DB
 	if err != nil {
+		badV = true
 		app.serverError(w, err)
-		return
-	}
-	dx, err = app.getSpider(v.Band, dxLines)
-	if err != nil {
-		if errors.Is(err, errNoDXSpots) {
-			validDX = false
-		}
-		if errors.Is(err, errTimeout) {
-			app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
-			validDX = false
-		}
-		if errors.Is(err, errDisconnect) {
-			app.sp.logIn(app.call)
-			dx, err = app.getSpider(band, dxLines)
-			if err != nil {
-				app.serverError(w, err)
-			}
-			validDX = true
-		}
-		app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
-		validDX = false
-	}
-	if validDX {
-		v.DX = dx
 	}
 	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
+		badV = true
 		app.serverError(w, err)
-		return
 	}
-	u, err := json.Marshal(*v)
-	if err != nil {
-		app.serverError(w, err)
-		return
+	var u = []byte{}
+	if !badV {
+		u, err = json.Marshal(*v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 	app.cw.Band = v.Band
 	w.Header().Set("Content-Type", "application/json")
@@ -344,7 +328,7 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	update := BandUpdate{}
-	var validDX bool
+	var validDX = true
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
@@ -352,23 +336,18 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	}
 	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
-		if errors.Is(err, errNoDXSpots) {
+		err = app.spiderError(err)
+		if err != nil {
+			app.serverError(w, err)
 			validDX = false
 		}
-		if errors.Is(err, errTimeout) {
-			app.infoLog.Printf("timeout error from calling getSpider in updateDX %v\n", err)
-			validDX = false
-		}
-		if errors.Is(err, errDisconnect) {
-			app.sp.logIn(app.call)
+		if validDX {
 			dx, err = app.getSpider(band, dxLines)
 			if err != nil {
 				app.serverError(w, err)
+				validDX = false
 			}
-			validDX = true
 		}
-		app.infoLog.Printf("error from calling getSpider in updateDX %v\n", err)
-		validDX = false
 	}
 	if validDX {
 		update.DXTable = dx

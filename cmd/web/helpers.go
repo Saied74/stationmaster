@@ -397,11 +397,6 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 	j := 0
 	for _, dx := range dxData {
 
-		//q, err := app.getHamInfo(dxItem.DE)
-		//if err != nil {
-		//continue
-		//}
-		//app.infoLog.Println(j, i, dx.DE)
 		inUS := strings.HasPrefix(dx.DE, "K") ||
 			strings.HasPrefix(dx.DE, "W") ||
 			strings.HasPrefix(dx.DE, "N") ||
@@ -411,7 +406,6 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 			strings.Contains(dx.DE, "2") ||
 			strings.Contains(dx.DE, "3") ||
 			strings.Contains(dx.DE, "4")
-			//	app.infoLog.Println("InZone", inZone)
 		if inUS && inZone {
 			newData = append(newData, dx)
 			i++
@@ -429,7 +423,7 @@ var noBandUpdate = errors.New("no band update")
 
 func (app *application) getUpdateBand() (*VFO, error) {
 	var b int
-
+	var dx = []DXClusters{}
 	v, err := app.getVFOUpdate() //populate VFO from dB
 	if err != nil {
 		return &VFO{}, err
@@ -448,13 +442,27 @@ func (app *application) getUpdateBand() (*VFO, error) {
 
 		err = app.changeBand(update.Band)
 		if err != nil {
-			return &VFO{}, err
+			err = app.spiderError(err)
+			if err != nil {
+				return &VFO{}, err
+			}
 		}
 		v, err := app.getVFOUpdate() //populate VFO from dB
 		if err != nil {
 			return &VFO{}, err
 		}
-
+		dx, err = app.getSpider(v.Band, dxLines)
+		if err != nil {
+			err = app.spiderError(err)
+			if err != nil {
+				return &VFO{}, err
+			}
+			dx, err = app.getSpider(v.Band, dxLines)
+			if err != nil {
+				return &VFO{}, err
+			}
+		}
+		v.DX = dx
 		v.Band = update.Band
 		return v, nil
 	}
