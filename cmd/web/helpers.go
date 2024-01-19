@@ -16,6 +16,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/Saied74/stationmaster/pkg/bandselect"
 )
 
 type formErrors map[string][]string
@@ -395,11 +397,6 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 	j := 0
 	for _, dx := range dxData {
 
-		//q, err := app.getHamInfo(dxItem.DE)
-		//if err != nil {
-		//continue
-		//}
-		//app.infoLog.Println(j, i, dx.DE)
 		inUS := strings.HasPrefix(dx.DE, "K") ||
 			strings.HasPrefix(dx.DE, "W") ||
 			strings.HasPrefix(dx.DE, "N") ||
@@ -409,7 +406,6 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 			strings.Contains(dx.DE, "2") ||
 			strings.Contains(dx.DE, "3") ||
 			strings.Contains(dx.DE, "4")
-			//	app.infoLog.Println("InZone", inZone)
 		if inUS && inZone {
 			newData = append(newData, dx)
 			i++
@@ -423,30 +419,57 @@ func (app *application) pickZone(zone string, dxData []DXClusters) ([]DXClusters
 
 }
 
-func (app * application)getUpdateBand() (*BandUpdate, error){
+var noBandUpdate = errors.New("no band update")
+
+func (app *application) getUpdateBand() (*VFO, error) {
 	var b int
-	select {
-	case b = <-app.bandData.Band:
-		update, ok := switchTable[b]
-		if !ok {
-			return &BandUpdate{}, fmt.Errorf("bad data from the switch %d", b)
-		}
-		err := app.otherModel.updateDefault("band", update.Band)
-			if err != nil {
-				return &BandUpdate{}, err
-			}
-		return &update, nil	
-	default:
-		band, err := app.otherModel.getDefault("band")
-		if err != nil {
-			return &BandUpdate{}, err
-		}
-		return &BandUpdate{Band: band}, nil
+	var dx = []DXClusters{}
+	v, err := app.getVFOUpdate() //populate VFO from dB
+	if err != nil {
+		return &VFO{}, err
 	}
+	b = bandselect.BandRead(app.bandData)
+	update, ok := switchTable[b]
+	if !ok {
+		return &VFO{}, fmt.Errorf("bad data from the switch %d", b)
+	}
+	if v.Band != update.Band {
+		err = app.otherModel.updateDefault("band", update.Band)
+		if err != nil {
+			return v, err
+		}
+
+		err = app.changeBand(update.Band)
+		if err != nil {
+			err = app.spiderError(err)
+			if err != nil {
+				return &VFO{}, err
+			}
+		}
+		v, err := app.getVFOUpdate() //populate VFO from dB
+		if err != nil {
+			return &VFO{}, err
+		}
+		dx, err = app.getSpider(v.Band, dxLines)
+		if err != nil {
+			err = app.spiderError(err)
+			if err != nil {
+				return &VFO{}, err
+			}
+			dx, err = app.getSpider(v.Band, dxLines)
+			if err != nil {
+				return &VFO{}, err
+			}
+		}
+		v.DX = dx
+		v.Band = update.Band
+		return v, nil
+	}
+	return v, nil
 }
 
-func (app *application)getUpdateMode(p *BandUpdate) error{
-	
+func (app *application) getUpdateMode(p *VFO) error {
+
 	xf := p.Band + "xfreq"
 	xFreq, err := app.otherModel.getDefault(xf)
 	if err != nil {
@@ -454,31 +477,31 @@ func (app *application)getUpdateMode(p *BandUpdate) error{
 	}
 	if xFreq <= vfoMemory[p.Band].CWBoundary {
 		switch xFreq {
-			case vfoMemory[p.Band].FT4Freq:
-				p.Mode = "FT4"
-			case vfoMemory[p.Band].FT8Freq:
-				p.Mode = "FT8"
-			default:
-				p.Mode = "CW"
-			}
-		} else {
-		switch p.Band {
-			case "10m":
-				p.Mode = "USB"
-			case "15m":
-				p.Mode = "USB"
-			case "20m":
-				p.Mode = "USB"
-			case "40m":
-				p.Mode = "LSB"
-			case "80m":
-				p.Mode = "LSB"
-			case "160m":
-				p.Mode = "LSB"
-			default:
-				p.Mode = "No transmission"
-			}
+		case vfoMemory[p.Band].FT4Freq:
+			p.Mode = "FT4"
+		case vfoMemory[p.Band].FT8Freq:
+			p.Mode = "FT8"
+		default:
+			p.Mode = "CW"
 		}
+	} else {
+		switch p.Band {
+		case "10m":
+			p.Mode = "USB"
+		case "15m":
+			p.Mode = "USB"
+		case "20m":
+			p.Mode = "USB"
+		case "40m":
+			p.Mode = "LSB"
+		case "80m":
+			p.Mode = "LSB"
+		case "160m":
+			p.Mode = "LSB"
+		default:
+			p.Mode = "No transmission"
+		}
+	}
 	err = app.otherModel.updateDefault("mode", p.Mode)
 	if err != nil {
 		return err

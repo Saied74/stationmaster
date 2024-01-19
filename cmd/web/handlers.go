@@ -3,16 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	//"fmt"
-	//"math"
+//	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	//"time"
-
-	//	"gobot.io/x/gobot/platforms/raspi"
 
 	"github.com/Saied74/stationmaster/pkg/code"
 	"github.com/Saied74/stationmaster/pkg/vfo"
@@ -28,7 +23,7 @@ const (
 	floatLsm   = 1.0
 	wsm        = "1.0"
 	floatWsm   = 1.0
-	dxLines    = 200
+	dxLines    = 20
 	cqZone     = "5" //Eastern US
 	maxDXLines = 20
 )
@@ -179,6 +174,8 @@ var vfoMemory = map[string]*VFO{
 	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
 }
 
+//var bandUpdateError error
+
 func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	v, err := app.getVFOUpdate()
@@ -192,22 +189,26 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
 	noDXData := strings.Contains(band, "Aux") || strings.Contains(band, "WWV")
 	if noDXData {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-	dx, err := clusters(band, dxLines)
+	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
-		if errors.Is(err, errNoDXSpots) {
-			app.render(w, r, "vfo.page.html", td) //data)
+		err = app.spiderError(err)
+		if err != nil {
+			app.serverError(w, err)
+			app.render(w, r, "vfo.page.html", td)
 			return
 		}
-		app.infoLog.Printf("error from calling clusters in startVFO %v\n", err)
-	}
-	dx, err = app.pickZone(cqZone, dx)
-	if err != nil {
-		app.serverError(w, err)
+		dx, err = app.getSpider(band, dxLines)
+		if err != nil {
+			app.serverError(w, err)
+			app.render(w, r, "vfo.page.html", td)
+			return
+		}
 	}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
@@ -215,6 +216,7 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
+	td.VFO.Band = band
 	td.VFO.DX = dx
 	app.render(w, r, "vfo.page.html", td) //data)
 }
@@ -231,6 +233,7 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
@@ -273,16 +276,15 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	}
 	xFreq = xFreq - lowerLimit + b
 	rFreq = rFreq - lowerLimit + b
-	//fmt.Println("before runvfo", band, rFreq)
 	app.cw.RcvFreq = rFreq
 	app.cw.Band = band
 	vfo.Runvfo(app.vfoAdaptor, xFreq, rFreq)
 }
 
 type BandUpdate struct {
-	Band    string `json:"Band"`
-	Mode    string `json:"Mode"`
-	DXTable []DXClusters
+	Band    string       `json:"Band"`
+	Mode    string       `json:"Mode"`
+	DXTable []DXClusters `json:"DXTable"`
 }
 
 var switchTable = map[int]BandUpdate{
@@ -298,53 +300,57 @@ var switchTable = map[int]BandUpdate{
 
 //triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
-	
-	update, err := app.getUpdateBand() //reads the band switch and updates DB
+	var err error
+	var v = &VFO{}
+	var badV = false
+	v, err = app.getUpdateBand() //reads the band switch and updates DB
 	if err != nil {
+		badV = true
 		app.serverError(w, err)
-		return
 	}
-	err = app.getUpdateMode(update) //calculates mode from band and xmit freq, updates DB
+	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
+		badV = true
 		app.serverError(w, err)
-		return
 	}
-	u, err := json.Marshal(*update)
-	if err != nil {
-		app.serverError(w, err)
-		return
+	var u = []byte{}
+	if !badV {
+		u, err = json.Marshal(*v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
-	app.cw.Band = update.Band
+	app.cw.Band = v.Band
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
 }
 
 func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
+	update := BandUpdate{}
+	var validDX = true
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	dx, err := clusters(band, dxLines)
+	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
-		if errors.Is(err, errNoDXSpots) {
-			return
+		err = app.spiderError(err)
+		if err != nil {
+			app.serverError(w, err)
+			validDX = false
 		}
-		app.infoLog.Printf("error from calling clusters in updateDX %v\n", err)
-		return
+		if validDX {
+			dx, err = app.getSpider(band, dxLines)
+			if err != nil {
+				app.serverError(w, err)
+				validDX = false
+			}
+		}
 	}
-	dx, err = app.pickZone(cqZone, dx)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	dx, err = app.logsModel.findNeed(dx)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	update := BandUpdate{
-		DXTable: dx,
+	if validDX {
+		update.DXTable = dx
 	}
 	u, err := json.Marshal(update)
 	if err != nil {

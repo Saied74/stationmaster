@@ -105,7 +105,7 @@ func (f *mockLogsModel) getConfirmedStates() ([]LogsRow, error) {
 }
 
 func (f *mockLogsModel) getLogsByState(state string) ([]LogsRow, error) {
-	return []LogsRow, nil
+	return []LogsRow{}, nil
 }
 
 func (f *mockLogsModel) findNeed(dx []DXClusters) ([]DXClusters, error) {

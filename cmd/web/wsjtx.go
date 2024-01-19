@@ -14,12 +14,11 @@ import (
 )
 
 const (
-	wsjtBuffer = 5
+	wsjtBuffer       = 5
 	wsjtShortAverage = 3
-	wsjtLongAverage = 5
-	wsjtMargin = 2
+	wsjtLongAverage  = 5
+	wsjtMargin       = 2
 )
-
 
 func (app *application) wsjtxServe() {
 	log.Println("Listening for WSJT-X...")
@@ -47,34 +46,34 @@ func (app *application) wsjtxServe() {
 		}
 		//t := time.Now().Second()
 		//if t % 15 < wsjtMargin && toggle == true {
-			//fmt.Printf("Count of 1 round = %d\t", app.cqStat[app.wsjtPntr])
-			//short := app.countCQ(wsjtShortAverage)
-			//long  := app.countCQ(wsjtLongAverage)
-			//fmt.Printf("\n")
-			
-			//if app.qsoStat[app.wsjtPntr] != 0 {
-				//r := float64(app.cqStat[app.wsjtPntr]) / float64(app.qsoStat[app.wsjtPntr])
-				//fmt.Printf("Prcnt of 1 round = %0.2f\t", r)
-			//}
-			//app.averageCQ(short, wsjtShortAverage)
-			//app.averageCQ(long, wsjtLongAverage)
-			
-			//app.wsjtPntr++
-			//if app.wsjtPntr >= wsjtBuffer {
-				//app.wsjtPntr = 0
-			//}
-			//app.cqStat[app.wsjtPntr] = 0
-			//app.qsoStat[app.wsjtPntr] = 0
-			//fmt.Printf("\n\n")
-			//toggle = false
+		//fmt.Printf("Count of 1 round = %d\t", app.cqStat[app.wsjtPntr])
+		//short := app.countCQ(wsjtShortAverage)
+		//long  := app.countCQ(wsjtLongAverage)
+		//fmt.Printf("\n")
+
+		//if app.qsoStat[app.wsjtPntr] != 0 {
+		//r := float64(app.cqStat[app.wsjtPntr]) / float64(app.qsoStat[app.wsjtPntr])
+		//fmt.Printf("Prcnt of 1 round = %0.2f\t", r)
+		//}
+		//app.averageCQ(short, wsjtShortAverage)
+		//app.averageCQ(long, wsjtLongAverage)
+
+		//app.wsjtPntr++
+		//if app.wsjtPntr >= wsjtBuffer {
+		//app.wsjtPntr = 0
+		//}
+		//app.cqStat[app.wsjtPntr] = 0
+		//app.qsoStat[app.wsjtPntr] = 0
+		//fmt.Printf("\n\n")
+		//toggle = false
 		//}
 		//if t % 15 > 10 {
-			//toggle = true
+		//toggle = true
 		//}
 	}
 }
 
-func (app * application)countCQ(n int) int{
+func (app *application) countCQ(n int) int {
 	p := app.wsjtPntr
 	cnt := 0
 	for i := 0; i < n; i++ {
@@ -88,7 +87,7 @@ func (app * application)countCQ(n int) int{
 	return cnt
 }
 
-func (app * application)averageCQ(l, n int) {
+func (app *application) averageCQ(l, n int) {
 	p := app.wsjtPntr
 	cnt := 0
 	for i := 0; i < n; i++ {
@@ -103,10 +102,8 @@ func (app * application)averageCQ(l, n int) {
 		fmt.Printf("Prcnt of %d rounds = %0.2f\t", n, r)
 	}
 }
-	
 
-
-func (app *application)handleServerMessage(message interface{}) error {
+func (app *application) handleServerMessage(message interface{}) error {
 	switch message.(type) {
 	case wsjtx.HeartbeatMessage:
 		//log.Println("Heartbeat:", message)
@@ -126,14 +123,14 @@ func (app *application)handleServerMessage(message interface{}) error {
 		now := time.Now()
 		now = now.UTC()
 		//fmt.Println("Hour: ", now.Hour())
-		t = t - (uint32(now.Hour()) * (60 * 60 *1000))
+		t = t - (uint32(now.Hour()) * (60 * 60 * 1000))
 		//fmt.Println("Minute: ", now.Minute())
 		t = t - (uint32(now.Minute()) * (60 * 1000))
 		t = t / 1000
 		if msg[0] == "CQ" {
 			app.cqStat[app.wsjtPntr]++
 		}
-		
+
 	case wsjtx.ClearMessage:
 		//log.Println("Clear:", message)
 	case wsjtx.QsoLoggedMessage:
@@ -155,9 +152,9 @@ func (app *application)handleServerMessage(message interface{}) error {
 	return nil
 }
 
-func (app *application)logQSO(message interface{}) error {
+func (app *application) logQSO(message interface{}) error {
 	m := message.(wsjtx.QsoLoggedMessage)
-	
+
 	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		return err
@@ -166,9 +163,9 @@ func (app *application)logQSO(message interface{}) error {
 	if err != nil {
 		return err
 	}
-	
+
 	call := m.DxCall
-	
+
 	c, err := app.qrzModel.getQRZ(call)
 	if err != nil {
 		if errors.Is(err, errNoRecord) {
@@ -182,16 +179,16 @@ func (app *application)logQSO(message interface{}) error {
 			if err != nil {
 				return err
 			}
-			
+
 			lr := LogsRow{
-				Call:  m.DxCall,
-				Sent: m.ReportSent,
-				Rcvd: m.ReportReceived,
-				Band: band,
-				Mode: mode,
-				Name: fmt.Sprintf("%s %s", c.Fname, c.Lname),
-				Country: c.Country,
-				Comment: m.DxGrid,
+				Call:     m.DxCall,
+				Sent:     m.ReportSent,
+				Rcvd:     m.ReportReceived,
+				Band:     band,
+				Mode:     mode,
+				Name:     fmt.Sprintf("%s %s", c.Fname, c.Lname),
+				Country:  c.Country,
+				Comment:  m.DxGrid,
 				ExchSent: m.ExchangeSent,
 				ExchRcvd: m.ExchangeReceived,
 			}
@@ -213,16 +210,16 @@ func (app *application)logQSO(message interface{}) error {
 	if err != nil {
 		return err
 	}
-	
+
 	lr := LogsRow{
-		Call:  m.DxCall,
-		Sent: m.ReportSent,
-		Rcvd: m.ReportReceived,
-		Band: band,
-		Mode: mode,
-		Name: fmt.Sprintf("%s %s", c.Fname, c.Lname),
-		Country: c.Country,
-		Comment: m.DxGrid,
+		Call:     m.DxCall,
+		Sent:     m.ReportSent,
+		Rcvd:     m.ReportReceived,
+		Band:     band,
+		Mode:     mode,
+		Name:     fmt.Sprintf("%s %s", c.Fname, c.Lname),
+		Country:  c.Country,
+		Comment:  m.DxGrid,
 		ExchSent: m.ExchangeSent,
 		ExchRcvd: m.ExchangeReceived,
 	}
@@ -244,128 +241,127 @@ func serverError(err error) {
 //type wsjtMsgType int
 
 //type wsjtMsgItemType struct {
-	//typ wsjtMsgType
-	//val string
+//typ wsjtMsgType
+//val string
 //}
 
 //type wsjtMsgLexer struct {
-	//name  string    // used only for error reports.
-	//input string    // the string being scanned.
-	//start int       // start position of this item.
-	//pos   int       // current position in the input.
-	//width int       // width of last rune read from input.
-	//field wsjtMsgItemType  //field to emit into the chanel
-	//items chan wsjtMsgItemType // channel of scanned items.
+//name  string    // used only for error reports.
+//input string    // the string being scanned.
+//start int       // start position of this item.
+//pos   int       // current position in the input.
+//width int       // width of last rune read from input.
+//field wsjtMsgItemType  //field to emit into the chanel
+//items chan wsjtMsgItemType // channel of scanned items.
 //}
 
 //type wsjtMsgStateFn func(*wsjtMsgLexer) wsjtMsgStateFn
 
 //const (
-	//wsjtItemCQ wsjtMsgType = iota
-	//wsjtItemDE
-	//wsjtItemDX
-	//wsjtItemEOR
-	//wsjtItemError
+//wsjtItemCQ wsjtMsgType = iota
+//wsjtItemDE
+//wsjtItemDX
+//wsjtItemEOR
+//wsjtItemError
 //)
 
 //type wsjtDecodeMsgType {
-	//cq bool
-	//dx string
-	//de string
-	//t  time.Time
+//cq bool
+//dx string
+//de string
+//t  time.Time
 //}
-	
 
 //unc (app *application) processDecodeMsg(m string) (wsjtDecodeMsgType, error) {
-	//msg := wsjtDecodeMsgType{
-		//t: time.Now(),
-		//}
+//msg := wsjtDecodeMsgType{
+//t: time.Now(),
+//}
 
-	//_, c := lex("wsjtDecodeMessage", m)
-	
-	//for {
-		//d := <-c
-		//switch d.typ {
-		//case wsjtItemEOR:
-			//return msg, nil
-		//case wsjtItemCQ:
-			//msg.cq = true
-		//case wsjtItemDE:
-			//msg.de = d.val
-		//case wsjtItemDX:
-			//msg.dx = d.val
-		//case itemError:
-			//return msg{}, fmt.Errorf("error from the decode message parser channel")
-		//default:
-			//return msg{}, fmt.Errorf("invalid type received from message parser channel %s", m)
-		//}
-	//}
-	//return msg, fmt.Errorf("got to the end of processDecodeMsg %s", m)
+//_, c := lex("wsjtDecodeMessage", m)
+
+//for {
+//d := <-c
+//switch d.typ {
+//case wsjtItemEOR:
+//return msg, nil
+//case wsjtItemCQ:
+//msg.cq = true
+//case wsjtItemDE:
+//msg.de = d.val
+//case wsjtItemDX:
+//msg.dx = d.val
+//case itemError:
+//return msg{}, fmt.Errorf("error from the decode message parser channel")
+//default:
+//return msg{}, fmt.Errorf("invalid type received from message parser channel %s", m)
+//}
+//}
+//return msg, fmt.Errorf("got to the end of processDecodeMsg %s", m)
 //}
 
 //func wsjtMsgLex(name, input string) (*wsjtMsgLexer, chan wsjtMsgItemType) {
-	//l := &wsjtMsgLexer{
-		//name:  name,
-		//input: input,
-		//items: make(chan item),
-	//}
-	//go l.run() // Concurrently run state machine.
-	//return l, l.items
+//l := &wsjtMsgLexer{
+//name:  name,
+//input: input,
+//items: make(chan item),
+//}
+//go l.run() // Concurrently run state machine.
+//return l, l.items
 //}
 
 //// run lexes the input by executing state functions until
 //// the state is nil.
 //func (l *wsjtMsgLexer) run() {
-	//for state := wsjtMsgLexSpace; state != nil; {
-		//state = state(l)
-	//}
-	//close(l.items) // No more tokens will be delivered.
+//for state := wsjtMsgLexSpace; state != nil; {
+//state = state(l)
+//}
+//close(l.items) // No more tokens will be delivered.
 //}
 
 //func (l *wsjtMsgLexer) emit() {
-	//l.items <- wsjtMsgItemType{l.field, l.input[l.start:l.pos]}
-	//l.start = l.pos
+//l.items <- wsjtMsgItemType{l.field, l.input[l.start:l.pos]}
+//l.start = l.pos
 //}
 
 //// next returns the next rune in the input.
 //func (l *wsjtMsgLexer) next() (r rune) {
-	//if l.pos >= len(l.input) {
-		//l.width = 0
-		//return eof
-	//}
-	//r, l.width = utf8.DecodeRuneInString(l.input[l.pos:])
-	//l.pos += l.width
-	//return r
+//if l.pos >= len(l.input) {
+//l.width = 0
+//return eof
+//}
+//r, l.width = utf8.DecodeRuneInString(l.input[l.pos:])
+//l.pos += l.width
+//return r
 //}
 
 //func wsjtLexSpace(l *wsjtMsgLexer) stateFn {
-	//for {
-		//if !strings.HasPrefix(l.input[l.pos:], " ") {
-			//l.start = l.pos
-			//return wsjtLexCQ // Next state.
-		//}
-		//if l.next() == eof {
-			//break
-		//}
-	//}
-	//// Correctly reached EOF.
-	//l.field = wsjtItemEOR
-	//l.emit()   // Useful to make EOF a token.
-	//return nil // Stop the run loop.
+//for {
+//if !strings.HasPrefix(l.input[l.pos:], " ") {
+//l.start = l.pos
+//return wsjtLexCQ // Next state.
+//}
+//if l.next() == eof {
+//break
+//}
+//}
+//// Correctly reached EOF.
+//l.field = wsjtItemEOR
+//l.emit()   // Useful to make EOF a token.
+//return nil // Stop the run loop.
 //}
 
 //func wsjtLexCQ(l *wsjtMsgLexer) stateFn {
-	//for {
-		//if strings.HasPrefix(l.input[l.pos:], "CQ") {
-			//l.start = l.pos
-			//return wsjtLexCQ // Next state.
-		//}
-		//if l.next() == eof {
-			//break
-		//}
-	//}
-	//// Correctly reached EOF.
-	//l.field = wsjtItemEOR
-	//l.emit()   // Useful to make EOF a token.
-	//return nil // Stop the run loop.
+//for {
+//if strings.HasPrefix(l.input[l.pos:], "CQ") {
+//l.start = l.pos
+//return wsjtLexCQ // Next state.
+//}
+//if l.next() == eof {
+//break
+//}
+//}
+//// Correctly reached EOF.
+//l.field = wsjtItemEOR
+//l.emit()   // Useful to make EOF a token.
+//return nil // Stop the run loop.
 //}

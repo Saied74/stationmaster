@@ -54,16 +54,16 @@ func (cw *CwDriver) Work(ctx context.Context) {
 	//the Farnsworth code speed model which can be found here:
 	//http://www.arrl.org/files/file/Technology/x9004008.pdf
 
-	fmt.Printf("speed: %f, farnspeed: %f, lf: %f, wf: %f\n", cw.Speed,
-		cw.Farnspeed, cw.LF, cw.WF)
+	//fmt.Printf("speed: %f, farnspeed: %f, lf: %f, wf: %f\n", cw.Speed,
+		//cw.Farnspeed, cw.LF, cw.WF)
 	if cw.Speed >= 18.0 {
 		cw.dL = 1200.0 / cw.Speed
 	} else {
 		cw.dL = 1200.0 / cw.Farnspeed
 	}
-	uwm, ulm := cw.calcSpacing()
+	//uwm, ulm := cw.calcSpacing()
 
-	fmt.Printf("DL: %f, uwm: %v, ulm: %v\n", cw.dL, uwm, ulm)
+	//fmt.Printf("DL: %f, uwm: %v, ulm: %v\n", cw.dL, uwm, ulm)
 
 	cw.Dit.DigitalWrite(cw.Output, cw.Low)
 	//letterTimer := time.Now()

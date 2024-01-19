@@ -1,3 +1,4 @@
+//go:build !rpi
 // +build !rpi
 
 package bandselect

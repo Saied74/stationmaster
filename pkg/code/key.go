@@ -36,6 +36,9 @@ type CwDriver struct {
 	Output    string
 	Hi        byte
 	Low       byte
+    RcvFreq	  float64
+	Band      string
+
 }
 
 //Work in this file does nothing.  It is for outside of RPI build
