@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+//	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -194,7 +195,6 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-
 	dx, err := app.getSpider(band, dxLines)
 	if err != nil {
 		err = app.spiderError(err)

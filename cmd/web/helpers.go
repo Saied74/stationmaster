@@ -433,7 +433,6 @@ func (app *application) getUpdateBand() (*VFO, error) {
 	if !ok {
 		return &VFO{}, fmt.Errorf("bad data from the switch %d", b)
 	}
-
 	if v.Band != update.Band {
 		err = app.otherModel.updateDefault("band", update.Band)
 		if err != nil {

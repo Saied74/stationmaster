@@ -48,7 +48,7 @@ func (app *application) initSpider() (spider, error) {
 }
 
 func (app *application) changeBand(band string) error {
-	if band == "WWV" || band == "AUX" {
+	if band == "WWV" || band == "AUX" || band == "160m" {
 		return nil
 	}
 	b := make([]byte, 500)
@@ -78,7 +78,6 @@ func (app *application) changeBand(band string) error {
 
 func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error) {
 	b := make([]byte, 500)
-
 	_, err := app.sp.w.WriteString(fmt.Sprintf("show/dx %d filter\n", lineCnt))
 	if err != nil {
 		return []DXClusters{}, err
@@ -87,7 +86,6 @@ func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error
 	if err != nil {
 		return []DXClusters{}, err
 	}
-
 	var sB string
 	m := 0
 	for {
