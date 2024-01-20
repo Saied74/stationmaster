@@ -45,3 +45,8 @@ type CwDriver struct {
 func (cw *CwDriver) Work(ctx context.Context) {
 	return
 }
+
+	
+func (cw *CwDriver) BeSilent() {
+	return
+}
