@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+.README.md.swp
 master
 adif.txt
 .DS_Store
