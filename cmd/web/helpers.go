@@ -308,6 +308,12 @@ func (f *formData) extractCWParameter(field string) (int, error) {
 		f.Errors.add(field, fmt.Sprintf("%v field must be a number", field))
 		return 0, fmt.Errorf("%v field must be a number", field)
 	}
+	if field == "volume" {
+		if s < 1 || s > 10 {
+			f.Errors.add(field, fmt.Sprintf("volume must be between 1 and 10"))
+			return 0, fmt.Errorf("volume must be between 1 and 10")
+		}
+	}
 	return s, nil
 }
 

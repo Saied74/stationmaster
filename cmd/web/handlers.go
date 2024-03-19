@@ -16,9 +16,9 @@ import (
 
 // seed data for the keyer - tutor
 const (
-	speed      = 25
+	speed      = 22
 	tone       = 650
-	volume     = 100
+	volume     = 5
 	cwMode     = "Keyer"
 	dxLines    = 20
 	cqZone     = "5" //Eastern US
@@ -82,7 +82,7 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		cmd.volume = int8(volume)
 	} else {
-		cmd.volume = int8(v)
+		cmd.volume = int8(-14*v + 141)
 	}
 
 	if !f.valid() {
