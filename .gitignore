@@ -18,5 +18,8 @@ adif.txt
 # swap files
 *.swp
 
+# sql backup files
+*.sql
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
