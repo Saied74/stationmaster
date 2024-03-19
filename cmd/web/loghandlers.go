@@ -10,25 +10,24 @@ import (
 
 //seed data for the keyer - tutor
 
-//for feeding dynamic data and error reports to templates
+// for feeding dynamic data and error reports to templates
 type templateData struct {
-	FormData  *formData //for form validation error handling
-	LookUp    *Ctype    //Full suite of QRZ individual ham data
-	Speed     string    //code sending speed
-	FarnSpeed string    //Farnsworth sending speed
-	Lsm       string    //Letter spacing modifier
-	Wsm       string    //word spacing modifier
-	Mode      string    //keying mode, tutor or keyer
-	Top       headRow   //Log table column titles
-	Table     []LogsRow //full set of log table rows
-	LogEdit   *LogsRow  //single row of the log table for editing
-	Show      bool
-	Edit      bool
-	StopCode  bool
-	Logger    bool
-	Contest   string
-	Stats     *Stats
-	VFO       *VFO
+	FormData *formData //for form validation error handling
+	LookUp   *Ctype    //Full suite of QRZ individual ham data
+	Speed    int8      //code sending speed
+	Tone     int16     //Practice tone
+	Volume   int8      //Practice volume
+	Mode     string    //keying mode, tutor or keyer
+	Top      headRow   //Log table column titles
+	Table    []LogsRow //full set of log table rows
+	LogEdit  *LogsRow  //single row of the log table for editing
+	Show     bool
+	Edit     bool
+	StopCode bool
+	Logger   bool
+	Contest  string
+	Stats    *Stats
+	VFO      *VFO
 }
 
 type Stats struct {
@@ -43,7 +42,7 @@ type Stats struct {
 	ConfirmedCounty   int
 }
 
-//LogType is for passing data to the add button of the logger
+// LogType is for passing data to the add button of the logger
 type LogType struct {
 	Name    string `json:"Name"`
 	Country string `json:"Country"`
@@ -51,7 +50,7 @@ type LogType struct {
 	Mode    string `json:"Mode"` //todo, I don't think this is used anymore
 }
 
-//QRZType is for passing data to the call sign search botton of the logger.
+// QRZType is for passing data to the call sign search botton of the logger.
 type QRZType struct {
 	QRZMsg   string `json:"QRZMsg"`
 	Call     string `json:"Call"`

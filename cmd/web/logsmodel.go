@@ -36,7 +36,7 @@ type logsModel struct {
 
 var errNoRecord = errors.New("no matching record found")
 
-//LogsRow is the data for the logs table rows
+// LogsRow is the data for the logs table rows
 type LogsRow struct {
 	Id          int
 	Time        time.Time
@@ -103,7 +103,7 @@ var tableHead = headRow{
 	"LOTW Rcvd",
 }
 
-//will insert a new record into the stationlogs table
+// will insert a new record into the stationlogs table
 func (m *logsModel) insertLog(l *LogsRow) (int, error) {
 	if len(l.Name) > 100 {
 		l.Name = l.Name[0:100]
@@ -135,7 +135,7 @@ exchrcvd, contestname)
 	return int(id), nil
 }
 
-//will get a record given its id
+// will get a record given its id
 func (m *logsModel) getLogByID(id int) (*LogsRow, error) {
 	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd
@@ -189,7 +189,7 @@ func (m *logsModel) getLogsByCall(call string) ([]*LogsRow, error) {
 	return tr, nil
 }
 
-//will return the n most recently created logs
+// will return the n most recently created logs
 func (m *logsModel) getLatestLogs(n int) ([]LogsRow, error) {
 	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
@@ -263,7 +263,7 @@ func (m *logsModel) getConfirmedContacts() ([]LogsRow, error) {
 	return t, nil
 }
 
-//will return the n most recently created logs
+// will return the n most recently created logs
 func (m *logsModel) getContestLogs(n int) ([]LogsRow, error) {
 	stmt := fmt.Sprintf(`SELECT id, time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,

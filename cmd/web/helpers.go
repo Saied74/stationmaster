@@ -16,8 +16,6 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
-
-	"github.com/Saied74/stationmaster/pkg/bandselect"
 )
 
 type formErrors map[string][]string
@@ -78,21 +76,20 @@ func (app *application) render(w http.ResponseWriter, r *http.Request,
 
 func initTemplateData() *templateData {
 	return &templateData{
-		FormData:  newForm(url.Values{}),
-		Speed:     speed,
-		FarnSpeed: farnspeed,
-		Lsm:       lsm,
-		Wsm:       wsm,
-		Top:       tableHead,
-		Table:     []LogsRow{},
-		LogEdit:   &LogsRow{},
-		Show:      false,
-		Edit:      false,
-		StopCode:  false,
-		Logger:    false,
-		Contest:   "No",
-		Stats:     &Stats{},
-		VFO:       &VFO{},
+		FormData: newForm(url.Values{}),
+		Speed:    speed,
+		Tone:     tone,
+		Volume:   volume,
+		Top:      tableHead,
+		Table:    []LogsRow{},
+		LogEdit:  &LogsRow{},
+		Show:     false,
+		Edit:     false,
+		StopCode: false,
+		Logger:   false,
+		Contest:  "No",
+		Stats:    &Stats{},
+		VFO:      &VFO{},
 	}
 }
 
@@ -284,7 +281,7 @@ func (f *formData) valid() bool {
 	return len(f.Errors) == 0
 }
 
-//extracts the floating value of the keyer fields
+// extracts the floating value of the keyer fields
 func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
 	value := f.Get(field)
 
@@ -299,6 +296,19 @@ func (f *formData) extractFloat(field, c string, fc float64) (float64, string) {
 		return 0, value
 	}
 	return s, value
+}
+
+func (f *formData) extractCWParameter(field string) (int, error) {
+	value := f.Get(field)
+	if strings.TrimSpace(value) == "" {
+		return 0, fmt.Errorf("Balnk %v field", field)
+	}
+	s, err := strconv.Atoi(value)
+	if err != nil {
+		f.Errors.add(field, fmt.Sprintf("%v field must be a number", field))
+		return 0, fmt.Errorf("%v field must be a number", field)
+	}
+	return s, nil
 }
 
 //<++++++++++++++++   centralized error handling   +++++++++++++++++++>
@@ -428,7 +438,11 @@ func (app *application) getUpdateBand() (*VFO, error) {
 	if err != nil {
 		return &VFO{}, err
 	}
-	b = bandselect.BandRead(app.bandData)
+	b, err = app.readBand()
+	if err != nil {
+		return v, err
+	}
+	//b = bandselect.BandRead(app.bandData)
 	update, ok := switchTable[b]
 	if !ok {
 		return &VFO{}, fmt.Errorf("bad data from the switch %d", b)

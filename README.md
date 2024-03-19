@@ -161,9 +161,10 @@ STATIONMASTER TABLE STRUCTURE
 
 This is the schema for the stationlogs table.  The file makelogstable.txt in the dbscripts folder
 generates this table when run in batch mode.
-+-------------+--------------+------+-----+---------------------+----------------+
+
+                                                                                  
 | Field       | Type         | Null | Key | Default             | Extra          |
-+-------------+--------------+------+-----+---------------------+----------------+
+|-------------|--------------|------|-----|---------------------|----------------|
 | id          | int(11)      | NO   | PRI | NULL                | auto_increment |
 | time        | datetime     | NO   | MUL | NULL                |                |
 | callsign    | varchar(20)  | NO   | MUL | NULL                |                |
@@ -182,7 +183,7 @@ generates this table when run in batch mode.
 | exchsent    | varchar(10)  | NO   |     |                     |                |
 | exchrcvd    | varchar(10)  | NO   |     |                     |                |
 | contestname | varchar(50)  | NO   |     |                     |                |
-+-------------+--------------+------+-----+---------------------+----------------+
+                                                                                  
 
 If you note, I store very little user information in the stationlogs table (I should
  store nothing but the call sign).  The detail information is stored in the qrztable
@@ -193,9 +194,9 @@ Note in the script for building this table for MariaDB, there is no foreign key 
 MariaDB did not support it when I first built the tables (and it may still not support it).
 But the software does not depend on it.
 
-+--------------+--------------+------+-----+---------+----------------+
+                                                                       
 | Field        | Type         | Null | Key | Default | Extra          |
-+--------------+--------------+------+-----+---------+----------------+
+|--------------|--------------|------|-----|---------|----------------|
 | id           | int(11)      | NO   | PRI | NULL    | auto_increment |
 | time         | datetime     | NO   |     | NULL    |                |
 | callsign     | varchar(20)  | NO   | UNI | NULL    |                |
@@ -241,7 +242,7 @@ But the software does not depend on it.
 | mqsl         | varchar(3)   | NO   |     | NULL    |                |
 | attn         | varchar(100) | NO   |     | NULL    |                |
 | qso_count    | int(11)      | NO   |     | NULL    |                |
-+--------------+--------------+------+-----+---------+----------------+
+                                                                       
 
 The stashtable is identical to the qrztable and it is used to stash data
 on a temporary basis to avoid multiple calls to qrz.com during one transaction.
@@ -251,10 +252,10 @@ constest exchanges,  and the like to make the user intrface a little nicer.
 It is a simple key value pair and the software uses it as needed by specifying
 a key and associating a value with it.
 
-+-------+--------------+------+-----+---------+----------------+
+                                                                
 | Field | Type         | Null | Key | Default | Extra          |
-+-------+--------------+------+-----+---------+----------------+
+|-------|--------------|------|-----|---------|----------------|
 | id    | int(11)      | NO   | PRI | NULL    | auto_increment |
 | kee   | varchar(20)  | NO   | MUL | NULL    |                |
 | val   | varchar(100) | NO   |     | NULL    |                |
-+-------+--------------+------+-----+---------+----------------+
+                                                                

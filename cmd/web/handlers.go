@@ -1,32 +1,38 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-//	"fmt"
+	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/Saied74/stationmaster/pkg/code"
+	//	"github.com/Saied74/stationmaster/pkg/code"
+
 	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
-//seed data for the keyer - tutor
+// seed data for the keyer - tutor
 const (
-	speed      = "20"
-	floatSpeed = 20.0
-	farnspeed  = "18"
-	floatFarn  = 18.0
-	lsm        = "1.0"
-	floatLsm   = 1.0
-	wsm        = "1.0"
-	floatWsm   = 1.0
+	speed      = 25
+	tone       = 650
+	volume     = 100
+	cwMode     = "Keyer"
 	dxLines    = 20
 	cqZone     = "5" //Eastern US
 	maxDXLines = 20
 )
+
+type cwData struct {
+	speed   int8
+	volume  int8
+	tone    int16
+	cmd     byte
+	RcvFreq float64 //dummy for now
+	Band    string  //dummy for now
+}
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
@@ -48,28 +54,35 @@ func (app *application) ktutor(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "ktutor.page.html", td) //data)
 }
 
+// This function (and related areas in the code) have been modified to work
+// with the new Arduino based CW keyer and practice oscillator
 func (app *application) start(w http.ResponseWriter, r *http.Request) {
-	//variable naming convention:
-	//all constants are lower case and longer
-	//thier numeric version has float in front ot it
-	//data extracted from the form ends in X (they are all strings)
-	//when converted to float64, they are shortened
 	td := initTemplateData()
+	cmd := &cwData{}
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 	}
 	f := newForm(r.PostForm)
 
-	s, speedX := f.extractFloat("speed", speed, floatSpeed)
-	fs, fspeedX := f.extractFloat("farnspeed", farnspeed, floatFarn)
-	wf, wsmX := f.extractFloat("wsm", wsm, floatWsm)
-	lf, lsmX := f.extractFloat("lsm", lsm, floatLsm)
-
-	//check to make sure keyer has stopped
-	_, _, ktrunning := app.getCancel()
-	if ktrunning {
-		f.Errors.add("ktrunning", "Keyer-tutor is running, stop it first")
+	s, err := f.extractCWParameter("speed")
+	if err != nil {
+		cmd.speed = int8(1200 / speed)
+		s = speed
+	} else {
+		cmd.speed = int8(1200 / s)
+	}
+	t, err := f.extractCWParameter("tone")
+	if err != nil {
+		cmd.tone = int16(tone)
+	} else {
+		cmd.tone = int16(t)
+	}
+	v, err := f.extractCWParameter("volume")
+	if err != nil {
+		cmd.volume = int8(volume)
+	} else {
+		cmd.volume = int8(v)
 	}
 
 	if !f.valid() {
@@ -78,43 +91,31 @@ func (app *application) start(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "ktutor.page.html", td)
 		return
 	}
-	//get context with cancel so the keyer can be stopped when needed
-	ctx, cancel := context.WithCancel(context.Background())
-	app.putCancel(ctx, cancel, true)
 	modeX := r.PostForm.Get("mode") //tutor or keyer
-	var whichOutput string
-	var hi, low byte
 	switch modeX {
 	case "1":
-		whichOutput = code.TutorOutput
-		hi = byte(0)
-		low = byte(1)
 		td.Mode = "Tutor"
+		cmd.cmd = tutor
 	case "2":
-		whichOutput = code.KeyerOutput
-		hi = byte(1)
-		low = byte(0)
 		td.Mode = "Keyer"
+		cmd.cmd = keyer
 	default:
-		hi = byte(0)
-		low = byte(1)
-		td.Mode = "Tutor"
-		f.Errors.add("ktrunning", "No mode selected, set to Tutor")
+		td.Mode = cwMode
+		if cwMode == "Tutor" {
+			cmd.cmd = tutor
+		} else {
+			cmd.cmd = keyer
+		}
 	}
-	app.cw.Speed = s
-	app.cw.Farnspeed = fs
-	app.cw.LF = lf
-	app.cw.WF = wf
-	app.cw.Output = whichOutput
-	app.cw.Hi = hi
-	app.cw.Low = low
+	err = app.issueCWCmd(cmd)
+	if err != nil {
+		f.Errors.add("ktrunning", fmt.Sprintf("error from new CW %v", err))
+	}
 
-	go app.cw.Work(ctx)
-
-	td.Speed = speedX
-	td.FarnSpeed = fspeedX
-	td.Lsm = lsmX
-	td.Wsm = wsmX
+	td.Speed = int8(s)
+	td.Tone = cmd.tone
+	td.Volume = cmd.volume
+	//td.Wsm = wsmX
 	td.StopCode = true
 	app.render(w, r, "runkt.page.html", td)
 
@@ -278,6 +279,11 @@ func (app *application) updateVFO(w http.ResponseWriter, r *http.Request) {
 	rFreq = rFreq - lowerLimit + b
 	app.cw.RcvFreq = rFreq
 	app.cw.Band = band
+	//app.setSplit("noSplit")
+	rPhase := (rFreq * math.Pow(2.0, 32.0)) / 125.0
+	rP := uint32(rPhase)
+	//fmt.Println("rP: ", rP)
+	app.setFrequency(rP, "tx")
 	vfo.Runvfo(app.vfoAdaptor, xFreq, rFreq)
 }
 
@@ -298,7 +304,7 @@ var switchTable = map[int]BandUpdate{
 	7: BandUpdate{Band: "160m", Mode: "LSB"},
 }
 
-//triggered by regular update requests from the web page vfo.page.html
+// triggered by regular update requests from the web page vfo.page.html
 func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var v = &VFO{}

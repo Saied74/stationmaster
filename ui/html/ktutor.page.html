@@ -8,17 +8,12 @@
   <div class="col-sm-2"></div>
   <div class="col-sm-6">
 
-<h3>Code Tutor and Keyer</h3>
-<p>This is a combinatin of cw totor and a keyer.
-I hope it helps you with CW and make code enjoyable.
-The keyer is for rigs that don't have a keyer built in but
-do generate side tone</p>
-<p>Dit, dah, and spacing times are calculated based on the data entered
-in the speed and Farnsworth speed fields according to this paper:
-http://www.arrl.org/files/file/Technology/x9004008.pdf.  Letter
-(3 dit lengths) and word (7 dit lengths) spacings as defined
-by the Farnsworth algorithm and are stretched by the factors you
-specify. Experiment to see what is comfortable for you.</p>
+<h3>CW Tutor and Keyer</h3>
+<p>
+My interest is code speeds of 18 wpm and higher (mostly 22 and 25 wpm
+these days).  So, per the ARRL standard, I will dispense with using
+the Farnswoth method.  You can find the ARRL starndard at this link:
+http://www.arrl.org/files/file/Technology/x9004008.pdf</p>
 
 <form action="/start" method="post">
 
@@ -27,39 +22,29 @@ specify. Experiment to see what is comfortable for you.</p>
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
 <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon3">Example: {{.Speed}}</span>
+  <span class="input-group-text" id="basic-addon3">Default: {{.Speed}}</span>
   <input type="text" class="form-control" id="basic-url"
   name="speed" aria-describedby="basic-addon3" value='{{.FormData.Get "speed"}}'>
 </div>
 
-<label for="basic-url" class="form-label">Farnswoth speed in WPM</label>
-{{with .FormData.Errors.Get "farnspeed"}}
+<label for="basic-url" class="form-label">Practice tone in Hz</label>
+{{with .FormData.Errors.Get "tone"}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
 <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon3">Example: {{.FarnSpeed}}</span>
-  <input type="text" class="form-control" id="basic-url" name="farnspeed"
-  value='{{.FormData.Get "farnspeed"}}' aria-describedby="basic-addon3">
+  <span class="input-group-text" id="basic-addon3">Default: {{.Tone}}</span>
+  <input type="text" class="form-control" id="basic-url" name="tone"
+  value='{{.FormData.Get "tone"}}' aria-describedby="basic-addon3">
 </div>
 
-<label for="basic-url" class="form-label">Letter spacing stretch</label>
-{{with .FormData.Errors.Get "lsm"}}
+<label for="basic-url" class="form-label">Practice volume from 1 to 10</label>
+{{with .FormData.Errors.Get "volume"}}
 		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
 	{{end}}
 <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon3">Example: {{.Lsm}}</span>
-  <input type="text" class="form-control" id="basic-url" name="lsm"
-  value='{{.FormData.Get "lsm"}}' aria-describedby="basic-addon3">
-</div>
-
-<label for="basic-url" class="form-label">Word spacing stretch</label>
-{{with .FormData.Errors.Get "wsm"}}
-		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
-	{{end}}
-<div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon3" >Example: {{.Wsm}}</span>
-  <input type="text" class="form-control" id="basic-url" name="wsm"
-  value='{{.FormData.Get "wsm"}}' aria-describedby="basic-addon3">
+  <span class="input-group-text" id="basic-addon3" >Default: {{.Volume}}</span>
+  <input type="text" class="form-control" id="basic-url" name="volume"
+  value='{{.FormData.Get "volume"}}' aria-describedby="basic-addon3">
 </div>
 
 {{with .FormData.Errors.Get "mode"}}
@@ -67,18 +52,18 @@ specify. Experiment to see what is comfortable for you.</p>
 {{end}}
 
 <select class="form-select" aria-label="Choices" name="mode">
-  <option selected>Select operating mode</option>
+  <option selected>Keyer</option>
   <option value="1">Tutor</option>
   <option value="2">Keyer</option>
 </select>
-<br><br>
+<br>
 
   <button type="submit" style="background-color: #9FE1EA; color: #442C2E" class="btn ">Start</button>
   {{with .FormData.Errors.Get "ktrunning"}}
 		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
 	{{end}}
 
-	{{end}}
+{{end}}
 
 </form>
 </div>
