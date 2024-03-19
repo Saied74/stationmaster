@@ -171,10 +171,11 @@ func findPorts(vids []string) ([]string, error) {
 		return portNames, fmt.Errorf("no ports were found")
 	}
 	for _, v := range vids {
-		v = strings.ToUpper(v)
+		vu := strings.ToUpper(v)
+		vl := strings.ToLower(v)
 		for _, port := range ports {
 			if port.IsUSB {
-				if port.VID == v {
+				if port.VID == v || port.VID == vl || port.VID == vu {
 					portNames = append(portNames, port.Name)
 				}
 			}
