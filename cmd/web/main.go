@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-yaml/yaml"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/Saied74/stationmaster/pkg/bandselect"
 	"github.com/Saied74/stationmaster/pkg/code"
+
+	//	"github.com/Saied74/stationmaster/pkg/code"
 	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
@@ -36,7 +39,7 @@ type configType struct {
 	Spider3    string `yaml:"spider3"`
 }
 
-//for injecting data into handlers
+// for injecting data into handlers
 type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
@@ -57,13 +60,18 @@ type application struct {
 	contestDir    string
 	vfoAdaptor    *raspi.Adaptor
 	bandData      *bandselect.BandData
-	cw            *code.CwDriver
+	cw            *cwData //*code.CwDriver
 	cqStat        [wsjtBuffer]int
 	qsoStat       [wsjtBuffer]int
 	wsjtPntr      int
 	call          string //user call sign, over ridden by call flag
 	dxspider      string //<ip address>:<port number>
 	sp            spider
+	remLock       sync.Mutex
+	rem           remotes
+	portName      string
+	vid           *string
+	remUp         bool
 }
 
 type httpClient interface {
@@ -92,6 +100,8 @@ func main() {
 	//dxSpider := flag.String("spider", "dxc.ww1r.com:7300", "dxspider server ip:port address")
 	dxSpider := flag.String("spider", "dxc.w1nr.net:23", "dxspider server ip:port address")
 	myCall := flag.String("call", "AD2CC", "your call sign")
+	vid := flag.String("vid", "2341", "USB Vendor ID default is Arduino SA")
+
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)
@@ -160,16 +170,45 @@ func main() {
 	}
 	sp, err := app.initSpider()
 	if err != nil {
-		app.errorLog.Fatal("failed spider lognin: ", err)
+		app.errorLog.Printf("failed spider lognin: ", err)
 	}
 	app.sp = sp
+	app.vid = vid
 
 	app.bandData = &bandselect.BandData{
 		Band:    make(chan int),
 		Adaptor: app.vfoAdaptor,
 	}
-	app.cw = &code.CwDriver{Dit: app.vfoAdaptor}
+	app.cw = &cwData{
+		speed:  speed,
+		volume: volume,
+		tone:   tone,
+		cmd:    keyer,
+	}
+
 	go app.wsjtxServe()
+
+	app.rem = make(remotes)
+	err = app.startCWRemote()
+	if err != nil {
+		app.errorLog.Println("failed to start CW remote %v", err)
+	}
+	err = app.startVFORemote()
+	if err != nil {
+		app.errorLog.Println("failed to start VFO remote %v", err)
+	}
+
+	defer func() {
+		for kind, _ := range remoteKind {
+			_, ok := app.rem[kind]
+			if !ok {
+				continue
+			}
+			if app.rem[kind].port != nil {
+				app.rem[kind].port.Close()
+			}
+		}
+	}()
 
 	mux := app.routes()
 	srv := &http.Server{

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-//<<<--------------------   Generating ADIF file     ---------------------->>>
+// <<<--------------------   Generating ADIF file     ---------------------->>>
 type parsPat struct {
 	testName string
 	call     []string
@@ -124,7 +124,7 @@ func TestGenADIFFile(t *testing.T) {
 	}
 }
 
-//<<<------------------   Testing parsing ADIF file  ---------------------->>>
+// <<<------------------   Testing parsing ADIF file  ---------------------->>>
 type genPat struct {
 	name  string
 	input string

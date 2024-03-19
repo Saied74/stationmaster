@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-//Qtype is the top level structure for the QRZ API
+// Qtype is the top level structure for the QRZ API
 type Qtype struct {
 	XMLName  xml.Name `xml:"QRZDatabase"`
 	Callsign Ctype
 	Session  Stype
 }
 
-//Ctype is the main payload of the QRZ API
+// Ctype is the main payload of the QRZ API
 type Ctype struct {
 	XMLName     xml.Name `xml:"Callsign"`
 	Id          int32
@@ -68,7 +68,7 @@ type Ctype struct {
 	QSOCount    int
 }
 
-//Stype is the validation part of the QRZ API
+// Stype is the validation part of the QRZ API
 type Stype struct {
 	Key   string `xml:"Key"`
 	Error string `xml: "Error"`

@@ -15,5 +15,8 @@ adif.txt
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# swap files
+*.swp
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
