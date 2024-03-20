@@ -44,7 +44,7 @@ This module incorporates an Analog Devices DDS chip and additional necessary
 components.  The output of the DDS directly drives the radio VFO input.
 The NuElec DDS module is available from Amazon.
 
-The VFO module also reads the radio bandswitch.  Even though given the
+The VFO module also reads the radio band switch.  Even though given the
 pin count of the Arduino Uno R4 Minima a diode encoder is not necessary, 
 since I am using part of a printed circuit board I made for another project
 I do encode the 8 switch settings into a 3 bit code that is read by
@@ -64,14 +64,13 @@ my Ten Tec Omni D with a modern radio one of these days and do the same.
 ### Database
 The database in MySQL is called stationmaster.  It has four tables.
 They are stationlogs, qrztable, defaults, and stashtable.  The scripts
-for building these tables are in the dbscripts directory.  They are
-called makelogtable.txt, makeqrztable.txt, and makestashtable.txt.
+for building these tables are in the dbscripts directory. 
 
 The details of the table structures and how to build them is at the end
 of this note.
 
 
-A few notes on the logger:
+### A few notes on the logger (and other screens):
 1. The callsign search window let's you search for the call sign prior to a QSO,
 get info about a contact, and find out if you have worked them before?
 2. The add button (next to the logger button) on the top ribbon is how you add
@@ -81,8 +80,8 @@ the band and mode show up on the add window.  If you are using the VFO subsystem
 (or equivalent), there is no need to set the defaults.  The software reads and
 infers them from the band and frequency information.
 4. After you move the curser out of the call sign window, the system looks up
-the call sign from the local database or from QRZ.com and update the add window.
-5. You only need to add the RST sent and received and any comments.
+the call sign from the local database or from QRZ.com and update the add window,
+then you only need to add the RST sent and received and any comments.
 6. If you need to edit the entry, click on the ID link.
 7. If you need to see more detail on the contact, click on the call sign.
 8. When the application makes an API call to QRZ, it stores all of the information
@@ -114,9 +113,11 @@ The Cabrillo button brings up the Cabrillo file generation page. All the fields
 on this page are required.  All dates and times are in UTC.  The file is stored
 in the contest directory as specified in the config.yaml file.
 
-A few final notes:
+### A final note:
 1. I am building this as a single user local application
-2. It is intended to run on a Raspberry Pi as the station controller
+2. It was originally intended to run on a Raspberry Pi as the station controller,
+though I originally developed the application on a Mac.  I am moving it to
+a Mac Mini.
 3. It also depends on specific hardware as I have described above.
 
 I have taken some liberties with how I have used the Go web
@@ -124,7 +125,8 @@ libraries.  If this was a multi-user application meant to be accessible
 on the Internet, you would not do some of these and add other functionality
 that I have not included.
 
-## Database installation (for MAC).
+## Database installation 
+I have tested this on a MAC and on a Raspberry Pi running Linux.
 
 This is my way.  You may have better ways in which case you can use them.
 
