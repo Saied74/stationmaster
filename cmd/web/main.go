@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"flag"
+
+	//	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -93,6 +95,7 @@ func init() {
 
 func main() {
 	var err error
+
 	sqlpw := flag.String("sqlpw", "", "MySQL Password")
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
