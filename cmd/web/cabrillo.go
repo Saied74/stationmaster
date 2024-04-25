@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -24,41 +24,49 @@ type contestData struct {
 	score     string
 }
 
+type cabBuffer []byte
+
+var cabData = cabBuffer{}
+
+func (c cabBuffer) Write(p []byte) (int, error) {
+	for _, pp := range p {
+		cabData = append(cabData, pp)
+	}
+	return len(p), nil
+}
+
 func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
-	var b bytes.Buffer
-	score, err := app.logsModel.calcContestScore(cd)
-	if err != nil {
-		return err
-	}
-	cd.score = fmt.Sprintf("%d", score)
-	b = writeCabrilloHeader(b, cd.name, cd.score)
-	b.Write([]byte("                              --------info sent------- -------info rcvd--------\n"))
-	b.Write([]byte("QSO:  freq mo date       time call          rst exch   call          rst exch   t\n"))
-	b.Write([]byte("QSO: ***** ** yyyy-mm-dd nnnn ************* nnn ****** ************* nnn ****** n\n"))
+	cabData = cabBuffer{}
+	dd := make(cabBuffer, 10)
+	cd.score = ""
+	header := writeCabrilloHeader(cabData, cd.name, cd.score)
+	w := tabwriter.NewWriter(dd, 1, 2, 1, ' ', 0)
 	for _, row := range rows {
-		b.Write([]byte("QSO: "))
-		b.Write(bandNormalize(row.Band))
-		b.Write(modeNormalize(row.Mode))
+		s := ""
+		s += "QSO:\t"
+		s += row.Band + "\t"
+		s += row.Mode + "\t"
 		dd, dt := cookTime(row.Time)
-		b.Write([]byte(dd + " "))
+		s += dd + "\t"
 		t := strings.Split(strings.TrimSuffix(dt, "Z"), ":")
-		b.Write([]byte(strings.Join(t[0:2], "") + " "))
-		b.Write(lengthNormalize("AD2CC", callLen))
-		b.Write(lengthNormalize(row.Sent, rstLen))
-		b.Write(lengthNormalize(row.ExchSent, exchLen))
-		b.Write(lengthNormalize(row.Call, callLen))
-		b.Write(lengthNormalize(row.Rcvd, rstLen))
-		b.Write(lengthNormalize(row.ExchRcvd, exchLen))
-		b.Write([]byte("o\n"))
+		s += strings.Join(t[0:2], "") + "\t"
+		s += "AD2CC\t"
+		s += row.Sent + "\t"
+		s += row.ExchSent + "\t"
+		s += row.Call + "\t"
+		s += row.Rcvd + "\t"
+		s += row.ExchRcvd + "\t"
+		fmt.Fprintln(w, s)
 	}
-	b.Write([]byte("END-OF-LOG: \n"))
-	p := make([]byte, b.Len())
-	b.Read(p)
-	err = writeCab(cd.filename, p)
+	w.Flush()
+	dd.Write([]byte("END-OF-LOG: \n"))
+	fullData := append(header, cabData...)
+	err := writeCab(cd.filename, []byte(fullData))
 	if err != nil {
 		return err
 	}
 	return nil
+
 }
 
 func bandNormalize(band string) []byte {
@@ -87,6 +95,17 @@ func modeNormalize(mode string) []byte {
 	return lengthNormalize(mode, modeLen) //// TODO: check length and normamize
 }
 
+func modeNorm(mode string) string {
+	mode = strings.ToUpper(mode)
+	switch mode {
+	case "USB":
+		return "PH\t"
+	case "LSB":
+		return "PH\t"
+	}
+	return mode + "\t"
+}
+
 func lengthNormalize(x string, l int) []byte {
 	if len(x) == l {
 		return []byte(x + " ")
@@ -102,7 +121,7 @@ func lengthNormalize(x string, l int) []byte {
 	return append(y, byte(space))
 }
 
-func writeCabrilloHeader(b bytes.Buffer, contest, score string) bytes.Buffer {
+func writeCabrilloHeader(b cabBuffer, contest, score string) cabBuffer {
 	b.Write([]byte("START-OF-LOG: 3.0\n"))
 	b.Write([]byte("CONTEST: " + contest + "\n"))
 	b.Write([]byte("LOCATION: NJ\n"))
@@ -111,7 +130,7 @@ func writeCabrilloHeader(b bytes.Buffer, contest, score string) bytes.Buffer {
 	b.Write([]byte("CATEGORY-ASSISTED: NON-ASSISTED\n"))
 	b.Write([]byte("CATEGORY-BAND: All\n"))
 	b.Write([]byte("CATEGORY-POWER: LOW\n"))
-	b.Write([]byte("CATEGORY-MODE: SSB\n"))
+	b.Write([]byte("CATEGORY-MODE: CW\n"))
 	b.Write([]byte("CATEGORY-STATION: FIXED\n"))
 	b.Write([]byte("CATEGORY-TRANSMITTER: ONE\n"))
 	b.Write([]byte("CLAIMED-SCORE: " + score + "\n"))
