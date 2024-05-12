@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -201,20 +202,20 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		err = app.spiderError(err)
 		if err != nil {
 			app.serverError(w, err)
-			app.render(w, r, "vfo.page.html", td)
+			//app.render(w, r, "vfo.page.html", td)
 			return
 		}
 		dx, err = app.getSpider(band, dxLines)
 		if err != nil {
 			app.serverError(w, err)
-			app.render(w, r, "vfo.page.html", td)
+			//app.render(w, r, "vfo.page.html", td)
 			return
 		}
 	}
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)
-		app.render(w, r, "vfo.page.html", td)
+		//app.render(w, r, "vfo.page.html", td)
 		return
 	}
 	td.VFO.Band = band
@@ -344,6 +345,8 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = app.spiderError(err)
 		if err != nil {
+			log.Println("EOF Error: ", err)
+			log.Printf("EOF Error Type %T\n", err)
 			app.serverError(w, err)
 			validDX = false
 		}

@@ -181,7 +181,7 @@ func (s *spider) logIn(call string) error {
 		}
 		b = append(b, bb)
 	}
-	fmt.Println(string(b))
+	//fmt.Println(string(b))
 
 	_, err = s.w.WriteString(call + "\n")
 	if err != nil {
@@ -201,7 +201,7 @@ func (s *spider) logIn(call string) error {
 			break
 		}
 	}
-	fmt.Println(string(b))
+	//fmt.Println(string(b))
 
 	return nil
 }
@@ -226,8 +226,22 @@ func (app *application) spiderError(err error) error {
 			return err
 		}
 	}
+	if errors.Is(err, syscall.ECONNRESET) {
+		err = app.sp.logIn(app.call)
+		if err != nil {
+			return err
+		}
+	}
 	if err != nil {
 		fmt.Errorf("error from calling spiderError %v\n", err)
+		return err
+	}
+	return nil
+}
+
+func (app *application) byeSpider() error {
+	_, err := app.sp.w.WriteString("bye\n")
+	if err != nil {
 		return err
 	}
 	return nil

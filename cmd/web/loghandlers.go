@@ -623,7 +623,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		f.required("contestname", "rst", "exch")
 		f.maxLength("contestname", 45)
 		f.maxLength("rst", 3)
-		f.maxLength("exch", 6)
+		f.maxLength("exch", 10)
 		if !f.valid() {
 			td.FormData = f
 			app.render(w, r, "defaults.page.html", td)
