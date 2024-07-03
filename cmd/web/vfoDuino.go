@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -195,7 +196,7 @@ func (app *application) readBand() (int, error) {
 	wBuff[sendMsgLen-1] = byte(crc)
 	n, err := app.writeRemote(wBuff, "vfo") //rem[vfoKind].port.Write(wBuff)
 	if err != nil {
-		return 0, fmt.Errorf("failed write to vfo usb port %v", err)
+		return 0, errors.Join(fmt.Errorf("failed write to vfo usb port"), err)
 	}
 	if n != sendMsgLen {
 		return 0, fmt.Errorf("did not write %d bytes, it wrote %d", sendMsgLen, n)
@@ -203,7 +204,7 @@ func (app *application) readBand() (int, error) {
 	//	time.Sleep(time.Duration(120) * time.Millisecond)
 	n, err = app.readRemote(rBuff, "vfo") //rem[vfoKind].port.Read(rBuff)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read from vfo usb port: %v", err)
+		return 0, errors.Join(fmt.Errorf("failed to read from vfo usb port"), err)
 	}
 	if n != 3 {
 		return 0, fmt.Errorf("did not read 3 bytes from vfo, read %d:", n)

@@ -29,6 +29,7 @@ All messages are specified to be 8 bytes since I have not figured out how to rea
 variable length messages on the Arduino side.
 */
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -61,6 +62,7 @@ type remotes map[string]*remote
 
 var remoteKind = map[string]byte{cwKind: cwAddress, vfoKind: vfoAddress}
 var vidList = []string{"10c4"}
+var noPortMatch = errors.New("no port matched the vid list")
 
 // classifyPorts takes a list of founded and opened port names and
 // returns the structure remotes ready for communicating with remotes.
@@ -182,7 +184,7 @@ func findPorts(vids []string) ([]string, error) {
 		}
 	}
 	if len(portNames) == 0 {
-		return portNames, fmt.Errorf("no port matched the vid list")
+		return portNames, noPortMatch
 	}
 	return portNames, nil
 }
