@@ -6,6 +6,7 @@
 *.dylib
 .README.md.swp
 master
+spider
 adif.txt
 .DS_Store
 
