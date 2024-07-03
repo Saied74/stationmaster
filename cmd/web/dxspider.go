@@ -78,6 +78,9 @@ func (app *application) changeBand(band string) error {
 
 func (app *application) getSpider(band string, lineCnt int) ([]DXClusters, error) {
 	b := make([]byte, 500)
+	if app.sp.w == nil {
+		return []DXClusters{}, nil
+	}
 	_, err := app.sp.w.WriteString(fmt.Sprintf("show/dx %d filter\n", lineCnt))
 	if err != nil {
 		return []DXClusters{}, err
@@ -221,10 +224,13 @@ func (app *application) spiderError(err error) error {
 		}
 	}
 	if errors.Is(err, syscall.EPIPE) {
-		err = app.sp.logIn(app.call)
+		sp, err := app.initSpider()
+		fmt.Println("EPIPE: ", err)
 		if err != nil {
 			return err
 		}
+		app.sp = sp
+		return nil
 	}
 	if errors.Is(err, syscall.ECONNRESET) {
 		err = app.sp.logIn(app.call)

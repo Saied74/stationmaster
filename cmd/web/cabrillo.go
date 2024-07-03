@@ -44,7 +44,7 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 	for _, row := range rows {
 		s := ""
 		s += "QSO:\t"
-		s += row.Band + "\t"
+		s += bandNormalize(row.Band) + "\t"
 		s += row.Mode + "\t"
 		dd, dt := cookTime(row.Time)
 		s += dd + "\t"
@@ -69,19 +69,21 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 
 }
 
-func bandNormalize(band string) []byte {
+func bandNormalize(band string) string {
 	band = strings.ToUpper(band)
 	switch band {
 	case "10M":
-		return []byte("21000 ")
+		return "28000"
+	case "15M":
+		return "21000"
 	case "20M":
-		return []byte("14000 ")
+		return "14000"
 	case "40M":
-		return []byte(" 7000 ")
+		return "7000"
 	case "80M":
-		return []byte(" 3500 ")
+		return "3500"
 	}
-	return lengthNormalize(band, freqLen) // TODO: check length and normalize
+	return band // lengthNormalize(band, freqLen) // TODO: check length and normalize
 }
 
 func modeNormalize(mode string) []byte {
