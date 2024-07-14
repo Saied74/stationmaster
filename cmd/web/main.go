@@ -265,6 +265,10 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/update-vfo", app.updateVFO)
 	mux.HandleFunc("/update-band", app.updateBand)
 	mux.HandleFunc("/update-dx", app.updateDX)
+	mux.HandleFunc("/cw-contacts", app.cwContacts)
+	mux.HandleFunc("/cw-confirmed", app.cwConfirmed)
+	mux.HandleFunc("/cw-confirmed-state", app.cwConfirmedState)
+	mux.HandleFunc("/cw-confirmed-country", app.cwConfirmedCountry)
 	return mux
 }
 

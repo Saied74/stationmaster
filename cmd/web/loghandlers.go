@@ -31,15 +31,19 @@ type templateData struct {
 }
 
 type Stats struct {
-	Contacts          int
-	ConfirmedContacts int
-	RepeatContacts    int
-	Country           int
-	ConfirmedCountry  int
-	State             int
-	ConfirmedState    int
-	County            int
-	ConfirmedCounty   int
+	Contacts           int
+	ConfirmedContacts  int
+	RepeatContacts     int
+	Country            int
+	ConfirmedCountry   int
+	State              int
+	ConfirmedState     int
+	County             int
+	ConfirmedCounty    int
+	CWContacts         int
+	ConfirmedCW        int
+	ConfirmedCWState   int
+	ConfirmedCWCountry int
 }
 
 // LogType is for passing data to the add button of the logger

@@ -193,3 +193,14 @@ func (f *mockOtherModel) updateDefault(k, v string) error {
 func (m *mockLogsModel) updateLOTWSent(id int) error {
 	return nil
 }
+
+func (m *mockLogsModel) getSimpleLogs(m, l, c string) ([]LogsRow, error) {
+	return nil
+}
+
+func (m *mockLogsModel) getUniqueCountry(m, l string) ([]LogsRow, error) {
+	return nil
+}
+func (m *mockLogsModel) getUniqueState(m, l string) ([]LogsRow, error) {
+	return nil
+}
