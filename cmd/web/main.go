@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"flag"
+
+	//	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -93,12 +95,12 @@ func init() {
 
 func main() {
 	var err error
+
 	sqlpw := flag.String("sqlpw", "", "MySQL Password")
 	displayLines := flag.Int("lines", 20, "No. of lines to be displayed on logs")
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
 	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
-	//dxSpider := flag.String("spider", "dxc.ww1r.com:7300", "dxspider server ip:port address")
-	dxSpider := flag.String("spider", "dxc.w1nr.net:23", "dxspider server ip:port address")
+	dxSpider := flag.String("spider", "coax.w1wra.net:7300", "dxspider server ip:port address")
 	myCall := flag.String("call", "AD2CC", "your call sign")
 	vid := flag.String("vid", "2341", "USB Vendor ID default is Arduino SA")
 
@@ -263,6 +265,10 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/update-vfo", app.updateVFO)
 	mux.HandleFunc("/update-band", app.updateBand)
 	mux.HandleFunc("/update-dx", app.updateDX)
+	mux.HandleFunc("/cw-contacts", app.cwContacts)
+	mux.HandleFunc("/cw-confirmed", app.cwConfirmed)
+	mux.HandleFunc("/cw-confirmed-state", app.cwConfirmedState)
+	mux.HandleFunc("/cw-confirmed-country", app.cwConfirmedCountry)
 	return mux
 }
 

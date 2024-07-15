@@ -31,15 +31,19 @@ type templateData struct {
 }
 
 type Stats struct {
-	Contacts          int
-	ConfirmedContacts int
-	RepeatContacts    int
-	Country           int
-	ConfirmedCountry  int
-	State             int
-	ConfirmedState    int
-	County            int
-	ConfirmedCounty   int
+	Contacts           int
+	ConfirmedContacts  int
+	RepeatContacts     int
+	Country            int
+	ConfirmedCountry   int
+	State              int
+	ConfirmedState     int
+	County             int
+	ConfirmedCounty    int
+	CWContacts         int
+	ConfirmedCW        int
+	ConfirmedCWState   int
+	ConfirmedCWCountry int
 }
 
 // LogType is for passing data to the add button of the logger
@@ -623,7 +627,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		f.required("contestname", "rst", "exch")
 		f.maxLength("contestname", 45)
 		f.maxLength("rst", 3)
-		f.maxLength("exch", 6)
+		f.maxLength("exch", 10)
 		if !f.valid() {
 			td.FormData = f
 			app.render(w, r, "defaults.page.html", td)

@@ -28,6 +28,9 @@ type logsType interface {
 	getConfirmedStates() ([]LogsRow, error)
 	getLogsByState(string) ([]LogsRow, error)
 	findNeed([]DXClusters) ([]DXClusters, error)
+	getSimpleLogs(string, string, string) ([]LogsRow, error)
+	getUniqueCountry(string, string) ([]LogsRow, error)
+	getUniqueState(string, string) ([]LogsRow, error)
 }
 
 type logsModel struct {
@@ -761,4 +764,106 @@ func (m *logsModel) findNeed(dx []DXClusters) ([]DXClusters, error) {
 	}
 
 	return newDX, nil
+}
+
+func (m *logsModel) getSimpleLogs(mode, confirmed, country string) ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd
+	FROM stationlogs WHERE mode like ? and lotwrcvd like ? and country like ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, mode, confirmed, country)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getUniqueCountry(mode, confirmed string) ([]LogsRow, error) {
+
+	stmt := `SELECT DISTINCT country FROM stationlogs where mode like ? and 
+	lotwrcvd like ? and country <> '' ORDER BY country ASC`
+	rows, err := m.DB.Query(stmt, mode, confirmed)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.Country)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		t = append(t, *item)
+	}
+
+	return t, nil
+}
+
+func (m *logsModel) getUniqueState(mode, confirmed string) ([]LogsRow, error) {
+	stmt := `SELECT DISTINCT qrztable.state
+	FROM stationlogs inner join qrztable on
+	stationlogs.callsign=qrztable.callsign WHERE stationlogs.mode like ? and stationlogs.lotwrcvd like ? and
+	stationlogs.country = ? and qrztable.state <> '' ORDER BY state ASC`
+
+	rows, err := m.DB.Query(stmt, mode, confirmed, "United States")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	tr := []*LogsRow{}
+
+	for rows.Next() {
+		s := &LogsRow{}
+
+		err = rows.Scan(&s.State)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	t := []LogsRow{}
+	for _, item := range tr {
+		item.Cnty = true
+		t = append(t, *item)
+	}
+
+	return t, nil
 }

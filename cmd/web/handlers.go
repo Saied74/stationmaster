@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -196,25 +198,27 @@ func (app *application) startVFO(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "vfo.page.html", td)
 		return
 	}
-	dx, err := app.getSpider(band, dxLines)
+	var dx []DXClusters
+	dx, err = app.getSpider(band, dxLines)
 	if err != nil {
 		err = app.spiderError(err)
 		if err != nil {
 			app.serverError(w, err)
-			app.render(w, r, "vfo.page.html", td)
+			//app.render(w, r, "vfo.page.html", td)
 			return
 		}
 		dx, err = app.getSpider(band, dxLines)
 		if err != nil {
 			app.serverError(w, err)
-			app.render(w, r, "vfo.page.html", td)
+			//app.render(w, r, "vfo.page.html", td)
 			return
 		}
 	}
+
 	dx, err = app.logsModel.findNeed(dx)
 	if err != nil {
 		app.serverError(w, err)
-		app.render(w, r, "vfo.page.html", td)
+		//app.render(w, r, "vfo.page.html", td)
 		return
 	}
 	td.VFO.Band = band
@@ -310,9 +314,12 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 	var v = &VFO{}
 	var badV = false
 	v, err = app.getUpdateBand() //reads the band switch and updates DB
-	if err != nil {
+	if err != nil && !errors.Is(err, noPortMatch) {
 		badV = true
 		app.serverError(w, err)
+	}
+	if errors.Is(err, noPortMatch) {
+		badV = true
 	}
 	err = app.getUpdateMode(v) //calculates mode from band and xmit freq, updates DB
 	if err != nil {
@@ -344,6 +351,8 @@ func (app *application) updateDX(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = app.spiderError(err)
 		if err != nil {
+			log.Println("EOF Error: ", err)
+			log.Printf("EOF Error Type %T\n", err)
 			app.serverError(w, err)
 			validDX = false
 		}

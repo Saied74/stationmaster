@@ -198,6 +198,30 @@ func (app *application) analysis(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.Stats.ConfirmedCounty = len(t)
+	t, err = app.logsModel.getSimpleLogs("CW", "%", "%")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Stats.CWContacts = len(t)
+	t, err = app.logsModel.getSimpleLogs("CW", "YES", "%")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Stats.ConfirmedCW = len(t)
+	t, err = app.logsModel.getUniqueCountry("CW", "YES")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Stats.ConfirmedCWCountry = len(t)
+	t, err = app.logsModel.getUniqueState("CW", "YES")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Stats.ConfirmedCWState = len(t)
 	app.render(w, r, "analysis.page.html", td)
 }
 
@@ -331,4 +355,55 @@ func (app *application) stateSelect(w http.ResponseWriter, r *http.Request) {
 	td.Table = t
 	td.Top.Cnty = true
 	app.render(w, r, "log.page.html", td)
+}
+
+func (app *application) cwContacts(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getSimpleLogs("CW", "%", "%")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	app.render(w, r, "log.page.html", td)
+
+}
+
+func (app *application) cwConfirmed(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getSimpleLogs("CW", "YES", "%")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	app.render(w, r, "log.page.html", td)
+
+}
+
+func (app *application) cwConfirmedState(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getUniqueState("CW", "YES")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	//	for _, item := range td.Table {
+	//		fmt.Println(item.State)
+	//	}
+	app.render(w, r, "state.page.html", td)
+
+}
+
+func (app *application) cwConfirmedCountry(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	t, err := app.logsModel.getUniqueCountry("CW", "YES")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = t
+	app.render(w, r, "country.page.html", td)
+
 }
