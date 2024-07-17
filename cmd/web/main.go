@@ -269,6 +269,9 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/cw-confirmed", app.cwConfirmed)
 	mux.HandleFunc("/cw-confirmed-state", app.cwConfirmedState)
 	mux.HandleFunc("/cw-confirmed-country", app.cwConfirmedCountry)
+	mux.HandleFunc("/contest", app.contest)
+	mux.HandleFunc("/check-dupe", app.checkDupe)
+	mux.HandleFunc("/update-log", app.updateLog)
 	return mux
 }
 

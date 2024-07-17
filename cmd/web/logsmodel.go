@@ -31,6 +31,7 @@ type logsType interface {
 	getSimpleLogs(string, string, string) ([]LogsRow, error)
 	getUniqueCountry(string, string) ([]LogsRow, error)
 	getUniqueState(string, string) ([]LogsRow, error)
+	checkDupe(time.Time, string, string, string, string) (bool, error)
 }
 
 type logsModel struct {
@@ -49,6 +50,8 @@ type LogsRow struct {
 	Rcvd        string
 	Contest     string
 	ContestName string
+	ContestDate string
+	ContestTime string
 	ExchSent    string
 	ExchRcvd    string
 	Band        string
@@ -160,6 +163,27 @@ func (m *logsModel) getLogByID(id int) (*LogsRow, error) {
 
 	}
 	return s, nil
+}
+
+// returns true if dupe
+func (m *logsModel) checkDupe(dateTime time.Time, contestname, callsign, band, mode string) (bool, error) {
+	stmt := `SELECT id FROM stationlogs WHERE contestname = ? AND band = ? AND mode=? AND callsign = ? AND
+	time > ?`
+
+	row := m.DB.QueryRow(stmt, contestname, band, mode, callsign, dateTime)
+	s := &LogsRow{}
+
+	err := row.Scan(&s.Id)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		} else {
+			return false, err
+		}
+
+	}
+	return true, nil
 }
 
 func (m *logsModel) getLogsByCall(call string) ([]*LogsRow, error) {
