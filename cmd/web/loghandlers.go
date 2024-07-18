@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 )
 
 //seed data for the keyer - tutor
@@ -18,6 +20,7 @@ type templateData struct {
 	Tone     int16     //Practice tone
 	Volume   int8      //Practice volume
 	Mode     string    //keying mode, tutor or keyer
+	Band     string
 	Top      headRow   //Log table column titles
 	Table    []LogsRow //full set of log table rows
 	LogEdit  *LogsRow  //single row of the log table for editing
@@ -28,6 +31,7 @@ type templateData struct {
 	Contest  string
 	Stats    *Stats
 	VFO      *VFO
+	Message  string
 }
 
 type Stats struct {
@@ -624,7 +628,7 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 
 	f := newForm(r.PostForm)
 	if td.LogEdit.Contest == "Yes" {
-		f.required("contestname", "rst", "exch")
+		f.required("contestname", "rst", "exch", "contestdate", "contesttime")
 		f.maxLength("contestname", 45)
 		f.maxLength("rst", 3)
 		f.maxLength("exch", 10)
@@ -641,6 +645,34 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		td.LogEdit.ContestName = cn
+
+		cd := r.PostForm.Get("contestdate")
+		f.dateCheck("contestdate")
+		if !f.valid() {
+			td.FormData = f
+			app.render(w, r, "defaults.page.html", td)
+			return
+		}
+		err = app.otherModel.updateDefault("contestdate", cd)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		td.LogEdit.ContestDate = cd
+
+		ct := r.PostForm.Get("contesttime")
+		f.timeCheck("contesttime")
+		if !f.valid() {
+			td.FormData = f
+			app.render(w, r, "defaults.page.html", td)
+			return
+		}
+		err = app.otherModel.updateDefault("contesttime", ct)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		td.LogEdit.ContestTime = ct
 
 		rst := r.PostForm.Get("rst")
 		err = app.otherModel.updateDefault("sent", rst)
@@ -680,4 +712,229 @@ func (app *application) contacts(w http.ResponseWriter, r *http.Request) {
 	}
 	td.LookUp = c
 	app.render(w, r, "contacts.page.html", td)
+}
+
+//<-------------------------- CONTESTING ------------------------------------>
+
+func (app *application) contest(w http.ResponseWriter, r *http.Request) {
+	td := initTemplateData()
+	band, err := app.otherModel.getDefault("Band")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	mode, err := app.otherModel.getDefault("Mode")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Band = band
+	td.Mode = mode
+	app.render(w, r, "contest.page.html", td) //data)
+}
+
+func (app *application) checkDupe(w http.ResponseWriter, r *http.Request) {
+	callSign := r.URL.Query().Get("call")
+	if callSign == "" {
+		app.infoLog.Printf("Got an empty call sign")
+		return
+	}
+	callSign = strings.ToUpper(callSign)
+	cn, err := app.otherModel.getDefault("contestname")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	cd, err := app.otherModel.getDefault("contestdate")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	ct, err := app.otherModel.getDefault("contesttime")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	cdt := cd + "T" + ct + ":00Z"
+	dateTime, err := time.Parse(time.RFC3339, cdt)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	band, err := app.otherModel.getDefault("band")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	mode, err := app.otherModel.getDefault("mode")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//returns true if dupe
+	dupe, err := app.logsModel.checkDupe(dateTime, cn, callSign, band, mode)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	var Duper struct {
+		Isdupe string
+	}
+	Duper.Isdupe = "No"
+	if dupe {
+		Duper.Isdupe = "Yes"
+	}
+	b, err := json.Marshal(Duper)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
+}
+
+func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
+	var c *Ctype
+	var v struct {
+		Call     string
+		RST      string
+		Exchange string
+		Message  string
+	}
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	err = json.NewDecoder(r.Body).Decode(&v)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	//fist, get band and mode
+	band, err := app.otherModel.getDefault("band")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	mode, err := app.otherModel.getDefault("mode")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	//check to see if contest is on
+	contestOn, err := app.otherModel.getDefault("contest") //Yes or No
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	if contestOn != "Yes" {
+		v.Message = "Contest is not on, you can't do this."
+		b, err := json.Marshal(v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+		return
+	}
+
+	if v.Call == "" || v.RST == "" || v.Exchange == "" {
+		v.Message = "There are one or more missing data fields."
+		b, err := json.Marshal(v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+		return
+
+	}
+
+	//<++++++++++++++++  get more defaults
+
+	//Sent RST
+	sent, err := app.otherModel.getDefault("sent")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//Exchange message
+	exchange, err := app.otherModel.getDefault("exch")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	name, err := app.otherModel.getDefault("contestname")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//<++++++++++++++++ end of get defaults
+
+	//<+++++++++++++++++  Calculate and store the number of logs with that call
+
+	t, err := app.logsModel.getLogsByCall(v.Call)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	repeat := true
+	c, err = app.qrzModel.getQRZ(v.Call)
+	if err != nil {
+		if !errors.Is(err, errNoRecord) {
+			app.serverError(w, err)
+			return
+		}
+		q, err := app.getHamInfo(v.Call)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		c = &q.Callsign
+		c.QSOCount = 1
+		err = app.qrzModel.insertQRZ(c)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		//This is the case that this is the first contact
+		repeat = false
+	}
+	if repeat {
+		//this is the case that this the second of more contacts
+		err = app.qrzModel.updateQSOCount(call, len(t)+1)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	//<++++++++++++++  Save the new log
+	tr := LogsRow{
+		Contest:     contestOn,
+		ContestName: name,
+		Call:        strings.ToUpper(v.Call),
+		Sent:        sent,
+		Rcvd:        v.RST,
+		Band:        band,
+		Mode:        mode,
+		Name:        c.Fname + " " + c.Lname,
+		Country:     c.Country,
+		Comment:     "",
+		ExchSent:    exchange,
+		ExchRcvd:    v.Exchange,
+	}
+
+	_, err = app.logsModel.insertLog(&tr)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//<+++++++++++++  New log saved
+
 }

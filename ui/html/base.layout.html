@@ -84,6 +84,10 @@ p, h2, h3, h4, h5, th, td, input, span, button {
         <li class="nav-item">
           <a class="nav-link" style="color: white" href="/start-vfo">VFO</a>
         </li>
+	 <li class="nav-item">
+          <a class="nav-link" style="color: white" href="/contest">Contest</a>
+        </li>
+
         <!-- <li class="nav-item">
           <a class="nav-link" style="color: white" href="/quit">Quit</a>
         </li> -->
@@ -195,34 +199,6 @@ $(document).ready(function(){
       })
       },120000)};  
   
-  $("#search-button").click(function() {
-    $.getJSON("/callsearch?call="+$("#search-call").val())
-    .then(function(data){
-    $("#want-update").html(data["QRZMsg"])
-    $("#call").text(data["Call"])
-    $("#qrzname").text(data["Name"])
-    $("#born").text(data["Born"])
-    $("#addr1").text(data["Addr1"])
-    // $("#addr2").text(data["Addr2"])
-    // $("#qrzcountry").text(data["QRZCountry"])
-    $("#geolocation").text(data["GeoLoc"])
-    $("#class").text(data["Class"])
-    $("#timezone").text(data["TimeZone"])
-    $("#qsocount").text(data["QSOCount"])
-    });
-  });
-
-
-$("#call-sign").blur(function(){
-  $.getJSON("/getconn?call="+$("#call-sign").val())
-  .then(function(data){
-    $("#name").val(data["Name"])
-    $("#country").val(data["Country"])
-    // $("#band-select").val(data["Band"])
-    // $("#mode-select").val(data["Mode"])
-    // alert($("#master-mode").val());
-  });
-});
 
 $("#rcv-enter").click(function(){
   if (isNaN($("#rcv-frequency").val())) {
@@ -553,6 +529,113 @@ function dxSend(f) {
 
 });
 
+//logger page script
+
+$(document).ready(function() {
+	var title = $("title").text()
+	if (title == "Log") {
+	$("#search-button").click(function() {
+    		$.getJSON("/callsearch?call="+$("#search-call").val())
+    		.then(function(data){
+    			$("#want-update").html(data["QRZMsg"])
+    			$("#call").text(data["Call"])
+    			$("#qrzname").text(data["Name"])
+   			$("#born").text(data["Born"])
+    			$("#addr1").text(data["Addr1"])
+    			// $("#addr2").text(data["Addr2"])
+    			// $("#qrzcountry").text(data["QRZCountry"])
+   		 	$("#geolocation").text(data["GeoLoc"])
+    			$("#class").text(data["Class"])
+   			$("#timezone").text(data["TimeZone"])
+    			$("#qsocount").text(data["QSOCount"])
+   		});
+  	});
+
+
+	$("#call-sign").blur(function(){
+  			$.getJSON("/getconn?call="+$("#call-sign").val())
+  			.then(function(data){
+    			$("#name").val(data["Name"])
+    			$("#country").val(data["Country"])
+    			// $("#band-select").val(data["Band"])
+    			// $("#mode-select").val(data["Mode"])
+    			// alert($("#master-mode").val());
+  		});
+	});
+	};
+});
+
+//Contest page script
+
+$(document).ready(function(){  
+  	var title = $("title").text()
+if (title == "Contest") {
+	var err = false;
+	$("#call-sign").on("keyup", function(){
+		var callSign = $("#call-sign").val()
+		var l = callSign.length
+		var lastChar = "";
+		if (l != 0) {
+			lastChar = callSign.charAt(l-1)
+		}
+		var letterNumber = /\w/;
+		var notLetterNumber = /\W/;
+		var n = callSign.search(notLetterNumber)
+		if (n != -1){
+			$("#dupe-call").text("Error")
+			err = true
+		}
+		if (n == -1) {
+			$("#dupe-call").text("")
+			err = false
+		}
+
+		if (l >= 3 && letterNumber.test(lastChar) && (err == false)) {
+			$.getJSON("/check-dupe?call="+callSign)
+  				.then (function(data){
+					if (data["Isdupe"] == "Yes") {
+						$("#dupe-call").text("DUPE")
+					};
+					if (data["Isdupe"] == "No") {
+						$("#dupe-call").text("")
+					};
+
+
+			  	});
+		};	
+	});
+	$("#RST").on("focusin", function() {
+		$("#RST").val("599")
+	});
+
+	$("#exChange").on("keyup", function(e) {
+		if (e.which === 13) {
+			var logdata = {
+    				Call:     $("#call-sign").val(),
+    				RST: 	  $("#RST").val(),
+    				Exchange: $("#exChange").val(),
+  			}
+
+  		$.ajax({
+            		url: "update-log",
+            		type: 'post',
+            		dataType: 'json',
+            		contentType: 'application/json',
+            		data: JSON.stringify(logdata),
+        	}).done(function(data){
+			$("#message").text(data["Message"])
+		});
+		$("#call-sign").val("")
+		$("#RST").val("")
+		$("#exChange").val("");
+		$("#dupe-call").text("")
+		$("#call-sign").focus()
+		};
+
+	});
+
+}
+});
 
 </script>
 
