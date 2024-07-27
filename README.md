@@ -14,7 +14,8 @@ interface for the application is a browser pointed to localhost:4000.
 9.  Interface to the Ten Tec (or any other radio) band switch to automatically know the band
 10. Interface to a DDS frequency synthesizer to control the radio frequency
 11. Interface to the WSJT-X application for logging FT8/FT4 contacts
-12. Interface to QRZ.com for pulling in contact information 
+12. Interface to QRZ.com for pulling in contact information
+13. Contest page
 
 ## Additinal software and hardware
 In addition to this software, you will also  of need:
@@ -112,6 +113,11 @@ configuration file.  The configuration chain works as follows:
 The Cabrillo button brings up the Cabrillo file generation page. All the fields
 on this page are required.  All dates and times are in UTC.  The file is stored
 in the contest directory as specified in the config.yaml file.
+
+The contest page depends on the entries in the defaults page for band, mode,
+RS(T) and exchange sent.  Today, I do not have direct integraton into the radio
+for sending code and in the case of anything other than my interfaces into the
+Ten Tec, for reading band and frequency.  That will come later.
 
 ### A final note:
 1. I am building this as a single user local application
