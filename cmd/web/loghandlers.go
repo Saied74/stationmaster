@@ -545,6 +545,7 @@ func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.LogEdit.ExchSent = v
+	app.updateContestFields(td)
 	app.render(w, r, "defaults.page.html", td)
 }
 
@@ -633,9 +634,26 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		f.required("contestname", "contestdate", "contesttime", "fieldCount")
 		f.maxLength("contestname", 45)
 		f.maxLength("fieldCount", 1)
+		fc := r.PostForm.Get("fieldCount")
+		fieldCount, err := strconv.Atoi(fc)
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+		fieldCount += 2
+		fieldNames := r.PostForm.Get("fieldNames")
+		fields := strings.Split(fieldNames, ",")
+		for i, _ := range fields {
+			fields[i] = strings.TrimSpace(fields[i])
+		}
+		if len(fields) != fieldCount {
+			err = fmt.Errorf("length of fields %v did not match field count %d", fields, fieldCount)
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
 		for i, field := range fields {
-			fieldName = "field" + strconv.Itoa(i)
-			f.required(fieldName)
+			f.required("field" + strconv.Itoa(i+1))
 			f.maxLength(field, 10)
 		}
 		if !f.valid() {
@@ -680,83 +698,67 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		}
 		td.LogEdit.ContestTime = ct
 
-		fc := r.PostForm.Get("fieldCount")
-		fieldCount, err := strconv.Atoi(fc)
-		if err != nil {
-			app.clientError(w, http.StatusBadRequest)
-			return
-		}
-		fieldCount += 2
 		err = app.otherModel.updateDefault("fieldCount", strconv.Itoa(fieldCount))
 		if err != nil {
 			app.serverError(w, err)
 		}
 
-		fieldNames := r.PostForm.Get("fieldNames")
-		fields := strings.Split(fieldNames, ",")
-		for i, _ := range fields {
-			fields[i] = strings.TrimSpace(fields[i])
-		}
-		if len(fields) != fieldCount {
-			err = log.Errorf("length of fields %v did not match field count %d", fields, fieldCount)
-			app.clientError(w, http.StatusBadRequest)
-			return
-		}
-		var fieldName string
+		//var fieldName string
 		var fieldDataList []string
 		for i, field := range fields {
-			fieldName = "field" + strconv.Itoa(i)
-			err = app.otherModel.updateDefault(fieldName, field)
+			fcString := strconv.Itoa(i + 1)
+			err = app.otherModel.updateDefault("field"+fcString+"Name", field)
 			if err != nil {
-				app.serverError(err)
+				app.serverError(w, err)
 			}
-			fieldData := r.PostForm.Get(fieldName)
-			err = app.otherModel.updateDefault(field, fieldData)
+			fieldData := r.PostForm.Get("field" + fcString)
+			err = app.otherModel.updateDefault("field"+fcString+"Data", fieldData)
 			if err != nil {
-				app.serverError(err)
+				app.serverError(w, err)
 			}
 			fieldDataList = append(fieldDataList, fieldData)
 		}
-		switch fieldCount {
-		case 2:
-			td.LogEdit.Field1Name = fields[0]
-			td.LogEdit.Field2Name = fields[1]
-			td.LogEdit.Field1Data = fieldDataList[0]
-			td.LogEdit.Field2Data = fieldDataList[1]
-
-		case 3:
-			td.LogEdit.Field1Name = fields[0]
-			td.LogEdit.Field2Name = fields[1]
-			td.LogEdit.Field3Name = fields[2]
-			td.LogEdit.Field1Data = fieldDataList[0]
-			td.LogEdit.Field2Data = fieldDataList[1]
-			td.LogEdit.Field3Data = fieldDataList[2]
-
-		case 4:
-			td.LogEdit.Field1Name = fields[0]
-			td.LogEdit.Field2Name = fields[1]
-			td.LogEdit.Field3Name = fields[2]
-			td.LogEdit.Field4Name = fields[3]
-			td.LogEdit.Field1Data = fieldDataList[0]
-			td.LogEdit.Field2Data = fieldDataList[1]
-			td.LogEdit.Field3Data = fieldDataList[2]
-			td.LogEdit.Field4Data = fieldDataList[3]
-
-		case 5:
-			td.LogEdit.Field1Name = fields[0]
-			td.LogEdit.Field2Name = fields[1]
-			td.LogEdit.Field3Name = fields[2]
-			td.LogEdit.Field4Name = fields[3]
-			td.LogEdit.Field5Name = fields[4]
-			td.LogEdit.Field1Data = fieldDataList[0]
-			td.LogEdit.Field2Data = fieldDataList[1]
-			td.LogEdit.Field3Data = fieldDataList[2]
-			td.LogEdit.Field4Data = fieldDataList[3]
-			td.LogEdit.Field5Data = fieldDataList[4]
-
-		default:
-			app.serverError(w, fmt.Errorf("fieldCount number error %d", fieldCount))
-		}
+		app.updateContestFields(td)
+		//		switch fieldCount {
+		//		case 2:
+		//			td.LogEdit.Field1Name = fields[0]
+		//			td.LogEdit.Field2Name = fields[1]
+		//			td.LogEdit.Field1Data = fieldDataList[0]
+		//			td.LogEdit.Field2Data = fieldDataList[1]
+		//
+		//		case 3:
+		//			td.LogEdit.Field1Name = fields[0]
+		//			td.LogEdit.Field2Name = fields[1]
+		//			td.LogEdit.Field3Name = fields[2]
+		//			td.LogEdit.Field1Data = fieldDataList[0]
+		//			td.LogEdit.Field2Data = fieldDataList[1]
+		//			td.LogEdit.Field3Data = fieldDataList[2]
+		//
+		//		case 4:
+		//			td.LogEdit.Field1Name = fields[0]
+		//			td.LogEdit.Field2Name = fields[1]
+		//			td.LogEdit.Field3Name = fields[2]
+		//			td.LogEdit.Field4Name = fields[3]
+		//			td.LogEdit.Field1Data = fieldDataList[0]
+		//			td.LogEdit.Field2Data = fieldDataList[1]
+		//			td.LogEdit.Field3Data = fieldDataList[2]
+		//			td.LogEdit.Field4Data = fieldDataList[3]
+		//
+		//		case 5:
+		//			td.LogEdit.Field1Name = fields[0]
+		//			td.LogEdit.Field2Name = fields[1]
+		//			td.LogEdit.Field3Name = fields[2]
+		//			td.LogEdit.Field4Name = fields[3]
+		//			td.LogEdit.Field5Name = fields[4]
+		//			td.LogEdit.Field1Data = fieldDataList[0]
+		//			td.LogEdit.Field2Data = fieldDataList[1]
+		//			td.LogEdit.Field3Data = fieldDataList[2]
+		//			td.LogEdit.Field4Data = fieldDataList[3]
+		//			td.LogEdit.Field5Data = fieldDataList[4]
+		//
+		//		default:
+		//			app.serverError(w, fmt.Errorf("fieldCount number error %d", fieldCount))
+		//		}
 
 		//rst := r.PostForm.Get("rst")
 		//err = app.otherModel.updateDefault("sent", rst)
@@ -812,6 +814,7 @@ func (app *application) contest(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	err = app.updateContestFields(td)
 	td.Band = band
 	td.Mode = mode
 	app.render(w, r, "contest.page.html", td) //data)

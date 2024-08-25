@@ -25,14 +25,15 @@
 	       <p>{{.Field2Name}} is set to: {{.Field2Data}}</p>
 	    {{end}}
 	    {{if .Field3Name}}
-	       <p>{{.Field3Name}} is set to: {{Field3Data}}</p>
+	       <p>{{.Field3Name}} is set to: {{.Field3Data}}</p>
 	    {{end}}
 	    {{if .Field4Name}}
-	       <p>{{.Field4Name}} is set to: {{Field4Data}}</p>
+	       <p>{{.Field4Name}} is set to: {{.Field4Data}}</p>
 	    {{end}}
             {{if .Field5Name}}
-	       <p>{{.Field5Name}} is set to: {{Field5Data}}</p>
+	       <p>{{.Field5Name}} is set to: {{.Field5Data}}</p>
 	    {{end}}
+	 {{end}}
 
 	 <p>Change the defaults below</p>
       </div>
@@ -140,63 +141,63 @@
  	 </div>
       </div>
       <p id="match-length"></p>
-      {{with .LogEdit}}
+      
       <div class="row">
-  	 {{with .FormData.Errors.Get "fieldOne"}}
+  	 {{with .FormData.Errors.Get "field1"}}
 	    <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
  	 {{end}}
   	 <div class="col-sm-6">
   	    <p id="field1" >Contest Field 1</p>
   	 </div>
   	 <div class="col-sm-6">
- 	    <input type="text" name="fieldOne" id="contestField1" >
+ 	    <input type="text" name="field1" id="contestField1" >
  	 </div>
       </div>
       <div class="row">
-         {{with .FormData.Errors.Get "fieldTwo"}}
+         {{with .FormData.Errors.Get "field2"}}
             <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
          {{end}}
 	 <div class="col-sm-6">
   	    <p id="field2" >Contest Field 2</p>
   	 </div>
   	 <div class="col-sm-6">
- 	    <input type="text" name="fieldTwo" id="contestField2" >
+ 	    <input type="text" name="field2" id="contestField2" >
  	 </div>
       </div>
 
       <div class="row">
-  	 {{with .FormData.Errors.Get "fieldThree"}}
+  	 {{with .FormData.Errors.Get "field3"}}
 	    <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
  	 {{end}}
   	 <div class="col-sm-6">
   	    <p id="field3" >Contest Field 3</p>
   	 </div>
   	 <div class="col-sm-6">
- 	    <input type="text" name="fieldThree" id="contestField3" >
+ 	    <input type="text" name="field3" id="contestField3" >
  	 </div>
       </div>
 
       <div class="row">
-  	 {{with .FormData.Errors.Get "fieldFour"}}
+  	 {{with .FormData.Errors.Get "field4"}}
 	    <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
  	 {{end}}
   	 <div class="col-sm-6">
   	    <p id="field4" >Contest Field 4</p>
   	 </div>
   	 <div class="col-sm-6">
- 	    <input type="text" name="fieldFour" id="contestField4" >
+ 	    <input type="text" name="field4" id="contestField4" >
  	 </div>
       </div>
 
       <div class="row">
-  	 {{with .FormData.Errors.Get "fieldFive"}}
+  	 {{with .FormData.Errors.Get "field5"}}
 	    <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
  	 {{end}}
   	 <div class="col-sm-6">
   	    <p id="field5" >Contest Field 5</p>
   	 </div>
   	 <div class="col-sm-6">
- 	    <input type="text" name="fieldFive" id="contestField5" >
+ 	    <input type="text" name="field5" id="contestField5" >
  	 </div>
       </div>
 

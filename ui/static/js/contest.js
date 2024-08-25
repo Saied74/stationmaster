@@ -35,9 +35,34 @@ if (title == "Contest") {
 			  	});
 		};	
 	});
-	$("#RST").on("focusin", function() {
-		$("#RST").val("599")
+	$("#field1").on("focusin", function() {
+		if ($("#f1").text().startsWith("RS")) {
+			$("#field1").val("599")
+		}	
 	});
+
+	$("#field2").on("focusin", function() {
+		if ($("#f2").text().startsWith("RS")) {
+			$("#field2").val("599")
+		}		
+	});
+	$("#field3").on("focusin", function() {
+		if ($("#f3").text().startsWith("RS")) {
+			$("#field3").val("599")
+		}
+	});
+	$("#field4").on("focusin", function() {
+		if ($("#f4").text().startsWith("RS")) {
+			$("#field4").val("599")
+		}
+	});
+	$("#field5").on("focusin", function() {
+		if ($("#f5").text().startsWith("RS")) {
+			$("#field5").val("599")
+		}
+			
+	});
+
 
 	$("#exChange").on("keyup", function(e) {
 		if (e.which === 13) {
