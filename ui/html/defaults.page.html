@@ -18,9 +18,22 @@
 	    <p>Contest name is set to: {{.ContestName}}</p>
 	    <p>Contest start date is set to: {{.ContestDate}}</p>
 	    <p>Contest start time is set to: {{.ContestTime}}</p>
-	    <p>Sent RST is set to: {{.Sent}}</p>
-	    <p>Sent exchange is set to: {{.ExchSent}}</p>
-	 {{end}}
+	    {{if .Field1Name}}
+	       <p>{{.Field1Name}} is set to: {{.Field1Data}}</p>
+	    {{end}}
+	    {{if .Field2Name}}
+	       <p>{{.Field2Name}} is set to: {{.Field2Data}}</p>
+	    {{end}}
+	    {{if .Field3Name}}
+	       <p>{{.Field3Name}} is set to: {{Field3Data}}</p>
+	    {{end}}
+	    {{if .Field4Name}}
+	       <p>{{.Field4Name}} is set to: {{Field4Data}}</p>
+	    {{end}}
+            {{if .Field5Name}}
+	       <p>{{.Field5Name}} is set to: {{Field5Data}}</p>
+	    {{end}}
+
 	 <p>Change the defaults below</p>
       </div>
    
@@ -127,7 +140,7 @@
  	 </div>
       </div>
       <p id="match-length"></p>
-
+      {{with .LogEdit}}
       <div class="row">
   	 {{with .FormData.Errors.Get "fieldOne"}}
 	    <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>

@@ -65,6 +65,16 @@ type LogsRow struct {
 	Lotwrcvd    string
 	LotwQSOdate time.Time
 	LotwQSLdate time.Time
+	Field1Name  string
+	Field2Name  string
+	Field3Name  string
+	Field4Name  string
+	Field5Name  string
+	Field1Data  string
+	Field2Data  string
+	Field3Data  string
+	Field4Data  string
+	Field5Data  string
 }
 
 type headRow struct {
