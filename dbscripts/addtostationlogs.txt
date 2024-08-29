@@ -1,2 +1,0 @@
-ALTER TABLE stationlogs
-ADD COLUMN contestname VARCHAR(50) NOT NULL AFTER exchrcvd;

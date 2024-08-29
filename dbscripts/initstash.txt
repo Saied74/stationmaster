@@ -1,9 +1,0 @@
-INSERT INTO stashtable (time, callsign, aliases, dxcc, first_name,
-  last_name, nickname, born, addr1, addr2, state, zip, country, country_code,
-  lat, lon, grid, county, fips, land, cqzone, ituzone, geolocation, effdate,
-  expdate, prevcall, class, codes, qslmgr, email, url, views, bio, image,
-  moddate, msa, areacode, timezone, gmtoffset, dst, eqsl, mqsl, attn,
-  qso_count) VALUES (
-UTC_TIMESTAMP(), "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
- "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-  "", "", "", "", "", "", "", "", "");
