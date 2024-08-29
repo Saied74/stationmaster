@@ -1,0 +1,71 @@
+{{template "base" .}}
+
+{{define "title"}}Morse Tutor - Keyer{{end}}
+
+{{define "main"}}
+
+<div class="row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-6">
+
+<h3>CW Tutor and Keyer</h3>
+<p>
+My interest is code speeds of 18 wpm and higher (mostly 22 and 25 wpm
+these days).  So, per the ARRL standard, I will dispense with using
+the Farnswoth method.  You can find the ARRL starndard at this link:
+http://www.arrl.org/files/file/Technology/x9004008.pdf</p>
+
+<form action="/start" method="post">
+
+<label for="basic-url" class="form-label">Sending speed in WPM</label>
+{{with .FormData.Errors.Get "speed"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Default: {{.Speed}}</span>
+  <input type="text" class="form-control" id="basic-url"
+  name="speed" aria-describedby="basic-addon3" value='{{.FormData.Get "speed"}}'>
+</div>
+
+<label for="basic-url" class="form-label">Practice tone in Hz</label>
+{{with .FormData.Errors.Get "tone"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3">Default: {{.Tone}}</span>
+  <input type="text" class="form-control" id="basic-url" name="tone"
+  value='{{.FormData.Get "tone"}}' aria-describedby="basic-addon3">
+</div>
+
+<label for="basic-url" class="form-label">Practice volume from 1 to 10</label>
+{{with .FormData.Errors.Get "volume"}}
+		<label class="error"><br><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+	{{end}}
+<div class="input-group mb-3">
+  <span class="input-group-text" id="basic-addon3" >Default: {{.Volume}}</span>
+  <input type="text" class="form-control" id="basic-url" name="volume"
+  value='{{.FormData.Get "volume"}}' aria-describedby="basic-addon3">
+</div>
+
+{{with .FormData.Errors.Get "mode"}}
+		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
+{{end}}
+
+<select class="form-select" aria-label="Choices" name="mode">
+  <option selected>Keyer</option>
+  <option value="1">Tutor</option>
+  <option value="2">Keyer</option>
+</select>
+<br>
+
+  <button type="submit" style="background-color: #9FE1EA; color: #442C2E" class="btn ">Start</button>
+  {{with .FormData.Errors.Get "ktrunning"}}
+		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label><br>
+	{{end}}
+
+{{end}}
+
+</form>
+</div>
+</div>
+<br><br>
