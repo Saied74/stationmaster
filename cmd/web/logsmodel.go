@@ -15,6 +15,7 @@ type logsType interface {
 	getContestLogs(int) ([]LogsRow, error)
 	getADIFData() ([]LogsRow, error)
 	getCabrilloData(*contestData) ([]LogsRow, error)
+	getNewCabrilloData(*contestData) ([]LogsRow, error)
 	updateLOTWSent(int) error
 	updateLog(*LogsRow, int) error
 	calcContestScore(*contestData) (int, error)
@@ -70,11 +71,16 @@ type LogsRow struct {
 	Field3Name  string
 	Field4Name  string
 	Field5Name  string
-	Field1Data  string
-	Field2Data  string
-	Field3Data  string
-	Field4Data  string
-	Field5Data  string
+	Field1Sent  string
+	Field2Sent  string
+	Field3Sent  string
+	Field4Sent  string
+	Field5Sent  string
+	Field1Rcvd  string
+	Field2Rcvd  string
+	Field3Rcvd  string
+	Field4Rcvd  string
+	Field5Rcvd  string
 }
 
 type headRow struct {
@@ -96,6 +102,11 @@ type headRow struct {
 	Comment     string
 	Lotwsent    string
 	Lotwrcvd    string
+	Field1Name  string
+	Field2Name  string
+	Field3Name  string
+	Field4Name  string
+	Field5Name  string
 }
 
 var tableHead = headRow{
@@ -117,6 +128,11 @@ var tableHead = headRow{
 	"Comment",
 	"LOTW Sent",
 	"LOTW Rcvd",
+	"",
+	"",
+	"",
+	"",
+	"",
 }
 
 // will insert a new record into the stationlogs table
@@ -133,13 +149,21 @@ func (m *logsModel) insertLog(l *LogsRow) (int, error) {
 
 	stmt := `INSERT INTO stationlogs (time, callsign, mode, sent, rcvd,
 	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
-exchrcvd, contestname)
-	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	exchrcvd, contestname,
+	field1Sent, field2Sent, field3Sent, field4Sent, field5Sent,
+	field1Rcvd, field2Rcvd, field3Rcvd, field4Rcvd, field5Rcvd)
+	VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?,
+		?, ?, ?, ?, ?, ?, ?, ?,
+		?, ?,
+		?, ?, ?, ?, ?,
+		?, ?, ?, ?, ?)`
 
 	result, err := m.DB.Exec(stmt,
 		l.Call, l.Mode, l.Sent, l.Rcvd,
 		l.Band, l.Name, l.Country, l.Comment, l.Lotwsent, l.Lotwrcvd,
-		l.Contest, l.ExchSent, l.ExchRcvd, l.ContestName)
+		l.Contest, l.ExchSent, l.ExchRcvd, l.ContestName,
+		l.Field1Sent, l.Field2Sent, l.Field3Sent, l.Field4Sent, l.Field5Sent,
+		l.Field1Rcvd, l.Field2Rcvd, l.Field3Rcvd, l.Field4Rcvd, l.Field5Rcvd)
 	if err != nil {
 		return 0, err
 	}
@@ -465,6 +489,44 @@ func (m *logsModel) getCabrilloData(cd *contestData) ([]LogsRow, error) {
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
 			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
 			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
+
+		if err != nil {
+			return nil, err
+		}
+		tr = append(tr, s)
+
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return tr, nil
+}
+
+func (m *logsModel) getNewCabrilloData(cd *contestData) ([]LogsRow, error) {
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
+	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
+	exchrcvd, contestname,
+	field1Sent, field2Sent, field3Sent, field4Sent, field5Sent,
+	Field1Rcvd, field2Rcvd, field3Rcvd, field4Rcvd, field5Rcvd
+	FROM stationlogs
+	WHERE contest = ? AND contestname = ? ORDER BY time DESC`
+
+	rows, err := m.DB.Query(stmt, "Yes", cd.name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tr := []LogsRow{}
+	for rows.Next() {
+		s := LogsRow{}
+		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
+			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
+			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName,
+			&s.Field1Sent, &s.Field2Sent, &s.Field3Sent, &s.Field4Sent, &s.Field5Sent,
+			&s.Field1Rcvd, &s.Field2Rcvd, &s.Field3Rcvd, &s.Field4Rcvd, &s.Field5Rcvd,
+		)
 
 		if err != nil {
 			return nil, err

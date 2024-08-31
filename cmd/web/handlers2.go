@@ -141,6 +141,56 @@ func (app *application) genCabrillo(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "cabrillo.page.html", td)
 }
 
+func (app *application) genCabrilloNew(w http.ResponseWriter, r *http.Request) {
+	var err error
+	td := initTemplateData()
+
+	err = r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	f := newForm(r.PostForm)
+	f.required("contestname", "contestfile")
+	f.maxLength("contestname", 45)
+	f.fileCheck("contestfile")
+	if !f.valid() {
+		td.FormData = f
+		app.render(w, r, "cabrillo.page.html", td)
+		return
+	}
+	cData, err := app.contestModel.getContest(f.Get("contestname"))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	cd := &contestData{
+		filename:   filepath.Join(app.contestDir, f.Get("contestfile")),
+		name:       f.Get("contestname"),
+		score:      "0",
+		fieldCount: cData.FieldCount,
+	}
+	td.FieldCount = cData.FieldCount
+	td.Top.Field1Name = cData.Field1Name
+	td.Top.Field2Name = cData.Field2Name
+	td.Top.Field3Name = cData.Field3Name
+	td.Top.Field4Name = cData.Field4Name
+	td.Top.Field5Name = cData.Field5Name
+
+	rows, err := app.logsModel.getNewCabrilloData(cd)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.genNewCabrilloFile(rows, cd)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.Table = rows
+	app.render(w, r, "cabrillo.page.html", td)
+}
+
 func (app *application) analysis(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	t, err := app.logsModel.getLatestLogs(1000000)

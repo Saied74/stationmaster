@@ -565,26 +565,26 @@ func (app *application) updateContestFields(td *templateData) error {
 	case 2:
 		td.LogEdit.Field1Name = fields[0]
 		td.LogEdit.Field2Name = fields[1]
-		td.LogEdit.Field1Data = fieldDataList[0]
-		td.LogEdit.Field2Data = fieldDataList[1]
+		td.LogEdit.Field1Sent = fieldDataList[0]
+		td.LogEdit.Field2Sent = fieldDataList[1]
 
 	case 3:
 		td.LogEdit.Field1Name = fields[0]
 		td.LogEdit.Field2Name = fields[1]
 		td.LogEdit.Field3Name = fields[2]
-		td.LogEdit.Field1Data = fieldDataList[0]
-		td.LogEdit.Field2Data = fieldDataList[1]
-		td.LogEdit.Field3Data = fieldDataList[2]
+		td.LogEdit.Field1Sent = fieldDataList[0]
+		td.LogEdit.Field2Sent = fieldDataList[1]
+		td.LogEdit.Field3Sent = fieldDataList[2]
 
 	case 4:
 		td.LogEdit.Field1Name = fields[0]
 		td.LogEdit.Field2Name = fields[1]
 		td.LogEdit.Field3Name = fields[2]
 		td.LogEdit.Field4Name = fields[3]
-		td.LogEdit.Field1Data = fieldDataList[0]
-		td.LogEdit.Field2Data = fieldDataList[1]
-		td.LogEdit.Field3Data = fieldDataList[2]
-		td.LogEdit.Field4Data = fieldDataList[3]
+		td.LogEdit.Field1Sent = fieldDataList[0]
+		td.LogEdit.Field2Sent = fieldDataList[1]
+		td.LogEdit.Field3Sent = fieldDataList[2]
+		td.LogEdit.Field4Sent = fieldDataList[3]
 
 	case 5:
 		td.LogEdit.Field1Name = fields[0]
@@ -592,11 +592,11 @@ func (app *application) updateContestFields(td *templateData) error {
 		td.LogEdit.Field3Name = fields[2]
 		td.LogEdit.Field4Name = fields[3]
 		td.LogEdit.Field5Name = fields[4]
-		td.LogEdit.Field1Data = fieldDataList[0]
-		td.LogEdit.Field2Data = fieldDataList[1]
-		td.LogEdit.Field3Data = fieldDataList[2]
-		td.LogEdit.Field4Data = fieldDataList[3]
-		td.LogEdit.Field5Data = fieldDataList[4]
+		td.LogEdit.Field1Sent = fieldDataList[0]
+		td.LogEdit.Field2Sent = fieldDataList[1]
+		td.LogEdit.Field3Sent = fieldDataList[2]
+		td.LogEdit.Field4Sent = fieldDataList[3]
+		td.LogEdit.Field5Sent = fieldDataList[4]
 
 	default:
 		return fmt.Errorf("fieldCount number error %d", fieldCount)

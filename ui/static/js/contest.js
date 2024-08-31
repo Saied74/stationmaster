@@ -63,21 +63,16 @@ if (title == "Contest") {
 			
 	});
 
-
-	$("#exChange").on("keyup", function(e) {
+	$("#field"+$("#fieldcount").text()).on("keyup", function(e) {
 		if (e.which === 13) {
 			var logdata = {
     				Call:     $("#call-sign").val(),
-				Field1	  $("#field1").val(),
-				Field2	  $("#field2").val(),
-				Field3	  $("#field3").val(),
-				Field4	  $("#field4").val(),
-				Field5    $("#field5").val(),
-
-    				//RST: 	  $("#RST").val(),
-    				//Exchange: $("#exChange").val(),
+				Field1:	  $("#field1").val(),
+				Field2:	  $("#field2").val(),
+				Field3:	  $("#field3").val(),
+				Field4:	  $("#field4").val(),
+				Field5:    $("#field5").val(),
   			}
-
   		$.ajax({
             		url: "update-log",
             		type: 'post',
@@ -88,17 +83,15 @@ if (title == "Contest") {
 			$("#message").text(data["Message"])
 		});
 		$("#call-sign").val("")
-		for (var i = 0; i < 5; i++) {
-			$("#field"+toString(i+1)).val("")
-		}
-		//$("#RST").val("")
-		//$("#exChange").val("");
+		$("#field1").val("")
+		$("#field2").val("")
+		$("#field3").val("")
+		$("#field4").val("")
+		$("#field5").val("")
 		$("#dupe-call").text("")
 		$("#call-sign").focus()
 		};
-
 	});
 
 }
 });
-

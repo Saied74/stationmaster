@@ -87,45 +87,115 @@
         </div>
 
   </form>
+   <form class="row g-3" method="POST" action="/gencabrilloNew">
+      <div class="row">
+         <div class="col-sm-6">
+            {{with .FormData.Errors.Get "contestname"}}
+               <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            {{end}}
+            <div class="input-group mb-3">
+               <span class="input-group-text" id="inputGroup-sizing-default">Contest Name</span>
+               <input type="text" name="contestname" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+            </div>
+         </div>
+         <div class="col-sm-6">
+            {{with .FormData.Errors.Get "contestfile"}}
+               <label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            {{end}}
+            <div class="input-group mb-3">
+               <span class="input-group-text" id="inputGroup-sizing-default">Contest File Name</span>
+               <input type="text" name="contestfile" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+         </div>
+       </div>
+       <div class="row">
+          <button type="submit" class="btn mb-3" style="background-color: #9FE1EA">Generate New Cabrillo File</button>
+       </div>
+    </form>   
+
+
   </div>
 </div>
 <hr>
 <table class="table table-borderless table-sm">
   <thead>
     <tr>
+      {{$fc := .FieldCount}}
       {{with .Top}}
-      <th scope="col">{{.Id}}</th>
-      <th scope="col">{{.Time}}</th>
-    	<th scope="col">{{.Call}}</th>
-      <th scope="col">{{.Band}}</th>
-    	<th scope="col">{{.Mode}}</th>
-    	<th scope="col">{{.Sent}}</th>
-    	<th scope="col">{{.Rcvd}}</th>
-    	<th scope="col">{{.Name}}</th>
-    	<th scope="col">{{.Country}}</th>
-      <!-- <th scope="col">{{.Comment}}</th> -->
-      <th scope="col">{{.ExchSent}}</th>
-      <th scope="col">{{.ExchRcvd}}</th>
+         <th scope="col">{{.Id}}</th>
+         <th scope="col">{{.Time}}</th>
+    	 <th scope="col">{{.Band}}</th>
+    	 <th scope="col">{{.Mode}}</th>
+    	 <th scope="col">{{.Name}}</th>
+    	 <th scope="col">{{.Country}}</th>
+	 {{if ge $fc 2}}
+	    <th scope="col">{{.Field1Name}}</th>
+	    <th scope="col">{{.Field2Name}}</th>
+         {{end}}
+	 {{if ge $fc 3 }}
+	    <th scope="col">{{.Field3Name}}</th>
+         {{end}}
+	 {{if ge $fc 4 }}
+	    <th scope="col">{{.Field4Name}}</th>
+         {{end}}
+	 {{if eq $fc 5 }}
+	    <th scope="col">{{.Field5Name}}</th>
+         {{end}}
+	 <th scope="col">{{.Call}}</th>
+         {{if ge $fc 2}}
+	    <th scope="col">{{.Field1Name}}</th>
+	    <th scope="col">{{.Field2Name}}</th>
+         {{end}}
+	 {{if ge $fc 3 }}
+	    <th scope="col">{{.Field3Name}}</th>
+         {{end}}
+	 {{if ge $fc 4 }}
+	    <th scope="col">{{.Field4Name}}</th>
+         {{end}}
+	 {{if eq $fc 5 }}
+	    <th scope="col">{{.Field5Name}}</th>
+         {{end}}
+
+      {{end}}
     </tr>
-    {{end}}
   </thead>
   <tbody>
-    {{range .Table}}
-    <tr>
-      <td scope="col">{{.Id}}</td>
-    	<td scope="col">{{.Time.Format "Jan 2 2006 15:04:05"}}</td>
-    	<td scope="col">{{.Call}}</td>
-      <td scope="col">{{.Band}}</td>
-    	<td scope="col">{{.Mode}}</td>
-    	<td scope="col">{{.Sent}}</td>
-    	<td scope="col">{{.Rcvd}}</td>
-    	<td scope="col">{{.Name}}</td>
-    	<td scope="col">{{.Country}}</td>
-      <!-- <td scope="col">{{.Comment}}</td> -->
-      <td scope="col">{{.ExchSent}}</td>
-      <td scope="col">{{.ExchRcvd}}</td>
-    </tr>
-      {{end}}
+     {{range .Table}}
+       <tr>
+          <td scope="col">{{.Id}}</td>
+    	  <td scope="col">{{.Time.Format "Jan 2 2006 15:04:05"}}</td>
+          <td scope="col">{{.Band}}</td>
+    	  <td scope="col">{{.Mode}}</td>
+    	  <td scope="col">{{.Name}}</td>
+    	  <td scope="col">{{.Country}}</td>
+	   {{if ge $fc 2}}
+	      <th scope="col">{{.Field1Sent}}</th>
+	      <th scope="col">{{.Field2Sent}}</th>
+           {{end}}
+	   {{if ge $fc 3 }}
+	      <th scope="col">{{.Field3Sent}}</th>
+           {{end}}
+	   {{if ge $fc 4 }}
+	      <th scope="col">{{.Field4Sent}}</th>
+           {{end}}
+	   {{if eq $fc 5 }}
+	      <th scope="col">{{.Field5Sent}}</th>
+           {{end}}
+	   <th scope="col">{{.Call}}</th>
+           {{if ge $fc 2}}
+	      <th scope="col">{{.Field1Rcvd}}</th>
+	      <th scope="col">{{.Field2Rcvd}}</th>
+           {{end}}
+	   {{if ge $fc 3 }}
+	      <th scope="col">{{.Field3Rcvd}}</th>
+           {{end}}
+	   {{if ge $fc 4 }}
+	      <th scope="col">{{.Field4Rcvd}}</th>
+           {{end}}
+	   {{if eq $fc 5 }}
+	      <th scope="col">{{.Field5Rcvd}}</th>
+           {{end}}
+       </tr>
+     {{end}}
   </tbody>
 </table>
 
