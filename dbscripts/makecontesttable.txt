@@ -1,0 +1,13 @@
+CREATE TABLE contests (
+id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+time DATETIME NOT NULL,
+contestname VARCHAR(50) NOT NULL,
+fieldCount TINYINT(1) NOT NULL,
+field1Name VARCHAR(10) NOT NULL,
+field2Name VARCHAR(10) NOT NULL,
+field3Name VARCHAR(10) NOT NULL,
+field4Name VARCHAR(10) NOT NULL,
+field5Name VARCHAR(10) NOT NULL
+);
+
+CREATE INDEX idx_contests_contestname ON contests(contestname);

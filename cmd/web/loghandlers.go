@@ -10,28 +10,31 @@ import (
 	"time"
 )
 
+type tTop interface{}
+
 //seed data for the keyer - tutor
 
 // for feeding dynamic data and error reports to templates
 type templateData struct {
-	FormData *formData //for form validation error handling
-	LookUp   *Ctype    //Full suite of QRZ individual ham data
-	Speed    int8      //code sending speed
-	Tone     int16     //Practice tone
-	Volume   int8      //Practice volume
-	Mode     string    //keying mode, tutor or keyer
-	Band     string
-	Top      headRow   //Log table column titles
-	Table    []LogsRow //full set of log table rows
-	LogEdit  *LogsRow  //single row of the log table for editing
-	Show     bool
-	Edit     bool
-	StopCode bool
-	Logger   bool
-	Contest  string
-	Stats    *Stats
-	VFO      *VFO
-	Message  string
+	FormData   *formData //for form validation error handling
+	LookUp     *Ctype    //Full suite of QRZ individual ham data
+	Speed      int8      //code sending speed
+	Tone       int16     //Practice tone
+	Volume     int8      //Practice volume
+	Mode       string    //keying mode, tutor or keyer
+	Band       string
+	Top        headRow   //Log table column titles
+	Table      []LogsRow //full set of log table rows
+	LogEdit    *LogsRow  //single row of the log table for editing
+	Show       bool
+	Edit       bool
+	StopCode   bool
+	Logger     bool
+	Contest    string
+	Stats      *Stats
+	VFO        *VFO
+	Message    string
+	FieldCount int
 }
 
 type Stats struct {
@@ -504,6 +507,8 @@ func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "log.page.html", td)
 }
 
+//<<=============================  Defaults =================================>>
+
 func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	td.Logger = true
@@ -543,11 +548,13 @@ func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.LogEdit.ExchSent = v
+	app.updateContestFields(td)
 	app.render(w, r, "defaults.page.html", td)
 }
 
 func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	var v string
+	cr := &ContestRow{}
 	td := initTemplateData()
 	err := r.ParseForm()
 	if err != nil {
@@ -628,17 +635,52 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 
 	f := newForm(r.PostForm)
 	if td.LogEdit.Contest == "Yes" {
-		f.required("contestname", "rst", "exch", "contestdate", "contesttime")
+		f.required("contestname", "contestdate", "contesttime", "fieldCount")
 		f.maxLength("contestname", 45)
-		f.maxLength("rst", 3)
-		f.maxLength("exch", 10)
+		f.maxLength("fieldCount", 1)
+		fc := r.PostForm.Get("fieldCount")
+		fieldCount, err := strconv.Atoi(fc)
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+		fieldCount += 2
+		cr.FieldCount = fieldCount
+		fieldNames := r.PostForm.Get("fieldNames")
+		fields := strings.Split(fieldNames, ",")
+		for i, _ := range fields {
+			fields[i] = strings.TrimSpace(fields[i])
+		}
+		if len(fields) != fieldCount {
+			err = fmt.Errorf("length of fields %v did not match field count %d", fields, fieldCount)
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		for i, field := range fields {
+			f.required("field" + strconv.Itoa(i+1))
+			f.maxLength(field, 10)
+		}
 		if !f.valid() {
 			td.FormData = f
 			app.render(w, r, "defaults.page.html", td)
 			return
 		}
-
+		if fieldCount >= 2 {
+			cr.Field1Name = fields[0]
+			cr.Field2Name = fields[1]
+		}
+		if fieldCount >= 3 {
+			cr.Field3Name = fields[2]
+		}
+		if fieldCount >= 4 {
+			cr.Field4Name = fields[3]
+		}
+		if fieldCount == 5 {
+			cr.Field5Name = fields[4]
+		}
 		cn := r.PostForm.Get("contestname")
+		cr.ContestName = cn
 		err = app.otherModel.updateDefault("contestname", cn)
 		if err != nil {
 			app.serverError(w, err)
@@ -673,22 +715,38 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		td.LogEdit.ContestTime = ct
-
-		rst := r.PostForm.Get("rst")
-		err = app.otherModel.updateDefault("sent", rst)
+		dt, err := time.Parse(time.RFC3339, cd+"T"+ct+":00Z")
 		if err != nil {
 			app.serverError(w, err)
-			return
 		}
-		td.LogEdit.Sent = rst
+		cr.Time = dt
 
-		e := r.PostForm.Get("exch")
-		err = app.otherModel.updateDefault("exch", e)
+		err = app.otherModel.updateDefault("fieldCount", strconv.Itoa(fieldCount))
 		if err != nil {
 			app.serverError(w, err)
-			return
 		}
-		td.LogEdit.ExchSent = e
+
+		//var fieldName string
+		var fieldDataList []string
+		for i, field := range fields {
+			fcString := strconv.Itoa(i + 1)
+			err = app.otherModel.updateDefault("field"+fcString+"Name", field)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			fieldData := r.PostForm.Get("field" + fcString)
+			err = app.otherModel.updateDefault("field"+fcString+"Data", fieldData)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			fieldDataList = append(fieldDataList, fieldData)
+		}
+		app.updateContestFields(td)
+		err = app.contestModel.insertContest(cr)
+		if err != nil {
+			app.serverError(w, err)
+		}
+
 	}
 	app.render(w, r, "defaults.page.html", td)
 }
@@ -728,6 +786,7 @@ func (app *application) contest(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	err = app.updateContestFields(td)
 	td.Band = band
 	td.Mode = mode
 	app.render(w, r, "contest.page.html", td) //data)
@@ -797,34 +856,16 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 	var c *Ctype
 	var v struct {
 		Call     string
+		Field1   string
+		Field2   string
+		Field3   string
+		Field4   string
+		Field5   string
 		RST      string
 		Exchange string
 		Message  string
 	}
-	err := r.ParseForm()
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-	err = json.NewDecoder(r.Body).Decode(&v)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	//fist, get band and mode
-	band, err := app.otherModel.getDefault("band")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	mode, err := app.otherModel.getDefault("mode")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	//check to see if contest is on
+	//Check to see if contest mode is on
 	contestOn, err := app.otherModel.getDefault("contest") //Yes or No
 	if err != nil {
 		app.serverError(w, err)
@@ -842,7 +883,46 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if v.Call == "" || v.RST == "" || v.Exchange == "" {
+	//Decode data sent from the page
+	err = r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	err = json.NewDecoder(r.Body).Decode(&v)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	//check to see if all fields are filled in
+	//Maybe in the future, do more checking
+	fcS, err := app.otherModel.getDefault("fieldCount")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	fc, err := strconv.Atoi(fcS)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	var test bool
+	switch fc {
+	case 2:
+		test = v.Field1 == "" || v.Field2 == ""
+	case 3:
+		test = v.Field1 == "" || v.Field2 == "" || v.Field3 == ""
+	case 4:
+		test = v.Field1 == "" || v.Field2 == "" || v.Field3 == "" || v.Field4 == ""
+	case 5:
+		test = v.Field1 == "" || v.Field2 == "" || v.Field3 == "" || v.Field4 == "" || v.Field5 == ""
+	default:
+		app.serverError(w, fmt.Errorf("field count was not 2, 3, 4, or 5, it was %d", fc))
+		return
+	}
+
+	if test {
 		v.Message = "There are one or more missing data fields."
 		b, err := json.Marshal(v)
 		if err != nil {
@@ -852,19 +932,16 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(b)
 		return
-
 	}
 
-	//<++++++++++++++++  get more defaults
-
-	//Sent RST
-	sent, err := app.otherModel.getDefault("sent")
+	//<++++++++++++++++  get defaults
+	//fist, get band and mode
+	band, err := app.otherModel.getDefault("band")
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	//Exchange message
-	exchange, err := app.otherModel.getDefault("exch")
+	mode, err := app.otherModel.getDefault("mode")
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -872,10 +949,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 	name, err := app.otherModel.getDefault("contestname")
 	if err != nil {
 		app.serverError(w, err)
-		return
 	}
-	//<++++++++++++++++ end of get defaults
-
 	//<+++++++++++++++++  Calculate and store the number of logs with that call
 
 	t, err := app.logsModel.getLogsByCall(v.Call)
@@ -914,21 +988,71 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//<++++++++++++++  Save the new log
+	//start the row to enter into the table:
 	tr := LogsRow{
 		Contest:     contestOn,
 		ContestName: name,
 		Call:        strings.ToUpper(v.Call),
-		Sent:        sent,
-		Rcvd:        v.RST,
 		Band:        band,
 		Mode:        mode,
 		Name:        c.Fname + " " + c.Lname,
 		Country:     c.Country,
 		Comment:     "",
-		ExchSent:    exchange,
-		ExchRcvd:    v.Exchange,
 	}
+	//Get Sent Fields
+	//sent, err := app.otherModel.getDefault("sent")
+	//if err != nil {
+	//	app.serverError(w, err)
+	//	return
+	//}
+	//The five fields
+	if fc >= 2 {
+		field1Sent, err := app.otherModel.getDefault("field1Data")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		tr.Field1Sent = field1Sent
+		tr.Field1Rcvd = v.Field1
+		field2Sent, err := app.otherModel.getDefault("field2Data")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		tr.Field2Sent = field2Sent
+		tr.Field2Rcvd = v.Field2
+	}
+	if fc >= 3 {
+		field3Sent, err := app.otherModel.getDefault("field3Data")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		tr.Field3Sent = field3Sent
+		tr.Field3Rcvd = v.Field2
+	}
+	if fc >= 4 {
+		field4Sent, err := app.otherModel.getDefault("field4Data")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		tr.Field4Sent = field4Sent
+		tr.Field4Rcvd = v.Field4
+	}
+	if fc == 5 {
+		field5Sent, err := app.otherModel.getDefault("field5Data")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		tr.Field5Sent = field5Sent
+		tr.Field5Rcvd = v.Field5
+	}
+
+	//<++++++++++++++++ end of get defaults
+
+	//<++++++++++++++  Save the new log
 
 	_, err = app.logsModel.insertLog(&tr)
 	if err != nil {

@@ -50,6 +50,7 @@ type application struct {
 	logsModel     logsType
 	qrzModel      qrzType
 	otherModel    otherType
+	contestModel  contestType
 	putCancel     putCancelFunc
 	getCancel     getCancelFunc
 	putId         putIdFunc
@@ -152,6 +153,7 @@ func main() {
 		displayLines:  *displayLines,
 		logsModel:     &logsModel{DB: db},
 		qrzModel:      &qrzModel{DB: db},
+		contestModel:  &contestModel{DB: db},
 		otherModel:    m,
 		putCancel:     putCancel,
 		getCancel:     getCancel,
@@ -248,6 +250,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/gen-adif", app.genadif)
 	mux.HandleFunc("/cabrillo", app.cabrillo)
 	mux.HandleFunc("/gencabrillo", app.genCabrillo)
+	mux.HandleFunc("/gencabrilloNew", app.genCabrilloNew)
 	mux.HandleFunc("/analysis", app.analysis)
 	mux.HandleFunc("/country", app.country)
 	mux.HandleFunc("/country-confirmed", app.countryConfirmed)

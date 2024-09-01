@@ -17,11 +17,12 @@ const (
 )
 
 type contestData struct {
-	filename  string
-	name      string //contest name
-	startTime time.Time
-	endTime   time.Time
-	score     string
+	filename   string
+	name       string //contest name
+	startTime  time.Time
+	endTime    time.Time
+	score      string
+	fieldCount int
 }
 
 type cabBuffer []byte
@@ -56,6 +57,63 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 		s += row.Call + "\t"
 		s += row.Rcvd + "\t"
 		s += row.ExchRcvd + "\t"
+		fmt.Fprintln(w, s)
+	}
+	w.Flush()
+	dd.Write([]byte("END-OF-LOG: \n"))
+	fullData := append(header, cabData...)
+	err := writeCab(cd.filename, []byte(fullData))
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) error {
+	cabData = cabBuffer{}
+	dd := make(cabBuffer, 10)
+	cd.score = ""
+	header := writeCabrilloHeader(cabData, cd.name, cd.score)
+	w := tabwriter.NewWriter(dd, 1, 2, 1, ' ', 0)
+	for _, row := range rows {
+		s := ""
+		s += "QSO:\t"
+		s += bandNormalize(row.Band) + "\t"
+		s += row.Mode + "\t"
+		dd, dt := cookTime(row.Time)
+		s += dd + "\t"
+		t := strings.Split(strings.TrimSuffix(dt, "Z"), ":")
+		s += strings.Join(t[0:2], "") + "\t"
+		s += "AD2CC\t"
+		if cd.fieldCount >= 2 {
+			s += row.Field1Sent + "\t"
+			s += row.Field2Sent + "\t"
+		}
+		if cd.fieldCount >= 3 {
+			s += row.Field3Sent + "\t"
+		}
+		if cd.fieldCount >= 4 {
+			s += row.Field4Sent + "\t"
+		}
+		if cd.fieldCount == 5 {
+			s += row.Field5Sent + "\t"
+		}
+		s += row.Call + "\t"
+		if cd.fieldCount >= 2 {
+			s += row.Field1Rcvd + "\t"
+			s += row.Field2Rcvd + "\t"
+		}
+		if cd.fieldCount >= 3 {
+			s += row.Field3Rcvd + "\t"
+		}
+		if cd.fieldCount >= 4 {
+			s += row.Field4Rcvd + "\t"
+		}
+		if cd.fieldCount == 5 {
+			s += row.Field5Rcvd + "\t"
+		}
+
 		fmt.Fprintln(w, s)
 	}
 	w.Flush()
