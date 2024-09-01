@@ -57,9 +57,6 @@ one byte of speed, one byte of dit time in milliseconds (dah time is 3 times dit
 
 import (
 	"fmt"
-	"time"
-
-	"go.bug.st/serial"
 )
 
 const (
@@ -100,21 +97,6 @@ func (app *application) startCWRemote() error {
 		port.Close()
 	}
 	return fmt.Errorf("No cw ports were found")
-}
-
-func initPort(usbPort string) (serial.Port, error) {
-	mode := &serial.Mode{
-		BaudRate: 115200,
-		Parity:   serial.NoParity,
-		DataBits: 8,
-		StopBits: serial.OneStopBit,
-	}
-	port, err := serial.Open(usbPort, mode)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open the usb connection: %s: %v", usbPort, err)
-	}
-	port.SetReadTimeout(time.Duration(2) * time.Second)
-	return port, nil
 }
 
 //func findPort(v string) (port string, err error) {
