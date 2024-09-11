@@ -603,3 +603,42 @@ func (app *application) updateContestFields(td *templateData) error {
 	}
 	return nil
 }
+
+func (app *application) updateFunctionKeys(td *templateData) error {
+
+	var fns = make([]string, 10)
+	for i := 0; i < 10; i++ {
+		fnString := strconv.Itoa(i + 1)
+		f, err := app.otherModel.getDefault("F" + fnString)
+		if err != nil {
+			if errors.Is(err, errNoRecord) {
+				continue
+			}
+			return err
+		}
+		fns[i] = f
+	}
+	td.F1 = fns[0]
+	td.F2 = fns[1]
+	td.F3 = fns[2]
+	td.F4 = fns[3]
+	td.F5 = fns[4]
+	td.F6 = fns[5]
+	td.F7 = fns[6]
+	td.F8 = fns[7]
+	td.F9 = fns[8]
+	td.F10 = fns[9]
+	return nil
+}
+
+func (app *application) saveFunctionKeys(td *templateData, fns []string) error {
+
+	for i := 0; i < 10; i++ {
+		fnString := strconv.Itoa(i + 1)
+		err := app.otherModel.updateDefault("F"+fnString, fns[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

@@ -64,6 +64,7 @@ if (title == "Contest") {
 	});
 
 	$("#field"+$("#fieldcount").text()).on("keyup", function(e) {
+
 		if (e.which === 13) {
 			var logdata = {
     				Call:     $("#call-sign").val(),
@@ -93,5 +94,31 @@ if (title == "Contest") {
 		};
 	});
 
+      $(document).on("keyup", function(e) {
+	      const functionKeys = [112, 113, 114, 115, 116, 117, 118, 119, 120, 121]
+		if (functionKeys.indexOf(e.which) != -1) {
+			var keydata = {
+    				Call:     $("#call-sign").val(),
+				Field1:	  $("#field1").val(),
+				Field2:	  $("#field2").val(),
+				Field3:	  $("#field3").val(),
+				Field4:	  $("#field4").val(),
+				Field5:    $("#field5").val(),
+				Key: e.which,
+  			}
+			$.ajax({
+            		url: "update-key",
+            		type: 'post',
+            		dataType: 'json',
+            		contentType: 'application/json',
+            		data: JSON.stringify(keydata),
+        	}).done(function(data){
+			$("#message").text(data["Message"])
+		});
+
+
+
+		};
+      });
 }
 });

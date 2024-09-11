@@ -35,6 +35,16 @@ type templateData struct {
 	VFO        *VFO
 	Message    string
 	FieldCount int
+	F1         string
+	F2         string
+	F3         string
+	F4         string
+	F5         string
+	F6         string
+	F7         string
+	F8         string
+	F9         string
+	F10        string
 }
 
 type Stats struct {
@@ -548,7 +558,16 @@ func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	td.LogEdit.ExchSent = v
-	app.updateContestFields(td)
+	err = app.updateContestFields(td)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.updateFunctionKeys(td)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
 	app.render(w, r, "defaults.page.html", td)
 }
 
@@ -634,6 +653,14 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 	td.LogEdit.Contest = v
 
 	f := newForm(r.PostForm)
+	var fns = make([]string, 10)
+	for i := 0; i < 10; i++ {
+		fns[i] = f.Get("f" + strconv.Itoa(i+1))
+	}
+	err = app.saveFunctionKeys(td, fns)
+	if err != nil {
+		app.serverError(w, err)
+	}
 	if td.LogEdit.Contest == "Yes" {
 		f.required("contestname", "contestdate", "contesttime", "fieldCount")
 		f.maxLength("contestname", 45)
@@ -746,7 +773,14 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			app.serverError(w, err)
 		}
-
+		err = app.updateFunctionKeys(td)
+		if err != nil {
+			app.serverError(w, err)
+		}
+	}
+	err = app.initRadio()
+	if err != nil {
+		app.serverError(w, err)
 	}
 	app.render(w, r, "defaults.page.html", td)
 }
@@ -787,6 +821,13 @@ func (app *application) contest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = app.updateContestFields(td)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	err = app.updateFunctionKeys(td)
+	if err != nil {
+		app.serverError(w, err)
+	}
 	td.Band = band
 	td.Mode = mode
 	app.render(w, r, "contest.page.html", td) //data)
@@ -1060,5 +1101,51 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//<+++++++++++++  New log saved
+
+}
+
+type radioMsg struct {
+	Call    string
+	Field1  string
+	Field2  string
+	Field3  string
+	Field4  string
+	Field5  string
+	Key     int
+	Message string
+}
+
+func (app *application) updateKey(w http.ResponseWriter, r *http.Request) {
+	v := radioMsg{}
+	//Check to see if contest mode is on
+	contestOn, err := app.otherModel.getDefault("contest") //Yes or No
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	if contestOn != "Yes" {
+		v.Message = "Contest is not on, you can't do this."
+		b, err := json.Marshal(v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+		return
+	}
+
+	//Decode data sent from the page
+	err = r.ParseForm()
+	err = json.NewDecoder(r.Body).Decode(&v)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.tickleRadio(&v)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	return
 
 }
