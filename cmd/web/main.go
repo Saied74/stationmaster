@@ -192,18 +192,27 @@ func main() {
 
 	go app.wsjtxServe()
 
-	app.rem = make(remotes)
-	err = app.startCWRemote()
+	err = app.classifyRemotes()
 	if err != nil {
-		app.errorLog.Println("failed to start CW remote %v", err)
+		app.errorLog.Println("failed to start remotes in main %v", err)
 	}
-	err = app.startVFORemote()
+	err = app.initRadio()
 	if err != nil {
-		app.errorLog.Println("failed to start VFO remote %v", err)
+		app.errorLog.Println("failed to initialize radio in main %v", err)
 	}
 
+	//app.rem = make(remotes)
+	//err = app.startCWRemote()
+	//if err != nil {
+	//	app.errorLog.Println("failed to start CW remote %v", err)
+	//}
+	//err = app.startVFORemote()
+	//if err != nil {
+	//	app.errorLog.Println("failed to start VFO remote %v", err)
+	//}
+
 	defer func() {
-		for kind, _ := range remoteKind {
+		for _, kind := range kinds {
 			_, ok := app.rem[kind]
 			if !ok {
 				continue
@@ -275,6 +284,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/contest", app.contest)
 	mux.HandleFunc("/check-dupe", app.checkDupe)
 	mux.HandleFunc("/update-log", app.updateLog)
+	mux.HandleFunc("/update-key", app.updateKey)
 	return mux
 }
 

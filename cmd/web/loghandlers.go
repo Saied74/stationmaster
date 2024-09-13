@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+const (
+	yesContest    string = "1"
+	noContest     string = "2"
+	switchContest string = "3"
+)
+
 type tTop interface{}
 
 //seed data for the keyer - tutor
@@ -35,6 +41,16 @@ type templateData struct {
 	VFO        *VFO
 	Message    string
 	FieldCount int
+	F1         string
+	F2         string
+	F3         string
+	F4         string
+	F5         string
+	F6         string
+	F7         string
+	F8         string
+	F9         string
+	F10        string
 }
 
 type Stats struct {
@@ -512,48 +528,23 @@ func (app *application) updateQRZ(w http.ResponseWriter, r *http.Request) {
 func (app *application) defaults(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
 	td.Logger = true
-	v, err := app.lookupDefault("mode")
+	err := app.updateDefaults(td)
 	if err != nil {
 		app.serverError(w, err)
+		app.render(w, r, "defaults.page.html", td)
 		return
+
 	}
-	td.LogEdit.Mode = v
-	v, err = app.lookupDefault("band")
+	err = app.updateFunctionKeys(td)
 	if err != nil {
 		app.serverError(w, err)
+		app.render(w, r, "defaults.page.html", td)
 		return
 	}
-	td.LogEdit.Band = v
-	v, err = app.lookupDefault("contest")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.Contest = v
-	v, err = app.lookupDefault("contestname")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.ContestName = v
-	v, err = app.lookupDefault("sent")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.Sent = v
-	v, err = app.lookupDefault("exchange")
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.ExchSent = v
-	app.updateContestFields(td)
 	app.render(w, r, "defaults.page.html", td)
 }
 
 func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
-	var v string
 	cr := &ContestRow{}
 	td := initTemplateData()
 	err := r.ParseForm()
@@ -561,80 +552,67 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	m := r.PostForm.Get("mode")
-	switch m {
-	case "1":
-		v = "USB"
-	case "2":
-		v = "LSB"
-	case "3":
-		v = "CW"
-	case "4":
-		v = "FT8"
-	case "5":
-		v = "FT4"
-	default:
-		v, err = app.lookupDefault("mode")
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
-	}
-	err = app.otherModel.updateDefault("mode", v)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.Mode = v
-	b := r.PostForm.Get("band")
-	switch b {
-	case "1":
-		v = "10m"
-	case "2":
-		v = "15m"
-	case "3":
-		v = "20m"
-	case "4":
-		v = "40m"
-	case "5":
-		v = "80m"
-	case "6":
-		v = "160m"
-	default:
-		v, err = app.lookupDefault("band")
-		if err != nil {
-			app.serverError(w, err)
-			return
-		}
-	}
-	err = app.otherModel.updateDefault("band", v)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.Band = v
 	c := r.PostForm.Get("contest")
 	switch c {
-	case "1":
-		v = "Yes"
-	case "2":
-		v = "No"
-	default:
-		v, err = app.lookupDefault("contest")
+	case "3": //contest selection is set to switch
+		cm, err := app.otherModel.getDefault("contest")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-	}
-	err = app.otherModel.updateDefault("contest", v)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	td.LogEdit.Contest = v
+		if cm == "Yes" {
+			cm = "No"
+		} else {
+			cm = "Yes"
+		}
+		err = app.otherModel.updateDefault("contest", cm)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateDefaults(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateFunctionKeys(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 
-	f := newForm(r.PostForm)
-	if td.LogEdit.Contest == "Yes" {
+	case "2":
+		err := app.saveBandMode(r)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateDefaults(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateFunctionKeys(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+	case "1":
+		err := app.saveBandMode(r)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		f := newForm(r.PostForm)
+		var fns = make([]string, 10)
+		for i := 0; i < 10; i++ {
+			fns[i] = f.Get("f" + strconv.Itoa(i+1))
+		}
+		err = app.saveFunctionKeys(td, fns)
+		if err != nil {
+			app.serverError(w, err)
+		}
 		f.required("contestname", "contestdate", "contesttime", "fieldCount")
 		f.maxLength("contestname", 45)
 		f.maxLength("fieldCount", 1)
@@ -745,9 +723,32 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		err = app.contestModel.insertContest(cr)
 		if err != nil {
 			app.serverError(w, err)
+			return
+		}
+		err = app.updateFunctionKeys(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	default:
+		err = app.updateDefaults(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateFunctionKeys(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
 		}
 
 	}
+	err = app.initRadio()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	app.render(w, r, "defaults.page.html", td)
 }
 
@@ -787,6 +788,13 @@ func (app *application) contest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = app.updateContestFields(td)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	err = app.updateFunctionKeys(td)
+	if err != nil {
+		app.serverError(w, err)
+	}
 	td.Band = band
 	td.Mode = mode
 	app.render(w, r, "contest.page.html", td) //data)
@@ -1060,5 +1068,51 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//<+++++++++++++  New log saved
+
+}
+
+type radioMsg struct {
+	Call    string
+	Field1  string
+	Field2  string
+	Field3  string
+	Field4  string
+	Field5  string
+	Key     int
+	Message string
+}
+
+func (app *application) updateKey(w http.ResponseWriter, r *http.Request) {
+	v := radioMsg{}
+	//Check to see if contest mode is on
+	contestOn, err := app.otherModel.getDefault("contest") //Yes or No
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	if contestOn != "Yes" {
+		v.Message = "Contest is not on, you can't do this."
+		b, err := json.Marshal(v)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+		return
+	}
+
+	//Decode data sent from the page
+	err = r.ParseForm()
+	err = json.NewDecoder(r.Body).Decode(&v)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	err = app.tickleRadio(&v)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	return
 
 }

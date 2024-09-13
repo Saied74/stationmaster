@@ -603,3 +603,139 @@ func (app *application) updateContestFields(td *templateData) error {
 	}
 	return nil
 }
+
+func (app *application) updateFunctionKeys(td *templateData) error {
+
+	var fns = make([]string, 10)
+	for i := 0; i < 10; i++ {
+		fnString := strconv.Itoa(i + 1)
+		f, err := app.otherModel.getDefault("F" + fnString)
+		if err != nil {
+			if errors.Is(err, errNoRecord) {
+				continue
+			}
+			return err
+		}
+		fns[i] = f
+	}
+	td.F1 = fns[0]
+	td.F2 = fns[1]
+	td.F3 = fns[2]
+	td.F4 = fns[3]
+	td.F5 = fns[4]
+	td.F6 = fns[5]
+	td.F7 = fns[6]
+	td.F8 = fns[7]
+	td.F9 = fns[8]
+	td.F10 = fns[9]
+	return nil
+}
+
+func (app *application) saveFunctionKeys(td *templateData, fns []string) error {
+
+	for i := 0; i < 10; i++ {
+		fnString := strconv.Itoa(i + 1)
+		err := app.otherModel.updateDefault("F"+fnString, fns[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (app *application) updateDefaults(td *templateData) error {
+	mode, err := app.otherModel.getDefault("mode")
+	if err != nil {
+		if !errors.Is(err, errNoRecord) {
+			return err
+		}
+	}
+	td.LogEdit.Mode = mode
+	td.Mode = mode
+	band, err := app.otherModel.getDefault("band")
+	if err != nil {
+		if errors.Is(err, errNoRecord) {
+			return err
+		}
+	}
+
+	td.LogEdit.Band = band
+	td.Band = band
+	contest, err := app.otherModel.getDefault("contest")
+	if err != nil {
+		if !errors.Is(err, errNoRecord) {
+
+			return err
+		}
+	}
+	td.LogEdit.Contest = contest
+	contestname, err := app.otherModel.getDefault("contestname")
+	if err != nil {
+		if !errors.Is(err, errNoRecord) {
+			return err
+		}
+	}
+	td.LogEdit.ContestName = contestname
+	if contestname != "" {
+
+		cr, err := app.contestModel.getContest(contestname)
+		if err != nil {
+			if !errors.Is(err, errNoRecord) {
+				return err
+			}
+		}
+		y, m, d := cr.Time.Date()
+		date := fmt.Sprintf("%04d-%02d-%02d", y, m, d)
+		td.LogEdit.ContestDate = date
+		time := fmt.Sprintf("%02d:%02d", cr.Time.Hour(), cr.Time.Minute())
+		td.LogEdit.ContestTime = time
+		return nil
+	}
+	return nil
+}
+
+func (app *application) saveBandMode(r *http.Request) error {
+	var v string
+	m := r.PostForm.Get("mode")
+	switch m {
+	case "1":
+		v = "USB"
+	case "2":
+		v = "LSB"
+	case "3":
+		v = "CW"
+	case "4":
+		v = "FT8"
+	case "5":
+		v = "FT4"
+	}
+	if v != "" {
+		err := app.otherModel.updateDefault("mode", v)
+		if err != nil {
+			return err
+		}
+	}
+	v = ""
+	b := r.PostForm.Get("band")
+	switch b {
+	case "1":
+		v = "10m"
+	case "2":
+		v = "15m"
+	case "3":
+		v = "20m"
+	case "4":
+		v = "40m"
+	case "5":
+		v = "80m"
+	case "6":
+		v = "160m"
+	}
+	if v != "" {
+		err := app.otherModel.updateDefault("band", v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

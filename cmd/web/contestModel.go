@@ -29,17 +29,35 @@ type contestModel struct {
 
 func (m *contestModel) insertContest(l *ContestRow) error {
 
-	stmt := `INSERT INTO contests (time, contestname, fieldCount,
-		field1Name, field2Name, field3Name, field4Name, field5Name)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-
-	result, err := m.DB.Exec(stmt, l.Time, l.ContestName, l.FieldCount,
-		l.Field1Name, l.Field2Name, l.Field3Name, l.Field4Name, l.Field5Name)
+	_, err := m.getContest(l.ContestName)
 	if err != nil {
-		return err
-	}
+		if errors.Is(err, sql.ErrNoRows) {
 
-	_, err = result.LastInsertId()
+			stmt := `INSERT INTO contests (time, contestname, fieldCount,
+			field1Name, field2Name, field3Name, field4Name, field5Name)
+			VALUES(?, ?, ?, ?, ?, ?, ?, ?)`
+
+			result, err := m.DB.Exec(stmt, l.Time, l.ContestName, l.FieldCount,
+				l.Field1Name, l.Field2Name, l.Field3Name, l.Field4Name, l.Field5Name)
+			if err != nil {
+				return err
+			}
+
+			_, err = result.LastInsertId()
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return nil
+	}
+	stmt := `UPDATE contests SET time = ?, fieldCount = ?,
+			field1Name = ?, field2Name = ?, field3Name = ?, field4Name = ?, field5Name = ?
+			WHERE contestname = ?`
+
+	_, err = m.DB.Exec(stmt, l.Time, l.FieldCount,
+		l.Field1Name, l.Field2Name, l.Field3Name, l.Field4Name, l.Field5Name,
+		l.ContestName)
 	if err != nil {
 		return err
 	}

@@ -324,7 +324,7 @@ come and gone and the data in the defaults table is overridden.
 
 
 | Field       | Type        | Null | Key | Default | Extra          |
-|-------------|-------------|------|-----|---------|----------------+
+|-------------|-------------|------|-----|---------|----------------|
 | id          | int         | NO   | PRI | NULL    | auto_increment |
 | time        | datetime    | NO   |     | NULL    |                |
 | contestname | varchar(50) | NO   | MUL | NULL    |                |
