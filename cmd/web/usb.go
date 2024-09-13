@@ -76,19 +76,19 @@ func (app *application) classifyRemotes() error {
 
 	ports, err := findPorts(vidList) //returns port details
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 	}
 	for _, p := range ports {
-		fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber)
+		//fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber)
 
 		rdo := false
 		port, err := openPort(p.Name, baudRate) //115200)
 		if err != nil {
 			if err.Error() == "Serial port busy" {
-				fmt.Println("Busy port error", err)
+				//fmt.Println("Busy port error", err)
 				continue
 			} else {
-				log.Println("did not open radio port", err)
+				//log.Println("did not open radio port", err)
 			}
 		}
 		if port != nil {
@@ -97,7 +97,7 @@ func (app *application) classifyRemotes() error {
 				log.Println(err)
 			}
 		} else {
-			fmt.Println("nil port error", p.Name)
+			//fmt.Println("nil port error", p.Name)
 		}
 		if rdo {
 			//	fmt.Println("r is true")
@@ -111,13 +111,13 @@ func (app *application) classifyRemotes() error {
 			rdo = false
 			continue
 		} else {
-			fmt.Println("r is false")
+			//fmt.Println("r is false")
 		}
 		for _, kind := range kinds[1:] {
 			if port != nil {
-				fmt.Printf("testing %s kind at %x\n", kind, app.rem[kind].address)
+				//fmt.Printf("testing %s kind at %x\n", kind, app.rem[kind].address)
 				if remoteUp(port, app.rem[kind].address) {
-					fmt.Println("poassed ok")
+					//fmt.Println("poassed ok")
 					app.rem[kind].port = port
 					app.rem[kind].vid = p.VID + ":" + p.PID
 					app.rem[kind].serialNumber = p.SerialNumber
@@ -127,12 +127,9 @@ func (app *application) classifyRemotes() error {
 					app.rem[kind].up = true
 				}
 			} else {
-				fmt.Println("Nil port error no 2", p.Name)
+				//fmt.Println("Nil port error no 2", p.Name)
 			}
 		}
-		//if port != nil {
-		//	port.Close()
-		//}
 	}
 	for _, kind := range kinds {
 		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -187,14 +184,13 @@ func openPort(p string, b int) (serial.Port, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the usb connection: %s: %v", p, err)
 	}
-	port.SetReadTimeout(time.Duration(1) * time.Second)
+	port.SetReadTimeout(time.Duration(15) * time.Millisecond)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 	return port, nil
 }
 
 func remoteUp(port serial.Port, address byte) bool {
 	if port == nil {
-		//log.Printf("Port %v is closed\n", address)
 		return false
 	}
 	for i := 0; i < upLimit; i++ {
@@ -204,7 +200,6 @@ func remoteUp(port serial.Port, address byte) bool {
 		}
 		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
-	//log.Printf("Remote %v tested not up", address)
 	return false
 }
 
@@ -369,10 +364,8 @@ func (app *application) writeRemote(msg []byte, kind string) (int, error) {
 
 	}
 	if r.port == nil || !r.up {
-		//log.Println("Failed port and up test")
 		return 0, fmt.Errorf("remote %s is down", kind)
 	}
-	//log.Printf("writing to remote %s\n", kind)
 	n, err := app.rem[kind].port.Write(msg)
 	return n, err
 }
@@ -394,7 +387,7 @@ func (app *application) readRemote(msg []byte, kind string) (int, error) {
 }
 
 func crc16(message []byte) uint16 {
-	//fmt.Println("Message: ", message)
+
 	crc := uint16(0x0000) // Initial value
 	for _, b := range message {
 		crc ^= uint16(b) << 8
