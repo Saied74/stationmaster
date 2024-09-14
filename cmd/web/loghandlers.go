@@ -1050,7 +1050,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		tr.Field3Sent = field3Sent
-		tr.Field3Rcvd = v.Field2
+		tr.Field3Rcvd = v.Field3
 	}
 	if fc >= 4 {
 		field4Sent, err := app.otherModel.getDefault("field4Data")
