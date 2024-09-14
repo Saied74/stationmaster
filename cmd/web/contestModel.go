@@ -31,8 +31,7 @@ func (m *contestModel) insertContest(l *ContestRow) error {
 
 	_, err := m.getContest(l.ContestName)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-
+		if errors.Is(err, errNoRecord) {
 			stmt := `INSERT INTO contests (time, contestname, fieldCount,
 			field1Name, field2Name, field3Name, field4Name, field5Name)
 			VALUES(?, ?, ?, ?, ?, ?, ?, ?)`
@@ -49,7 +48,7 @@ func (m *contestModel) insertContest(l *ContestRow) error {
 			}
 			return nil
 		}
-		return nil
+		return err
 	}
 	stmt := `UPDATE contests SET time = ?, fieldCount = ?,
 			field1Name = ?, field2Name = ?, field3Name = ?, field4Name = ?, field5Name = ?

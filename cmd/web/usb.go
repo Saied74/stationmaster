@@ -48,7 +48,7 @@ const (
 
 )
 
-var vidList = []string{"10c4"}
+var vidList = []string{"10c4", "2341"}
 var noPortMatch = errors.New("no port matched the vid list")
 
 var kinds []string = []string{radioKind, vfoKind, cwKind}
@@ -117,7 +117,7 @@ func (app *application) classifyRemotes() error {
 			if port != nil {
 				//fmt.Printf("testing %s kind at %x\n", kind, app.rem[kind].address)
 				if remoteUp(port, app.rem[kind].address) {
-					//fmt.Println("poassed ok")
+					//fmt.Printf("%s poassed ok\n", kind)
 					app.rem[kind].port = port
 					app.rem[kind].vid = p.VID + ":" + p.PID
 					app.rem[kind].serialNumber = p.SerialNumber
@@ -155,17 +155,17 @@ func findPorts(vids []string) ([]*enumerator.PortDetails, error) {
 	if len(ports) == 0 {
 		return portDetails, fmt.Errorf("no ports were found")
 	}
-	for _, v := range vids {
-		vu := strings.ToUpper(v)
-		vl := strings.ToLower(v)
-		for _, port := range ports {
-			if port.IsUSB {
-				if port.VID == v || port.VID == vl || port.VID == vu {
-					portDetails = append(portDetails, port)
-				}
-			}
+	//for _, p := range vids {
+	//	vu := strings.ToUpper(v)
+	//	vl := strings.ToLower(v)
+	for _, port := range ports {
+		if port.IsUSB {
+			//			if port.VID == v || port.VID == vl || port.VID == vu {
+			portDetails = append(portDetails, port)
+			//}
 		}
 	}
+	//}
 	if len(portDetails) == 0 {
 		return portDetails, noPortMatch
 	}
@@ -298,7 +298,7 @@ func (app *application) readBand() (int, error) {
 	if n != sendMsgLen {
 		return 0, fmt.Errorf("did not write %d bytes, it wrote %d", sendMsgLen, n)
 	}
-	//	time.Sleep(time.Duration(120) * time.Millisecond)
+	time.Sleep(time.Duration(120) * time.Millisecond)
 	n, err = app.readRemote(rBuff, vfoKind) //rem[vfoKind].port.Read(rBuff)
 	if err != nil {
 		return 0, errors.Join(fmt.Errorf("failed to read from vfo usb port"), err)

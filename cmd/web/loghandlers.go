@@ -696,12 +696,14 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		dt, err := time.Parse(time.RFC3339, cd+"T"+ct+":00Z")
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 		cr.Time = dt
 
 		err = app.otherModel.updateDefault("fieldCount", strconv.Itoa(fieldCount))
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 
 		//var fieldName string
@@ -711,15 +713,26 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			err = app.otherModel.updateDefault("field"+fcString+"Name", field)
 			if err != nil {
 				app.serverError(w, err)
+				return
 			}
 			fieldData := r.PostForm.Get("field" + fcString)
 			err = app.otherModel.updateDefault("field"+fcString+"Data", fieldData)
 			if err != nil {
 				app.serverError(w, err)
+				return
 			}
 			fieldDataList = append(fieldDataList, fieldData)
 		}
-		app.updateContestFields(td)
+		err = app.updateContestFields(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateDefaults(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 		err = app.contestModel.insertContest(cr)
 		if err != nil {
 			app.serverError(w, err)
