@@ -184,7 +184,7 @@ func openPort(p string, b int) (serial.Port, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the usb connection: %s: %v", p, err)
 	}
-	port.SetReadTimeout(time.Duration(15) * time.Millisecond)
+	port.SetReadTimeout(time.Duration(150) * time.Millisecond)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 	return port, nil
 }
@@ -502,7 +502,7 @@ func bytesBuilder(s string) []byte {
 
 func numFun(n int) (string, error) {
 	if n < 112 || n > 121 {
-		return "", fmt.Errorf("function key number %d is out of rante", n)
+		return "", fmt.Errorf("function key number %d is out of range", n)
 	}
 	if n > 116 {
 		return "0", fmt.Errorf("function key % d not built yet", n)

@@ -587,6 +587,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+		err = app.otherModel.updateDefault("contest", "No")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 		err = app.updateDefaults(td)
 		if err != nil {
 			app.serverError(w, err)
@@ -724,6 +729,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			fieldDataList = append(fieldDataList, fieldData)
 		}
 		err = app.updateContestFields(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.otherModel.updateDefault("contest", "Yes")
 		if err != nil {
 			app.serverError(w, err)
 			return
