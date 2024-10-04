@@ -66,8 +66,11 @@ if (title == "Contest") {
 	$("#field"+$("#fieldcount").text()).on("keyup", function(e) {
 
 		if (e.which === 13) {
+			var s =  $("#seq").text().split(" ")
+			var n = parseInt(s[1])
 			var logdata = {
     				Call:     $("#call-sign").val(),
+				Seq:      s[1],
 				Field1:	  $("#field1").val(),
 				Field2:	  $("#field2").val(),
 				Field3:	  $("#field3").val(),
@@ -90,11 +93,13 @@ if (title == "Contest") {
 		$("#field4").val("")
 		$("#field5").val("")
 		$("#dupe-call").text("")
+		$("#seq").text("Sequence: " + (n+1))
 		$("#call-sign").focus()
 		};
 	});
 
       $(document).on("keyup", function(e) {
+	      var n = $("#seq").text().split(" ")[1]
 	      const functionKeys = [112, 113, 114, 115, 116, 117, 118, 119, 120, 121]
 		if (functionKeys.indexOf(e.which) != -1) {
 			var keydata = {
@@ -103,7 +108,8 @@ if (title == "Contest") {
 				Field2:	  $("#field2").val(),
 				Field3:	  $("#field3").val(),
 				Field4:	  $("#field4").val(),
-				Field5:    $("#field5").val(),
+				Field5:   $("#field5").val(),
+				Seq:	  n,
 				Key: e.which,
   			}
 			$.ajax({

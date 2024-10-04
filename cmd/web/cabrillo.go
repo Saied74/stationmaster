@@ -56,7 +56,7 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 		s += dd + "\t"
 		t := strings.Split(strings.TrimSuffix(dt, "Z"), ":")
 		s += strings.Join(t[0:2], "") + "\t"
-		s += "AD2CC\t"
+		s += myCall + "\t"
 		s1 += row.Call + "\t"
 		if tst.FieldCount < 3 {
 			s += row.Field1Sent + "\t"
@@ -110,7 +110,7 @@ func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) erro
 		s += dd + "\t"
 		t := strings.Split(strings.TrimSuffix(dt, "Z"), ":")
 		s += strings.Join(t[0:2], "") + "\t"
-		s += "AD2CC\t"
+		s += myCall + "\t"
 		if cd.fieldCount >= 2 {
 			s += row.Field1Sent + "\t"
 			s += row.Field2Sent + "\t"
@@ -210,7 +210,7 @@ func writeCabrilloHeader(b cabBuffer, contest, score string) cabBuffer {
 	b.Write([]byte("START-OF-LOG: 3.0\n"))
 	b.Write([]byte("CONTEST: " + contest + "\n"))
 	b.Write([]byte("LOCATION: NJ\n"))
-	b.Write([]byte("CALLSIGN: AD2CC\n"))
+	b.Write([]byte("CALLSIGN: " + myCall + "\n"))
 	b.Write([]byte("CATEGORY-OPERATOR: SINGLE-OP\n"))
 	b.Write([]byte("CATEGORY-ASSISTED: NON-ASSISTED\n"))
 	b.Write([]byte("CATEGORY-BAND: All\n"))

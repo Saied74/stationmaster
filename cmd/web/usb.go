@@ -44,6 +44,7 @@ const (
 	id         string = "ID" //identification the reply is 0761
 	idResponse string = "0761"
 	km         string = "KM" //keyer memory
+	varMem     string = "5"  //variable memory
 	keyCW      string = "KY" //key the radio
 
 )
@@ -85,10 +86,10 @@ func (app *application) classifyRemotes() error {
 		port, err := openPort(p.Name, baudRate) //115200)
 		if err != nil {
 			if err.Error() == "Serial port busy" {
-				//fmt.Println("Busy port error", err)
+				fmt.Println("Busy port error", err)
 				continue
 			} else {
-				//log.Println("did not open radio port", err)
+				log.Println("did not open radio port", err)
 			}
 		}
 		if port != nil {
@@ -466,20 +467,32 @@ func (app *application) initRadio() error {
 func (app *application) tickleRadio(v *radioMsg) error {
 	f, err := numFun(v.Key)
 	if err != nil {
-		if f == "0" {
-			return nil
-		}
+		//	if f == "0" {
+		//		return nil
+		//	}
 		return err
 	}
 	fnKey, err := app.otherModel.getDefault("F" + f)
 	if err != nil {
 		return err
 	}
-	if fnKey == "" {
-		wBuff := bytesBuilder(km + f + strings.ToUpper(v.Call) + "}" + ";")
+	switch strings.ToUpper(fnKey) {
+	case "HIS CALL":
+		wBuff := bytesBuilder(km + varMem + strings.ToUpper(v.Call) + "}" + ";")
 		app.writeRemote(wBuff, radioKind)
+		f = varMem
+	case seq:
+		wBuff := bytesBuilder(km + varMem + v.Seq + "}" + ";")
+		app.writeRemote(wBuff, radioKind)
+		f = varMem
+	default:
+		if f == "5" || f == "6" || f == "7" || f == "8" || f == "9" || f == "10" {
+			wBuff := bytesBuilder(km + varMem + strings.ToUpper(fnKey) + "}" + ";")
+			app.writeRemote(wBuff, radioKind)
+		}
 	}
-	stupid := map[string]string{"1": "6", "2": "7", "3": "8", "4": "9", "5": "A"}
+	stupid := map[string]string{"1": "6", "2": "7", "3": "8", "4": "9", "5": "A",
+		"6": "A", "7": "A", "8": "A", "9": "A", "10": "A"}
 	s := stupid[f]
 	wBuff := bytesBuilder(keyCW + s + ";")
 	n, err := app.writeRemote(wBuff, radioKind)
@@ -504,8 +517,8 @@ func numFun(n int) (string, error) {
 	if n < 112 || n > 121 {
 		return "", fmt.Errorf("function key number %d is out of range", n)
 	}
-	if n > 116 {
-		return "0", fmt.Errorf("function key % d not built yet", n)
-	}
+	//if n > 116 {
+	//	return "0", fmt.Errorf("function key % d not built yet", n)
+	//}
 	return strconv.Itoa(n - 111), nil
 }

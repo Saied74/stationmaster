@@ -567,23 +567,50 @@ func (app *application) updateContestFields(td *templateData) error {
 	switch fieldCount {
 	case 2:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 
 	case 3:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
 
 	case 4:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field4Name = fields[3]
+		if strings.ToUpper(fields[3]) == seq {
+			td.Seq = fieldDataList[3]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
@@ -591,10 +618,25 @@ func (app *application) updateContestFields(td *templateData) error {
 
 	case 5:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field4Name = fields[3]
+		if strings.ToUpper(fields[3]) == seq {
+			td.Seq = fieldDataList[3]
+		}
 		td.LogEdit.Field5Name = fields[4]
+		if strings.ToUpper(fields[4]) == seq {
+			td.Seq = fieldDataList[4]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
