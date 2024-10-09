@@ -74,62 +74,67 @@ func (app *application) classifyRemotes() error {
 		vfoKind:   &remote{kind: vfoKind, address: vfoAddress},
 		cwKind:    &remote{kind: cwKind, address: cwAddress},
 	}
-
+	//fmt.Println("B: calling find ports in usb.go")
 	ports, err := findPorts(vidList) //returns port details
 	if err != nil {
 		//log.Println(err)
 	}
+	rdo := false
+	taken := map[string]bool{}
 	for _, p := range ports {
-		//fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber)
-
-		rdo := false
+		//fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber, "\tName: ", p.Name)
+		//fmt.Println("C: calling for opeenning a port in usb.go")
 		port, err := openPort(p.Name, baudRate) //115200)
 		if err != nil {
 			if err.Error() == "Serial port busy" {
 				fmt.Println("Busy port error", err)
 				continue
 			} else {
-				log.Println("did not open radio port", err)
+				log.Println("did not open port", err)
 			}
 		}
-		if port != nil {
+		if port != nil && !rdo {
+			//fmt.Println("D: calling for testing radio port in usb.go")
 			rdo, err = testRadio(port)
 			if err != nil {
 				log.Println(err)
 			}
-		} else {
-			//fmt.Println("nil port error", p.Name)
-		}
-		if rdo {
-			//	fmt.Println("r is true")
-			app.rem[radioKind].port = port
-			app.rem[radioKind].vid = p.VID + ":" + p.PID
-			app.rem[radioKind].serialNumber = p.SerialNumber
-			app.rem[radioKind].portName = p.Name
-			app.rem[radioKind].nowUp = true
-			app.rem[radioKind].lastUp = true
-			app.rem[radioKind].up = true
-			rdo = false
-			continue
-		} else {
-			//fmt.Println("r is false")
-		}
-		for _, kind := range kinds[1:] {
-			if port != nil {
-				//fmt.Printf("testing %s kind at %x\n", kind, app.rem[kind].address)
-				if remoteUp(port, app.rem[kind].address) {
-					//fmt.Printf("%s poassed ok\n", kind)
-					app.rem[kind].port = port
-					app.rem[kind].vid = p.VID + ":" + p.PID
-					app.rem[kind].serialNumber = p.SerialNumber
-					app.rem[kind].portName = p.Name
-					app.rem[kind].nowUp = true
-					app.rem[kind].lastUp = true
-					app.rem[kind].up = true
-				}
-			} else {
-				//fmt.Println("Nil port error no 2", p.Name)
+			if rdo {
+				taken[p.Name] = true
+				//fmt.Println("DD: radio found")
+				app.rem[radioKind].port = port
+				app.rem[radioKind].vid = p.VID + ":" + p.PID
+				app.rem[radioKind].serialNumber = p.SerialNumber
+				app.rem[radioKind].portName = p.Name
+				app.rem[radioKind].nowUp = true
+				app.rem[radioKind].lastUp = true
+				app.rem[radioKind].up = true
+				//rdo = false
+				//continue
 			}
+		}
+		ok, _ := taken[p.Name]
+		if !ok {
+			for _, kind := range kinds[1:] {
+				if port != nil {
+					//fmt.Printf("E: testing %s kind at %x\n", kind, app.rem[kind].address)
+					if remoteUp(port, app.rem[kind].address) {
+						taken[p.Name] = true
+						//fmt.Printf("%s poassed ok\n", kind)
+						app.rem[kind].port = port
+						app.rem[kind].vid = p.VID + ":" + p.PID
+						app.rem[kind].serialNumber = p.SerialNumber
+						app.rem[kind].portName = p.Name
+						app.rem[kind].nowUp = true
+						app.rem[kind].lastUp = true
+						app.rem[kind].up = true
+						break
+					}
+				}
+			}
+		}
+		if len(taken) == len(kinds) {
+			break
 		}
 	}
 	for _, kind := range kinds {
@@ -180,11 +185,12 @@ func openPort(p string, b int) (serial.Port, error) {
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
-
+	//fmt.Printf("XX: openning port %s\n", p)
 	port, err := serial.Open(p, mode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the usb connection: %s: %v", p, err)
 	}
+	//fmt.Printf("YY: Port opened %s\n", p)
 	port.SetReadTimeout(time.Duration(150) * time.Millisecond)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 	return port, nil

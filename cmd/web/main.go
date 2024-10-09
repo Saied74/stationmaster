@@ -106,7 +106,7 @@ func main() {
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
 	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
 	dxSpider := flag.String("spider", "coax.w1wra.net:7300", "dxspider server ip:port address")
-	myCall := flag.String("call", myCall, "your call sign")
+	//myCall := flag.String("call", myCall, "your call sign")
 	vid := flag.String("vid", "2341", "USB Vendor ID default is Arduino SA")
 
 	flag.Parse()
@@ -173,13 +173,15 @@ func main() {
 		cqStat:        [wsjtBuffer]int{},
 		qsoStat:       [wsjtBuffer]int{},
 		wsjtPntr:      0,
-		call:          *myCall,
+		call:          myCall,
 		dxspider:      *dxSpider,
 	}
+	//fmt.Println("calling spider")
 	sp, err := app.initSpider()
 	if err != nil {
 		app.errorLog.Printf("failed spider lognin: ", err)
 	}
+	fmt.Println("returned from Spider")
 	app.sp = sp
 	app.vid = vid
 
@@ -195,11 +197,12 @@ func main() {
 	}
 
 	go app.wsjtxServe()
-
+	//fmt.Println("A: called classify remotes in main.go")
 	err = app.classifyRemotes()
 	if err != nil {
 		app.errorLog.Println("failed to start remotes in main %v", err)
 	}
+	//fmt.Println("Z: returned from calling calssify remotes in main.go")
 	err = app.initRadio()
 	if err != nil {
 		app.errorLog.Println("failed to initialize radio in main %v", err)
