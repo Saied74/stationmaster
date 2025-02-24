@@ -1,0 +1,24 @@
+{{template "base" .}}
+
+{{define "title"}}Antenna{{end}}
+
+
+{{define "main"}}
+
+<div class="row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-6">
+		<p>I hope to improve on the antenna tunning by better algorithms</p>
+		<p>Key up and key down is it for now</p>
+		<div class="row">
+			<div class="col-sm-3">
+				<a class="btn btn-primary" href="/keydown" role="button">Key Down</a>
+			</div>
+			<div class="col-sm-3">
+				<a class="btn btn-primary" href="/keyup" role="button">Key Up</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+{{end}}

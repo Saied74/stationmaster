@@ -1,0 +1,112 @@
+{{template "base" .}}
+
+{{define "title"}}Contest{{end}}
+
+{{define "main"}}
+
+<div class="row">
+  <div class="col-sm-2"></div>
+  <h3>Contest</h3>
+  <p id="message" class="error" style="color:rgb(255, 0, 0)"></p>
+  <br>
+
+  <p id="contest-band">Band: {{.Band}}</p>
+  <p id="contest-mode">Mode: {{.Mode}}</p>
+  <p id="seq">Sequence: {{.Seq}}</p>
+  <p class="visually-hidden" id="fieldcount">{{.FieldCount}}</p>
+   {{with .LogEdit}}
+  <div class="col-sm-2">
+	<label for="call-sign" class="form-label">Call Sign</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="call-sign"
+	  name="call" aria-describedby="basic-addon3" autofocus>
+	</div>
+	<p id="dupe-call"><p>
+
+  </div>
+  {{if .Field1Name }}
+  <div class="col-sm-1">
+	  <label for="field1" class="form-label" id="f1">{{.Field1Name}}</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="field1"
+	  name="field1" aria-describedby="basic-addon3">
+	</div>
+  </div>
+  {{end}}
+  {{if .Field2Name}}
+  <div class="col-sm-2">
+	  <label for="field2" class="form-label" id="f2">{{.Field2Name}}</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="field2"
+	  name="field2" aria-describedby="basic-addon3">
+	</div>
+  </div>
+  {{end}}
+
+{{if .Field3Name}}
+  <div class="col-sm-2">
+	  <label for="field3" class="form-label" id="f3">{{.Field3Name}}</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="field3"
+	  name="field3" aria-describedby="basic-addon3">
+	</div>
+  </div>
+  {{end}}
+
+{{if .Field4Name}}
+  <div class="col-sm-2">
+	  <label for="field4" class="form-label" id="f4">{{.Field4Name}}</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="field4"
+	  name="field4" aria-describedby="basic-addon3">
+	</div>
+  </div>
+  {{end}}
+
+  {{if .Field5Name}}
+  <div class="col-sm-2">
+	  <label for="field5" class="form-label" id="f5">{{.Field5Name}}</label>
+	<div class="input-group mb-3">
+	  <input type="text" class="form-control" id="field5"
+	  name="field5" aria-describedby="basic-addon3">
+	</div>
+  </div>
+  {{end}}
+  {{end}}
+
+
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">F1</th>
+      <th scope="col">F2</th>
+      <th scope="col">F3</th>
+      <th scope="col">F4</th>
+      <th scope="col">F5</th>
+      <th scope="col">F6</th>
+      <th scope="col">F7</th>
+      <th scope="col">F8</th>
+      <th scope="col">F9</th>
+      <th scope="col">F10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{.F1}}</td>
+      <td>{{.F2}}</td>
+      <td>{{.F3}}</td>
+      <td>{{.F4}}</td>
+      <td>{{.F5}}</td>
+      <td>{{.F6}}</td>
+      <td>{{.F7}}</td>
+      <td>{{.F8}}</td>
+      <td>{{.F9}}</td>
+      <td>{{.F10}}</td>
+    </tr>
+  </tbody>
+</table>
+
+
+</div>
+
+{{end}}
