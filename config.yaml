@@ -1,8 +1,0 @@
----
-  dsn: "web:%s@/stationmaster?parseTime=true"
-  configfile: "$STATIONMASTER/config.yaml"
-  adiffile: "adif.txt"
-  qsldir: "$HOME/Documents/hamradio/lotwqsl"
-  contestdir: "$HOME/Documents/hamradio/contest"
-  spider0: "coax.w1wra.net:7300"
-  spider1: "usdx.w1nr.net:23"
