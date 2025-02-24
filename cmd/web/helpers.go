@@ -529,6 +529,9 @@ func (app *application) getUpdateMode(p *VFO) error {
 	return nil
 }
 
+// reads the field count and the number of fields indicated by the field
+// count from the daatabase and  populates the td (template data) structure
+// Anywhere from 2 to 5 fields are permitted
 func (app *application) updateContestFields(td *templateData) error {
 	var fieldCount int
 	var fields, fieldDataList []string
@@ -564,23 +567,50 @@ func (app *application) updateContestFields(td *templateData) error {
 	switch fieldCount {
 	case 2:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 
 	case 3:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
 
 	case 4:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field4Name = fields[3]
+		if strings.ToUpper(fields[3]) == seq {
+			td.Seq = fieldDataList[3]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
@@ -588,10 +618,25 @@ func (app *application) updateContestFields(td *templateData) error {
 
 	case 5:
 		td.LogEdit.Field1Name = fields[0]
+		if strings.ToUpper(fields[0]) == seq {
+			td.Seq = fieldDataList[0]
+		}
 		td.LogEdit.Field2Name = fields[1]
+		if strings.ToUpper(fields[1]) == seq {
+			td.Seq = fieldDataList[1]
+		}
 		td.LogEdit.Field3Name = fields[2]
+		if strings.ToUpper(fields[2]) == seq {
+			td.Seq = fieldDataList[2]
+		}
 		td.LogEdit.Field4Name = fields[3]
+		if strings.ToUpper(fields[3]) == seq {
+			td.Seq = fieldDataList[3]
+		}
 		td.LogEdit.Field5Name = fields[4]
+		if strings.ToUpper(fields[4]) == seq {
+			td.Seq = fieldDataList[4]
+		}
 		td.LogEdit.Field1Sent = fieldDataList[0]
 		td.LogEdit.Field2Sent = fieldDataList[1]
 		td.LogEdit.Field3Sent = fieldDataList[2]
@@ -604,6 +649,11 @@ func (app *application) updateContestFields(td *templateData) error {
 	return nil
 }
 
+// reads all 10 function keys from the defaults table and adds them to
+// td (template data) structure.  Function keys are what is sent by
+// the radio over the air when a function key is pressed.
+// if any of the first 5 function keys is blank, when pressed,
+// "his call" is sent.
 func (app *application) updateFunctionKeys(td *templateData) error {
 
 	var fns = make([]string, 10)
@@ -643,6 +693,11 @@ func (app *application) saveFunctionKeys(td *templateData, fns []string) error {
 	return nil
 }
 
+// updates the mode, band, contest status (Yes or No), and contest
+// name from the defaults database table to the td structure for
+// display of the web page.  It also uses the contestname to lookup
+// contest date and time from the contests table and add it to the
+// td structure
 func (app *application) updateDefaults(td *templateData) error {
 	mode, err := app.otherModel.getDefault("mode")
 	if err != nil {
@@ -680,9 +735,10 @@ func (app *application) updateDefaults(td *templateData) error {
 
 		cr, err := app.contestModel.getContest(contestname)
 		if err != nil {
-			if !errors.Is(err, errNoRecord) {
-				return err
+			if errors.Is(err, errNoRecord) {
+				return nil
 			}
+			return err
 		}
 		y, m, d := cr.Time.Date()
 		date := fmt.Sprintf("%04d-%02d-%02d", y, m, d)
@@ -694,6 +750,8 @@ func (app *application) updateDefaults(td *templateData) error {
 	return nil
 }
 
+// it extracts the mode and band from the request structure (from
+// the defaults page and adds them to the default table.
 func (app *application) saveBandMode(r *http.Request) error {
 	var v string
 	m := r.PostForm.Get("mode")

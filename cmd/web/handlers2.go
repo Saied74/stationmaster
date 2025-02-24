@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 )
@@ -161,6 +163,11 @@ func (app *application) genCabrilloNew(w http.ResponseWriter, r *http.Request) {
 	}
 	cData, err := app.contestModel.getContest(f.Get("contestname"))
 	if err != nil {
+		if errors.Is(err, errNoRecord) {
+			td.Message = fmt.Sprintf("contest name %s does not exist", f.Get("contestname"))
+			app.render(w, r, "cabrillo.page.html", td)
+			return
+		}
 		app.serverError(w, err)
 		return
 	}

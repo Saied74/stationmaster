@@ -3,6 +3,19 @@
 {{define "title"}}Defaults{{end}}
 
 {{define "main"}}
+ 
+<div class="container">
+    <div class="col-sm-12">
+        <div class="row">
+		<a class="btn btn-primary btn-large btn-block" href="/set_Yaesu" role="button">Yaesu</a>
+	</div>
+	<br>
+	<div class="row">
+		<a class="btn btn-primary btn-large btn-block" href="/set_TenTec" role="button">Ten Tec</a>
+	</div>
+	<br>
+    </div>
+</div>
 
 <form action="/store-defaults" method="post">
 <div class="container">
@@ -32,7 +45,7 @@
 	    {{end}}
             {{if .Field5Name}}
 	       <p>{{.Field5Name}} is set to: {{.Field5Sent}}</p>
-	    {{end}}
+	    {{end}} 
 	 {{end}}
 
 	 <p>Change the defaults below</p>

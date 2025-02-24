@@ -44,11 +44,12 @@ const (
 	id         string = "ID" //identification the reply is 0761
 	idResponse string = "0761"
 	km         string = "KM" //keyer memory
+	varMem     string = "5"  //variable memory
 	keyCW      string = "KY" //key the radio
 
 )
 
-var vidList = []string{"10c4"}
+var vidList = []string{"10c4", "2341"}
 var noPortMatch = errors.New("no port matched the vid list")
 
 var kinds []string = []string{radioKind, vfoKind, cwKind}
@@ -73,62 +74,67 @@ func (app *application) classifyRemotes() error {
 		vfoKind:   &remote{kind: vfoKind, address: vfoAddress},
 		cwKind:    &remote{kind: cwKind, address: cwAddress},
 	}
-
+	//fmt.Println("B: calling find ports in usb.go")
 	ports, err := findPorts(vidList) //returns port details
 	if err != nil {
 		//log.Println(err)
 	}
+	rdo := false
+	taken := map[string]bool{}
 	for _, p := range ports {
-		//fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber)
-
-		rdo := false
+		//fmt.Println("VID: ", p.VID, "\t", "Serial No: ", p.SerialNumber, "\tName: ", p.Name)
+		//fmt.Println("C: calling for opeenning a port in usb.go")
 		port, err := openPort(p.Name, baudRate) //115200)
 		if err != nil {
 			if err.Error() == "Serial port busy" {
-				//fmt.Println("Busy port error", err)
+				fmt.Println("Busy port error", err)
 				continue
 			} else {
-				//log.Println("did not open radio port", err)
+				log.Println("did not open port", err)
 			}
 		}
-		if port != nil {
+		if port != nil && !rdo {
+			//fmt.Println("D: calling for testing radio port in usb.go")
 			rdo, err = testRadio(port)
 			if err != nil {
 				log.Println(err)
 			}
-		} else {
-			//fmt.Println("nil port error", p.Name)
-		}
-		if rdo {
-			//	fmt.Println("r is true")
-			app.rem[radioKind].port = port
-			app.rem[radioKind].vid = p.VID + ":" + p.PID
-			app.rem[radioKind].serialNumber = p.SerialNumber
-			app.rem[radioKind].portName = p.Name
-			app.rem[radioKind].nowUp = true
-			app.rem[radioKind].lastUp = true
-			app.rem[radioKind].up = true
-			rdo = false
-			continue
-		} else {
-			//fmt.Println("r is false")
-		}
-		for _, kind := range kinds[1:] {
-			if port != nil {
-				//fmt.Printf("testing %s kind at %x\n", kind, app.rem[kind].address)
-				if remoteUp(port, app.rem[kind].address) {
-					//fmt.Println("poassed ok")
-					app.rem[kind].port = port
-					app.rem[kind].vid = p.VID + ":" + p.PID
-					app.rem[kind].serialNumber = p.SerialNumber
-					app.rem[kind].portName = p.Name
-					app.rem[kind].nowUp = true
-					app.rem[kind].lastUp = true
-					app.rem[kind].up = true
-				}
-			} else {
-				//fmt.Println("Nil port error no 2", p.Name)
+			if rdo {
+				taken[p.Name] = true
+				//fmt.Println("DD: radio found")
+				app.rem[radioKind].port = port
+				app.rem[radioKind].vid = p.VID + ":" + p.PID
+				app.rem[radioKind].serialNumber = p.SerialNumber
+				app.rem[radioKind].portName = p.Name
+				app.rem[radioKind].nowUp = true
+				app.rem[radioKind].lastUp = true
+				app.rem[radioKind].up = true
+				//rdo = false
+				//continue
 			}
+		}
+		ok, _ := taken[p.Name]
+		if !ok {
+			for _, kind := range kinds[1:] {
+				if port != nil {
+					//fmt.Printf("E: testing %s kind at %x\n", kind, app.rem[kind].address)
+					if remoteUp(port, app.rem[kind].address) {
+						taken[p.Name] = true
+						//fmt.Printf("%s poassed ok\n", kind)
+						app.rem[kind].port = port
+						app.rem[kind].vid = p.VID + ":" + p.PID
+						app.rem[kind].serialNumber = p.SerialNumber
+						app.rem[kind].portName = p.Name
+						app.rem[kind].nowUp = true
+						app.rem[kind].lastUp = true
+						app.rem[kind].up = true
+						break
+					}
+				}
+			}
+		}
+		if len(taken) == len(kinds) {
+			break
 		}
 	}
 	for _, kind := range kinds {
@@ -155,17 +161,17 @@ func findPorts(vids []string) ([]*enumerator.PortDetails, error) {
 	if len(ports) == 0 {
 		return portDetails, fmt.Errorf("no ports were found")
 	}
-	for _, v := range vids {
-		vu := strings.ToUpper(v)
-		vl := strings.ToLower(v)
-		for _, port := range ports {
-			if port.IsUSB {
-				if port.VID == v || port.VID == vl || port.VID == vu {
-					portDetails = append(portDetails, port)
-				}
-			}
+	//for _, p := range vids {
+	//	vu := strings.ToUpper(v)
+	//	vl := strings.ToLower(v)
+	for _, port := range ports {
+		if port.IsUSB {
+			//			if port.VID == v || port.VID == vl || port.VID == vu {
+			portDetails = append(portDetails, port)
+			//}
 		}
 	}
+	//}
 	if len(portDetails) == 0 {
 		return portDetails, noPortMatch
 	}
@@ -179,12 +185,13 @@ func openPort(p string, b int) (serial.Port, error) {
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
-
+	//fmt.Printf("XX: openning port %s\n", p)
 	port, err := serial.Open(p, mode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the usb connection: %s: %v", p, err)
 	}
-	port.SetReadTimeout(time.Duration(15) * time.Millisecond)
+	//fmt.Printf("YY: Port opened %s\n", p)
+	port.SetReadTimeout(time.Duration(150) * time.Millisecond)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 	return port, nil
 }
@@ -298,7 +305,7 @@ func (app *application) readBand() (int, error) {
 	if n != sendMsgLen {
 		return 0, fmt.Errorf("did not write %d bytes, it wrote %d", sendMsgLen, n)
 	}
-	//	time.Sleep(time.Duration(120) * time.Millisecond)
+	time.Sleep(time.Duration(120) * time.Millisecond)
 	n, err = app.readRemote(rBuff, vfoKind) //rem[vfoKind].port.Read(rBuff)
 	if err != nil {
 		return 0, errors.Join(fmt.Errorf("failed to read from vfo usb port"), err)
@@ -466,20 +473,32 @@ func (app *application) initRadio() error {
 func (app *application) tickleRadio(v *radioMsg) error {
 	f, err := numFun(v.Key)
 	if err != nil {
-		if f == "0" {
-			return nil
-		}
+		//	if f == "0" {
+		//		return nil
+		//	}
 		return err
 	}
 	fnKey, err := app.otherModel.getDefault("F" + f)
 	if err != nil {
 		return err
 	}
-	if fnKey == "" {
-		wBuff := bytesBuilder(km + f + strings.ToUpper(v.Call) + "}" + ";")
+	switch strings.ToUpper(fnKey) {
+	case "HIS CALL":
+		wBuff := bytesBuilder(km + varMem + strings.ToUpper(v.Call) + "}" + ";")
 		app.writeRemote(wBuff, radioKind)
+		f = varMem
+	case seq:
+		wBuff := bytesBuilder(km + varMem + v.Seq + "}" + ";")
+		app.writeRemote(wBuff, radioKind)
+		f = varMem
+	default:
+		if f == "5" || f == "6" || f == "7" || f == "8" || f == "9" || f == "10" {
+			wBuff := bytesBuilder(km + varMem + strings.ToUpper(fnKey) + "}" + ";")
+			app.writeRemote(wBuff, radioKind)
+		}
 	}
-	stupid := map[string]string{"1": "6", "2": "7", "3": "8", "4": "9", "5": "A"}
+	stupid := map[string]string{"1": "6", "2": "7", "3": "8", "4": "9", "5": "A",
+		"6": "A", "7": "A", "8": "A", "9": "A", "10": "A"}
 	s := stupid[f]
 	wBuff := bytesBuilder(keyCW + s + ";")
 	n, err := app.writeRemote(wBuff, radioKind)
@@ -502,10 +521,10 @@ func bytesBuilder(s string) []byte {
 
 func numFun(n int) (string, error) {
 	if n < 112 || n > 121 {
-		return "", fmt.Errorf("function key number %d is out of rante", n)
+		return "", fmt.Errorf("function key number %d is out of range", n)
 	}
-	if n > 116 {
-		return "0", fmt.Errorf("function key % d not built yet", n)
-	}
+	//if n > 116 {
+	//	return "0", fmt.Errorf("function key % d not built yet", n)
+	//}
 	return strconv.Itoa(n - 111), nil
 }

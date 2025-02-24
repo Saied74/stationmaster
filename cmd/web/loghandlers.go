@@ -14,6 +14,7 @@ const (
 	yesContest    string = "1"
 	noContest     string = "2"
 	switchContest string = "3"
+	seq           string = "SEQ"
 )
 
 type tTop interface{}
@@ -41,6 +42,7 @@ type templateData struct {
 	VFO        *VFO
 	Message    string
 	FieldCount int
+	Seq        string
 	F1         string
 	F2         string
 	F3         string
@@ -587,6 +589,11 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+		err = app.otherModel.updateDefault("contest", "No")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 		err = app.updateDefaults(td)
 		if err != nil {
 			app.serverError(w, err)
@@ -696,12 +703,14 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 		dt, err := time.Parse(time.RFC3339, cd+"T"+ct+":00Z")
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 		cr.Time = dt
 
 		err = app.otherModel.updateDefault("fieldCount", strconv.Itoa(fieldCount))
 		if err != nil {
 			app.serverError(w, err)
+			return
 		}
 
 		//var fieldName string
@@ -711,15 +720,31 @@ func (app *application) storeDefaults(w http.ResponseWriter, r *http.Request) {
 			err = app.otherModel.updateDefault("field"+fcString+"Name", field)
 			if err != nil {
 				app.serverError(w, err)
+				return
 			}
 			fieldData := r.PostForm.Get("field" + fcString)
 			err = app.otherModel.updateDefault("field"+fcString+"Data", fieldData)
 			if err != nil {
 				app.serverError(w, err)
+				return
 			}
 			fieldDataList = append(fieldDataList, fieldData)
 		}
-		app.updateContestFields(td)
+		err = app.updateContestFields(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.otherModel.updateDefault("contest", "Yes")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		err = app.updateDefaults(td)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 		err = app.contestModel.insertContest(cr)
 		if err != nil {
 			app.serverError(w, err)
@@ -864,6 +889,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 	var c *Ctype
 	var v struct {
 		Call     string
+		Seq      string
 		Field1   string
 		Field2   string
 		Field3   string
@@ -1015,46 +1041,149 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 	//}
 	//The five fields
 	if fc >= 2 {
-		field1Sent, err := app.otherModel.getDefault("field1Data")
+		field1Name, err := app.otherModel.getDefault("field1Name")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-		tr.Field1Sent = field1Sent
+		if strings.ToUpper(field1Name) == seq {
+			tr.Field1Sent = v.Seq
+			n, err := strconv.Atoi(v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			k := strconv.Itoa(n + 1)
+			err = app.otherModel.updateDefault("field1Data", k)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			field1Sent, err := app.otherModel.getDefault("field1Data")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tr.Field1Sent = field1Sent
+		}
 		tr.Field1Rcvd = v.Field1
-		field2Sent, err := app.otherModel.getDefault("field2Data")
+		field2Name, err := app.otherModel.getDefault("field2Name")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-		tr.Field2Sent = field2Sent
+		if strings.ToUpper(field2Name) == seq {
+			tr.Field1Sent = v.Seq
+			n, err := strconv.Atoi(v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			k := strconv.Itoa(n + 1)
+			err = app.otherModel.updateDefault("field2Data", k)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			field2Sent, err := app.otherModel.getDefault("field2Data")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tr.Field2Sent = field2Sent
+		}
 		tr.Field2Rcvd = v.Field2
 	}
 	if fc >= 3 {
-		field3Sent, err := app.otherModel.getDefault("field3Data")
+		field3Name, err := app.otherModel.getDefault("field3Name")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-		tr.Field3Sent = field3Sent
-		tr.Field3Rcvd = v.Field2
+		if strings.ToUpper(field3Name) == seq {
+			tr.Field3Sent = v.Seq
+			n, err := strconv.Atoi(v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			k := strconv.Itoa(n + 1)
+			err = app.otherModel.updateDefault("field3Data", k)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			field3Sent, err := app.otherModel.getDefault("field3Data")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tr.Field3Sent = field3Sent
+		}
+		tr.Field3Rcvd = v.Field3
 	}
 	if fc >= 4 {
-		field4Sent, err := app.otherModel.getDefault("field4Data")
+		field4Name, err := app.otherModel.getDefault("field4Name")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-		tr.Field4Sent = field4Sent
+		if strings.ToUpper(field4Name) == seq {
+			tr.Field4Sent = v.Seq
+			n, err := strconv.Atoi(v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			k := strconv.Itoa(n + 1)
+			err = app.otherModel.updateDefault("field4Data", k)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			field4Sent, err := app.otherModel.getDefault("field4Data")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tr.Field4Sent = field4Sent
+		}
 		tr.Field4Rcvd = v.Field4
 	}
 	if fc == 5 {
-		field5Sent, err := app.otherModel.getDefault("field5Data")
+		field5Name, err := app.otherModel.getDefault("field5Name")
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
-		tr.Field5Sent = field5Sent
+		if strings.ToUpper(field5Name) == seq {
+			tr.Field5Sent = v.Seq
+			n, err := strconv.Atoi(v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+			}
+			k := strconv.Itoa(n + 1)
+			err = app.otherModel.updateDefault("field5Data", k)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+		} else {
+			err := app.otherModel.updateDefault("field5Data", v.Seq)
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			field5Sent, err := app.otherModel.getDefault("field5Data")
+			if err != nil {
+				app.serverError(w, err)
+				return
+			}
+			tr.Field5Sent = field5Sent
+		}
 		tr.Field5Rcvd = v.Field5
 	}
 
@@ -1073,6 +1202,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 
 type radioMsg struct {
 	Call    string
+	Seq     string
 	Field1  string
 	Field2  string
 	Field3  string

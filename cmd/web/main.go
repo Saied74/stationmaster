@@ -25,6 +25,10 @@ import (
 	"github.com/Saied74/stationmaster/pkg/vfo"
 )
 
+const (
+	myCall string = "N2VY"
+)
+
 //The design of this program is along the lines of Alex Edward's
 //Let's Go except since it is a single user local program, it
 //ignore the rules for a shared over the internet application
@@ -102,7 +106,7 @@ func main() {
 	qrzpw := flag.String("qrzpw", "", "QRZ.com Password")
 	qrzuser := flag.String("qrzuser", "", "QRZ.com User Name")
 	dxSpider := flag.String("spider", "coax.w1wra.net:7300", "dxspider server ip:port address")
-	myCall := flag.String("call", "AD2CC", "your call sign")
+	//myCall := flag.String("call", myCall, "your call sign")
 	vid := flag.String("vid", "2341", "USB Vendor ID default is Arduino SA")
 
 	flag.Parse()
@@ -169,13 +173,15 @@ func main() {
 		cqStat:        [wsjtBuffer]int{},
 		qsoStat:       [wsjtBuffer]int{},
 		wsjtPntr:      0,
-		call:          *myCall,
+		call:          myCall,
 		dxspider:      *dxSpider,
 	}
+	//fmt.Println("calling spider")
 	sp, err := app.initSpider()
 	if err != nil {
 		app.errorLog.Printf("failed spider lognin: ", err)
 	}
+	fmt.Println("returned from Spider")
 	app.sp = sp
 	app.vid = vid
 
@@ -191,11 +197,12 @@ func main() {
 	}
 
 	go app.wsjtxServe()
-
+	//fmt.Println("A: called classify remotes in main.go")
 	err = app.classifyRemotes()
 	if err != nil {
 		app.errorLog.Println("failed to start remotes in main %v", err)
 	}
+	//fmt.Println("Z: returned from calling calssify remotes in main.go")
 	err = app.initRadio()
 	if err != nil {
 		app.errorLog.Println("failed to initialize radio in main %v", err)
@@ -211,17 +218,11 @@ func main() {
 	//	app.errorLog.Println("failed to start VFO remote %v", err)
 	//}
 
-	defer func() {
-		for _, kind := range kinds {
-			_, ok := app.rem[kind]
-			if !ok {
-				continue
-			}
-			if app.rem[kind].port != nil {
-				app.rem[kind].port.Close()
-			}
+	for _, r := range app.rem {
+		if r.port != nil {
+			defer r.port.Close()
 		}
-	}()
+	}
 
 	mux := app.routes()
 	srv := &http.Server{
@@ -285,6 +286,8 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/check-dupe", app.checkDupe)
 	mux.HandleFunc("/update-log", app.updateLog)
 	mux.HandleFunc("/update-key", app.updateKey)
+	mux.HandleFunc("/set_Yaesu", app.setYaesu)
+	mux.HandleFunc("/set_TenTec", app.setTenTec)
 	return mux
 }
 

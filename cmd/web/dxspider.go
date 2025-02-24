@@ -40,6 +40,7 @@ func (app *application) initSpider() (spider, error) {
 		r: bufio.NewReader(c),
 		w: bufio.NewWriter(c),
 	}
+	//fmt.Println(app.call)
 	err = dx.logIn( /*c, */ app.call)
 	if err != nil {
 		return spider{}, err
@@ -185,7 +186,7 @@ func (s *spider) logIn(call string) error {
 		b = append(b, bb)
 	}
 	//fmt.Println(string(b))
-
+	//fmt.Println(string(call))
 	_, err = s.w.WriteString(call + "\n")
 	if err != nil {
 		return err
@@ -194,13 +195,14 @@ func (s *spider) logIn(call string) error {
 	if err != nil {
 		return err
 	}
+	//fmt.Println("logged in")
 	for {
 		bb, err := s.r.ReadByte()
 		if err != nil {
 			return err
 		}
 		b = append(b, bb)
-		if strings.Contains(string(b), "ad2cc") {
+		if strings.Contains(string(b), myCall) {
 			break
 		}
 	}

@@ -470,10 +470,11 @@ func (m *logsModel) updateLOTWSent(id int) error {
 }
 
 func (m *logsModel) getCabrilloData(cd *contestData) ([]LogsRow, error) {
-	stmt := `SELECT id, time, callsign, mode, sent, rcvd,
-	band, name, country, comment, lotwsent, lotwrcvd, contest, exchsent,
-	exchrcvd, contestname FROM stationlogs
-	WHERE contest = ? AND contestname = ? AND time >= ? AND time <= ?
+	stmt := `SELECT id, time, callsign, mode, sent, rcvd, band, name, country,
+	comment, lotwsent, lotwrcvd, contest, exchsent, exchrcvd, contestname, 
+	field1sent, field2sent, field3sent, field4sent, field5sent,
+	field1rcvd, field2rcvd, field3rcvd, field4rcvd, field5rcvd,
+	FROM stationlogs WHERE contest = ? AND contestname = ? AND time >= ? AND time <= ?
 	ORDER BY time DESC`
 
 	rows, err := m.DB.Query(stmt, "Yes", cd.name, cd.startTime, cd.endTime)
@@ -488,7 +489,9 @@ func (m *logsModel) getCabrilloData(cd *contestData) ([]LogsRow, error) {
 		err := rows.Scan(&s.Id, &s.Time, &s.Call, &s.Mode,
 			&s.Sent, &s.Rcvd, &s.Band, &s.Name, &s.Country,
 			&s.Comment, &s.Lotwsent, &s.Lotwrcvd, &s.Contest,
-			&s.ExchSent, &s.ExchRcvd, &s.ContestName)
+			&s.ExchSent, &s.ExchRcvd, &s.ContestName,
+			&s.Field1Sent, &s.Field2Sent, &s.Field3Sent, &s.Field4Sent, &s.Field5Sent,
+			&s.Field1Rcvd, &s.Field2Rcvd, &s.Field3Rcvd, &s.Field4Rcvd, &s.Field5Rcvd)
 
 		if err != nil {
 			return nil, err

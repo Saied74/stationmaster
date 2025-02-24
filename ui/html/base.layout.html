@@ -20,6 +20,7 @@
 <script src="/static/js/contest.js"></script>
 <script src="/static/js/logger.js"></script>
 <script src="/static/js/defaults.js"></script>
+<script src="/static/js/base.js"></script>
 
 <style>
 body {
@@ -91,11 +92,9 @@ p, h2, h3, h4, h5, th, td, input, span, button {
 	 <li class="nav-item">
           <a class="nav-link" style="color: white" href="/contest">Contest</a>
         </li>
-
-        <!-- <li class="nav-item">
-          <a class="nav-link" style="color: white" href="/quit">Quit</a>
-        </li> -->
       </ul>
+      <div class="col-sm-6"></div>
+      <button class="btn btn-outline-warning my-2 my-lg-0" id="qq">Quit</button>
     </div>
   </div>
 </nav>
@@ -104,10 +103,12 @@ p, h2, h3, h4, h5, th, td, input, span, button {
 
 <div class="row">
   <div class="col-sm-1"></div>
-
-
+  
 
   <div class="col-sm-10">
+	  <p  style="color:rgb(255, 0, 0)">{{.Message}}</p>
+
+
 
     {{template "main" .}}
 

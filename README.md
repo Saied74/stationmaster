@@ -17,7 +17,7 @@ interface for the application is a browser pointed to localhost:4000.
 12. Interface to QRZ.com for pulling in contact information
 13. Contest page
 
-## Additinal software and hardware
+## Additional software and hardware
 In addition to this software, you will also  of need:
 1. MySQL database (required)
 2. A Morse code subsystem (optional)

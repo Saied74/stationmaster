@@ -35,8 +35,8 @@ const (
 	startPattern = "ad2cc"
 	deStart      = "<"
 	deEnd        = ">"
-	myCall       = "ad2cc"
-	dxeof        = -1
+	//	myCall       = "ad2cc"
+	dxeof = -1
 )
 
 type dxLexer struct {

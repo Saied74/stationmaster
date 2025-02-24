@@ -145,6 +145,11 @@ func (app *application) stopcode(w http.ResponseWriter, r *http.Request) {
 //<++++++++++++++++++++++++++++  Quit  ++++++++++++++++++++++++++++++>
 
 func (app *application) quit(w http.ResponseWriter, r *http.Request) {
+	for _, r := range app.rem {
+		if r.port != nil {
+			r.port.Close()
+		}
+	}
 	os.Exit(1)
 }
 

@@ -95,7 +95,7 @@ func cookTime(t time.Time) (string, string) {
 func topLine() string {
 	t := time.Now()
 	dt, tt := cookTime(t)
-	return fmt.Sprintf("Generated on %s at %s for AD2CC\n", dt, tt)
+	return fmt.Sprintf("Generated on %s at %s for %s\n", dt, tt, myCall)
 }
 
 func writeHeader(b bytes.Buffer) bytes.Buffer {
@@ -103,7 +103,7 @@ func writeHeader(b bytes.Buffer) bytes.Buffer {
 	b.Write([]byte(line))
 	b.Write([]byte("\n"))
 	b.Write([]byte("<adif_ver:5>3.0.5\n"))
-	programID := "AD2CC Stationmaster"
+	programID := myCall + " Stationmaster"
 	b.Write([]byte(fmt.Sprintf("<programid:%d>%s\n", len(programID), programID)))
 	// userDef := "AD2CC stationmaster:github.com/Saied74/stationmaster"
 	// b.Write([]byte(fmt.Sprintf("<USERDEF1:%d:S>%s\n", len(userDef), userDef)))
