@@ -46,13 +46,15 @@ const (
 	km         string = "KM" //keyer memory
 	varMem     string = "5"  //variable memory
 	keyCW      string = "KY" //key the radio
+	yIF        string = "IF" //radio info
 
 )
 
 var vidList = []string{"10c4", "2341"}
 var noPortMatch = errors.New("no port matched the vid list")
+var radioYaesuDown = errors.New("Yaesu radio is offline")
 
-var kinds []string = []string{radioKind, vfoKind, cwKind}
+var kinds []string = []string{radioKind, cwKind}
 
 type remote struct {
 	vid          string
@@ -68,16 +70,19 @@ type remote struct {
 
 type remotes map[string]*remote
 
-func (app *application) classifyRemotes() error {
+func (app *application) initRemotes() {
 	app.rem = remotes{
 		radioKind: &remote{kind: radioKind},
 		vfoKind:   &remote{kind: vfoKind, address: vfoAddress},
 		cwKind:    &remote{kind: cwKind, address: cwAddress},
 	}
+}
+
+func (app *application) classifyRemotes() error {
 	//fmt.Println("B: calling find ports in usb.go")
 	ports, err := findPorts(vidList) //returns port details
 	if err != nil {
-		//log.Println(err)
+		return err
 	}
 	rdo := false
 	taken := map[string]bool{}
@@ -93,15 +98,21 @@ func (app *application) classifyRemotes() error {
 				log.Println("did not open port", err)
 			}
 		}
-		if port != nil && !rdo {
+		r, err := app.otherModel.getDefault(radio)
+		if err != nil {
+			return err
+		}
+
+		if port != nil && !rdo && r == yaesu {
 			//fmt.Println("D: calling for testing radio port in usb.go")
 			rdo, err = testRadio(port)
 			if err != nil {
 				log.Println(err)
 			}
+
 			if rdo {
 				taken[p.Name] = true
-				//fmt.Println("DD: radio found")
+				fmt.Println("DD: radio found")
 				app.rem[radioKind].port = port
 				app.rem[radioKind].vid = p.VID + ":" + p.PID
 				app.rem[radioKind].serialNumber = p.SerialNumber
@@ -111,10 +122,25 @@ func (app *application) classifyRemotes() error {
 				app.rem[radioKind].up = true
 				//rdo = false
 				//continue
+
+				for _, kind := range kinds {
+					fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++")
+					fmt.Println("Kind: ", kind)
+					fmt.Println("Other Kind: ", app.rem[kind].kind)
+					fmt.Println("Port Name: ", app.rem[kind].portName)
+					fmt.Println("VID: ", app.rem[kind].vid)
+					fmt.Println("Address: ", app.rem[kind].address)
+					fmt.Println("Up? :", app.rem[kind].nowUp)
+					fmt.Println("Serial Number: ", app.rem[kind].serialNumber)
+					fmt.Println()
+				}
+
+				return nil
+
 			}
 		}
-		ok, _ := taken[p.Name]
-		if !ok {
+		tkn, ok := taken[p.Name]
+		if port != nil && r == tentec && (!tkn || !ok) {
 			for _, kind := range kinds[1:] {
 				if port != nil {
 					//fmt.Printf("E: testing %s kind at %x\n", kind, app.rem[kind].address)
@@ -133,9 +159,6 @@ func (app *application) classifyRemotes() error {
 				}
 			}
 		}
-		if len(taken) == len(kinds) {
-			break
-		}
 	}
 	for _, kind := range kinds {
 		fmt.Println("++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -150,6 +173,19 @@ func (app *application) classifyRemotes() error {
 	}
 	return nil
 
+}
+
+func (app *application) clearPorts() error {
+	for _, r := range app.rem {
+		if r.port != nil {
+			err := r.port.Close()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	app.initRemotes()
+	return nil
 }
 
 func findPorts(vids []string) ([]*enumerator.PortDetails, error) {
@@ -371,7 +407,7 @@ func (app *application) writeRemote(msg []byte, kind string) (int, error) {
 
 	}
 	if r.port == nil || !r.up {
-		return 0, fmt.Errorf("remote %s is down", kind)
+		return 0, radioYaesuDown
 	}
 	n, err := app.rem[kind].port.Write(msg)
 	return n, err
@@ -386,7 +422,7 @@ func (app *application) readRemote(msg []byte, kind string) (int, error) {
 	}
 	if r.port == nil || !r.up {
 
-		return 0, fmt.Errorf("remote %s is down", kind)
+		return 0, radioYaesuDown
 
 	}
 	n, err := app.rem[kind].port.Read(msg)
@@ -511,6 +547,61 @@ func (app *application) tickleRadio(v *radioMsg) error {
 	return nil
 }
 
+func (app *application) readYaesuInfo() (*yaesuInfo, error) {
+
+	wBuff := bytesBuilder(yIF + ";") //get radio info (freq, band, mode, etc.)
+	n, err := app.writeRemote(wBuff, radioKind)
+	if err != nil {
+		return &yaesuInfo{}, err
+	}
+	if n != len(wBuff) {
+		return &yaesuInfo{}, errors.Join(radioYaesuDown, fmt.Errorf("did not write %d, wrote %d", len(wBuff), n))
+	}
+	rBuff := make([]byte, 28)
+	n, err = app.readRemote(rBuff, radioKind)
+	if err != nil {
+		return &yaesuInfo{}, err
+	}
+	if n == 0 {
+		return &yaesuInfo{}, radioYaesuDown
+	}
+	if n != len(rBuff) {
+		return &yaesuInfo{}, errors.Join(radioYaesuDown, fmt.Errorf(`in readYaesu calling readRemote,
+			expected %d, got %d bytes`, len(rBuff), n))
+	}
+	y := yaesuInfo{}
+	if string(rBuff[:2]) != yIF {
+		return &yaesuInfo{}, fmt.Errorf(`in readYaesu calling readRemote,
+			expected %s got %s header`, yIF, string(rBuff[:2]))
+	}
+	f, err := strconv.Atoi(string(rBuff[5:14]))
+	if err != nil {
+		return &yaesuInfo{}, fmt.Errorf(`frequency field in readYaesu did not
+			convert to an integer, it was %s`, string(rBuff[5:14]))
+	}
+	b, err := freqToBand(f)
+	if err != nil {
+		return &yaesuInfo{}, fmt.Errorf(`frequency field in readYaesu did not 
+			convert to a band, it was %s and error was %v`,
+			string(rBuff[5:14]), err)
+	}
+	modeTable := map[string]string{
+		"1": "LSB", "2": "USB", "3": "CW", "4": "FM", "5": "AM", "6": "RTTY-L",
+		"7": "CW-L", "8": "DATA-L", "9": "RTTY-U", "A": "DATA-FM", "B": "FM-N",
+		"C": "DATA-U", "D": "AM-N", "E": "PSK", "F": "DATA-FM-N"}
+	m, ok := modeTable[string(rBuff[21])]
+	if !ok {
+		return &yaesuInfo{}, fmt.Errorf(`mode field in readYaesu did not convert
+				to a mode, it was %x`, rBuff[21])
+	}
+	mm := strings.Split(m, "-")
+	app.otherModel.updateDefault("band", b)
+	app.otherModel.updateDefault("mode", mm[0])
+	y.Band = b
+	y.Mode = m
+	return &y, nil
+}
+
 func bytesBuilder(s string) []byte {
 	buff := []byte{}
 	for _, b := range []rune(s) {
@@ -527,4 +618,26 @@ func numFun(n int) (string, error) {
 	//	return "0", fmt.Errorf("function key % d not built yet", n)
 	//}
 	return strconv.Itoa(n - 111), nil
+}
+
+func freqToBand(f int) (string, error) {
+
+	for b, fList := range vfoMemory {
+		u := strings.Split(fList.UpperLimit, ".")
+		uu := strings.Join(u, "")
+		upperLimit, err := strconv.Atoi(uu)
+		if err != nil {
+			return "", err
+		}
+		l := strings.Split(fList.LowerLimit, ".")
+		ll := strings.Join(l, "")
+		lowerLimit, err := strconv.Atoi(ll)
+		if err != nil {
+			return "", err
+		}
+		if f >= lowerLimit && f <= upperLimit {
+			return b, nil
+		}
+	}
+	return "Band Not Found", nil
 }
