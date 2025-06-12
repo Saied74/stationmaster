@@ -7,6 +7,7 @@
 .README.md.swp
 master
 spider
+radios
 adif.txt
 .DS_Store
 
@@ -21,6 +22,7 @@ adif.txt
 
 # sql backup files
 *.sql
+
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
