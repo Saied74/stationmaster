@@ -197,16 +197,18 @@ func main() {
 	}
 
 	go app.wsjtxServe()
+
+	app.initRemotes()
 	//fmt.Println("A: called classify remotes in main.go")
-	err = app.classifyRemotes()
-	if err != nil {
-		app.errorLog.Println("failed to start remotes in main %v", err)
-	}
+	//err = app.classifyRemotes()
+	//if err != nil {
+	//	app.errorLog.Println("failed to start remotes in main %v", err)
+	//}
 	//fmt.Println("Z: returned from calling calssify remotes in main.go")
-	err = app.initRadio()
-	if err != nil {
-		app.errorLog.Println("failed to initialize radio in main %v", err)
-	}
+	//err = app.initRadio()
+	//if err != nil {
+	//	app.errorLog.Println("failed to initialize radio in main %v", err)
+	//}
 
 	//app.rem = make(remotes)
 	//err = app.startCWRemote()
@@ -288,6 +290,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/update-key", app.updateKey)
 	mux.HandleFunc("/set_Yaesu", app.setYaesu)
 	mux.HandleFunc("/set_TenTec", app.setTenTec)
+	mux.HandleFunc("/read-yaesu", app.readYaesu)
 	return mux
 }
 

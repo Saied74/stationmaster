@@ -172,11 +172,15 @@ type VFO struct {
 }
 
 var vfoMemory = map[string]*VFO{
+	"6m":   &VFO{UpperLimit: "54.000000", LowerLimit: "50.000000", CWBoundary: "50.100000"},
 	"10m":  &VFO{UpperLimit: "29.700000", LowerLimit: "28.000000", CWBoundary: "28.300000", VFOBase: "5.010847", FT8Freq: "28.074000", FT4Freq: "28.180000"},
+	"12m":  &VFO{UpperLimit: "24.990000", LowerLimit: "24.890000", CWBoundary: "24.930000"},
 	"15m":  &VFO{UpperLimit: "21.450000", LowerLimit: "21.000000", CWBoundary: "21.200000", VFOBase: "5.010382", FT8Freq: "21.074000", FT4Freq: "21.140000"},
 	"Aux":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
+	"17m":  &VFO{UpperLimit: "18.168000", LowerLimit: "18.068000", CWBoundary: "18.110000"},
 	"20m":  &VFO{UpperLimit: "14.350000", LowerLimit: "14.000000", CWBoundary: "14.150000", VFOBase: "5.000305", FT8Freq: "14.074000", FT4Freq: "14.080000"},
 	"WWV":  &VFO{UpperLimit: "10.500000", LowerLimit: "10.000000", CWBoundary: "10.500000", VFOBase: "5.011585", FT8Freq: "", FT4Freq: ""},
+	"30m":  &VFO{UpperLimit: "10.150000", LowerLimit: "10.100000"},
 	"40m":  &VFO{UpperLimit: "7.300000", LowerLimit: "7.000000", CWBoundary: "7.125000", VFOBase: "5.000200", FT8Freq: "7.074000", FT4Freq: "7.047500"},
 	"80m":  &VFO{UpperLimit: "4.000000", LowerLimit: "3.500000", CWBoundary: "3.600000", VFOBase: "5.000000", FT8Freq: "3.573000", FT4Freq: "3.575000"},
 	"160m": &VFO{UpperLimit: "2.000000", LowerLimit: "1.800000", CWBoundary: "1.900000", VFOBase: "5.000000", FT8Freq: "", FT4Freq: ""},
@@ -340,6 +344,46 @@ func (app *application) updateBand(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	app.cw.Band = v.Band
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(u)
+}
+
+type yaesuInfo struct {
+	Band string
+	Mode string
+}
+
+// triggered by regular update requests from the web page contest.page.html
+func (app *application) readYaesu(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var y = &yaesuInfo{}
+	var badV = false
+	if app.rem[radioKind].up {
+		y, err = app.readYaesuInfo() //reads the Yaesu radio info and updates DB
+		if errors.Is(err, radioYaesuDown) {
+			if y == nil {
+				y = &yaesuInfo{}
+			}
+			y.Band = "Yaesu audio is not responding"
+		} else {
+			if err != nil && !errors.Is(err, noPortMatch) {
+				badV = true
+				app.serverError(w, err)
+			}
+			if errors.Is(err, noPortMatch) {
+				badV = true
+			}
+		}
+	}
+	var u = []byte{}
+	if !badV {
+		u, err = json.Marshal(*y)
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+	}
+	//	app.cw.Band = y.Band
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(u)
 }

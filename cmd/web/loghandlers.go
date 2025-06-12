@@ -1239,9 +1239,11 @@ func (app *application) updateKey(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-	err = app.tickleRadio(&v)
-	if err != nil {
-		app.serverError(w, err)
+	if app.rem[radioKind].up {
+		err = app.tickleRadio(&v)
+		if err != nil {
+			app.serverError(w, err)
+		}
 	}
 	return
 
