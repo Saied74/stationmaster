@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -17,12 +19,18 @@ const (
 )
 
 type contestData struct {
-	filename   string
-	name       string //contest name
-	startTime  time.Time
-	endTime    time.Time
-	score      string
-	fieldCount int
+	filename    string
+	name        string //contest name
+	startTime   time.Time
+	endTime     time.Time
+	score       string
+	fieldCount  int
+	callWidth   int
+	field1Width int
+	field2Width int
+	field3Width int
+	field4Width int
+	field5Width int
 }
 
 type cabBuffer []byte
@@ -96,58 +104,121 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 }
 
 func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) error {
-	cabData = cabBuffer{}
-	dd := make(cabBuffer, 10)
+	b := new(bytes.Buffer)
+	//cabData = cabBuffer{}
+	//dd := make(cabBuffer, 10)
 	cd.score = ""
-	header := writeCabrilloHeader(cabData, cd.name, cd.score)
-	w := tabwriter.NewWriter(dd, 1, 2, 1, ' ', 0)
+	writeNewCabrilloHeader(b, cd.name, cd.score)
+	//w := tabwriter.NewWriter(dd, 1, 2, 1, ' ', 0)
 	for _, row := range rows {
 		s := ""
-		s += "QSO:\t"
-		s += bandNormalize(row.Band) + "\t"
-		s += row.Mode + "\t"
+		s += "QSO: "
+		band := bandNormalize(row.Band)
+		bandLen := utf8.RuneCountInString(band)
+		if bandLen == 5 {
+			s += band + " "
+		} else {
+			s += " " + band + " "
+		}
+		s += row.Mode + " "
 		dd, dt := cookTime(row.Time)
-		s += dd + "\t"
+		s += dd + " "
 		t := strings.Split(strings.TrimSuffix(dt, "Z"), ":")
-		s += strings.Join(t[0:2], "") + "\t"
-		s += myCall + "\t"
+		s += strings.Join(t[0:2], "") + " "
+		callGap := cd.callWidth - utf8.RuneCountInString(myCall)
+		if callGap < 0 {
+			return fmt.Errorf("caller call sign too wide by: %d", callGap)
+		}
+		s += myCall + strings.Repeat(" ", callGap+1)
 		if cd.fieldCount >= 2 {
-			s += row.Field1Sent + "\t"
-			s += row.Field2Sent + "\t"
+			gap1 := cd.field1Width - utf8.RuneCountInString(row.Field1Sent)
+			if gap1 < 0 {
+				return fmt.Errorf("field 1 gap is negative by: %d", gap1)
+			}
+			gap2 := cd.field2Width - utf8.RuneCountInString(row.Field2Sent)
+			if gap2 < 0 {
+				return fmt.Errorf("field 2 gap is negative by: %d", gap2)
+			}
+			s += row.Field1Sent + strings.Repeat(" ", gap1+1)
+			s += row.Field2Sent + strings.Repeat(" ", gap2+1)
 		}
 		if cd.fieldCount >= 3 {
-			s += row.Field3Sent + "\t"
+			gap3 := cd.field3Width - utf8.RuneCountInString(row.Field3Sent)
+			if gap3 < 0 {
+				return fmt.Errorf("field 3 gap is negative by: %d", gap3)
+			}
+			s += row.Field1Sent + strings.Repeat(" ", gap3+1)
 		}
 		if cd.fieldCount >= 4 {
-			s += row.Field4Sent + "\t"
+			gap4 := cd.field4Width - utf8.RuneCountInString(row.Field4Sent)
+			if gap4 < 0 {
+				return fmt.Errorf("field 4 gap is negative by: %d", gap4)
+			}
+			s += row.Field1Sent + strings.Repeat(" ", gap4+1)
 		}
 		if cd.fieldCount == 5 {
-			s += row.Field5Sent + "\t"
+			gap5 := cd.field5Width - utf8.RuneCountInString(row.Field5Sent)
+			if gap5 < 0 {
+				return fmt.Errorf("field 5 gap is negative by: %d", gap5)
+			}
+			s += row.Field1Sent + strings.Repeat(" ", gap5+1)
 		}
-		s += row.Call + "\t"
+		callGap = cd.callWidth - utf8.RuneCountInString(row.Call)
+		if callGap < 0 {
+			return fmt.Errorf("called call sign too wide by: %d", callGap)
+		}
+		s += row.Call + strings.Repeat(" ", callGap+1)
 		if cd.fieldCount >= 2 {
-			s += row.Field1Rcvd + "\t"
-			s += row.Field2Rcvd + "\t"
+			gap1 := cd.field1Width - utf8.RuneCountInString(row.Field1Rcvd)
+			if gap1 < 0 {
+				return fmt.Errorf("field 1 gap is negative by: %d", gap1)
+			}
+			gap2 := cd.field2Width - utf8.RuneCountInString(row.Field2Rcvd)
+			if gap2 < 0 {
+				return fmt.Errorf("field 2 gap is negative by: %d", gap2)
+			}
+			s += row.Field1Rcvd + strings.Repeat(" ", gap1+1)
+			s += row.Field2Rcvd + strings.Repeat(" ", gap2+1)
 		}
 		if cd.fieldCount >= 3 {
-			s += row.Field3Rcvd + "\t"
+			gap3 := cd.field3Width - utf8.RuneCountInString(row.Field3Rcvd)
+			if gap3 < 0 {
+				return fmt.Errorf("field 3 gap is negative by: %d", gap3)
+			}
+			s += row.Field1Rcvd + strings.Repeat(" ", gap3+1)
 		}
 		if cd.fieldCount >= 4 {
-			s += row.Field4Rcvd + "\t"
+			gap4 := cd.field4Width - utf8.RuneCountInString(row.Field4Rcvd)
+			if gap4 < 0 {
+				return fmt.Errorf("field 4 gap is negative by: %d", gap4)
+			}
+			s += row.Field1Rcvd + strings.Repeat(" ", gap4+1)
 		}
 		if cd.fieldCount == 5 {
-			s += row.Field5Rcvd + "\t"
+			gap5 := cd.field5Width - utf8.RuneCountInString(row.Field5Rcvd)
+			if gap5 < 0 {
+				return fmt.Errorf("field 5 gap is negative by: %d", gap5)
+			}
+			s += row.Field1Rcvd + strings.Repeat(" ", gap5+1)
 		}
+		s += "\n"
 
-		fmt.Fprintln(w, s)
+		b.WriteString(s)
 	}
-	w.Flush()
-	dd.Write([]byte("END-OF-LOG: \n"))
-	fullData := append(header, cabData...)
-	err := writeCab(cd.filename, []byte(fullData))
+
+	b.WriteString("END-OF-LOG: \n")
+	f, err := os.Create(cd.filename)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
+	bb := make([]byte, 10000)
+	b.Read(bb)
+	_, err = f.Write(bb)
+	if err != nil {
+		return err
+	}
+
 	return nil
 
 }
@@ -236,4 +307,22 @@ func writeCab(filename string, c []byte) error {
 		return err
 	}
 	return nil
+}
+
+func writeNewCabrilloHeader(b *bytes.Buffer, contest, score string) {
+	b.Write([]byte("START-OF-LOG: 3.0\n"))
+	b.Write([]byte("CONTEST: " + contest + "\n"))
+	b.Write([]byte("LOCATION: NJ\n"))
+	b.Write([]byte("CALLSIGN: " + myCall + "\n"))
+	b.Write([]byte("CATEGORY-OPERATOR: SINGLE-OP\n"))
+	b.Write([]byte("CATEGORY-ASSISTED: NON-ASSISTED\n"))
+	b.Write([]byte("CATEGORY-BAND: All\n"))
+	b.Write([]byte("CATEGORY-POWER: LOW\n"))
+	b.Write([]byte("CATEGORY-MODE: CW\n"))
+	b.Write([]byte("CATEGORY-STATION: FIXED\n"))
+	b.Write([]byte("CATEGORY-TRANSMITTER: ONE\n"))
+	b.Write([]byte("CLAIMED-SCORE: " + score + "\n"))
+	b.Write([]byte("CLUB: DVRA\n"))
+	b.Write([]byte("NAME: Asadolah Seghatoleslami\n"))
+	b.Write([]byte("ADDRESS: 11 Silvers Lane, Cranbury NJ 08512\n"))
 }

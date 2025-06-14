@@ -15,6 +15,7 @@ const (
 	noContest     string = "2"
 	switchContest string = "3"
 	seq           string = "SEQ"
+	rst           string = "RST"
 )
 
 type tTop interface{}
@@ -43,7 +44,7 @@ type templateData struct {
 	Message    string
 	FieldCount int
 	Seq        string
-	F1         string
+	F1         string //contesting function keys
 	F2         string
 	F3         string
 	F4         string
@@ -53,6 +54,7 @@ type templateData struct {
 	F8         string
 	F9         string
 	F10        string
+	FieldNames []string
 }
 
 type Stats struct {
@@ -1046,7 +1048,9 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, err)
 			return
 		}
+		fmt.Println("Field1Name: ", field1Name)
 		if strings.ToUpper(field1Name) == seq {
+			fmt.Println("Field1 is sequence")
 			tr.Field1Sent = v.Seq
 			n, err := strconv.Atoi(v.Seq)
 			if err != nil {
@@ -1061,6 +1065,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			field1Sent, err := app.otherModel.getDefault("field1Data")
+			fmt.Println("Field1Sent: ", field1Sent)
 			if err != nil {
 				app.serverError(w, err)
 				return
@@ -1074,7 +1079,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if strings.ToUpper(field2Name) == seq {
-			tr.Field1Sent = v.Seq
+			tr.Field2Sent = v.Seq
 			n, err := strconv.Atoi(v.Seq)
 			if err != nil {
 				app.serverError(w, err)
@@ -1190,7 +1195,7 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 	//<++++++++++++++++ end of get defaults
 
 	//<++++++++++++++  Save the new log
-
+	fmt.Println("on exit field1Sent: ", tr.Field1Sent)
 	_, err = app.logsModel.insertLog(&tr)
 	if err != nil {
 		app.serverError(w, err)

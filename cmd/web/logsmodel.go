@@ -137,6 +137,7 @@ var tableHead = headRow{
 
 // will insert a new record into the stationlogs table
 func (m *logsModel) insertLog(l *LogsRow) (int, error) {
+	fmt.Println("l.Field1Sent: ", l.Field1Sent)
 	if len(l.Name) > 100 {
 		l.Name = l.Name[0:100]
 	}

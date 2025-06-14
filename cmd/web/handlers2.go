@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 )
 
 func (app *application) adif(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +95,25 @@ func (app *application) confirmQSLs(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) cabrillo(w http.ResponseWriter, r *http.Request) {
 	td := initTemplateData()
+	fc, err := app.otherModel.getDefault("fieldCount")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	c, err := strconv.Atoi(fc)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	td.FieldCount = c
+	for i := 0; i < c; i++ {
+		q := fmt.Sprintf("field%dName", i+1)
+		sfn, err := app.otherModel.getDefault(q)
+		if err != nil {
+			app.serverError(w, err)
+		}
+		td.FieldNames = append(td.FieldNames, sfn)
+	}
 	app.render(w, r, "cabrillo.page.html", td)
 }
 
@@ -107,13 +127,15 @@ func (app *application) genCabrillo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f := newForm(r.PostForm)
-	f.required("contestname", "starttime", "startdate", "enddate", "endtime", "contestfile")
+	f.required("contestname", "starttime", "startdate", "enddate",
+		"endtime", "contestfile")
 	f.maxLength("contestname", 45)
 	f.dateCheck("startdate")
 	f.dateCheck("enddate")
 	f.timeCheck("starttime")
 	f.timeCheck("endtime")
 	f.fileCheck("contestfile")
+
 	start := f.datetimeFormat("startdate", "starttime")
 	end := f.datetimeFormat("enddate", "endtime")
 	if !f.valid() {
@@ -153,9 +175,35 @@ func (app *application) genCabrilloNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f := newForm(r.PostForm)
-	f.required("contestname", "contestfile")
+	f.required("contestname", "contestfile", "callWidth")
+	f.isInt("callWidth")
 	f.maxLength("contestname", 45)
 	f.fileCheck("contestfile")
+	fc, err := app.otherModel.getDefault("fieldCount")
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	cnt, err := strconv.Atoi(fc)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	for i := 0; i < cnt; i++ {
+		q := fmt.Sprintf("field%dName", i+1)
+		sfn, err := app.otherModel.getDefault(q)
+		if err != nil {
+			app.serverError(w, err)
+		}
+		td.FieldNames = append(td.FieldNames, sfn)
+	}
+
+	for i := 0; i < cnt; i++ {
+		fW := fmt.Sprintf("field%dWidth", i)
+		f.required(fW)
+		f.isInt(fW)
+	}
+
 	if !f.valid() {
 		td.FormData = f
 		app.render(w, r, "cabrillo.page.html", td)
@@ -171,11 +219,24 @@ func (app *application) genCabrilloNew(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	w0, _ := strconv.Atoi(f.Get("callWidth"))
+	w1, _ := strconv.Atoi(f.Get("field0Width"))
+	w2, _ := strconv.Atoi(f.Get("field1Width"))
+	w3, _ := strconv.Atoi(f.Get("field2Width"))
+	w4, _ := strconv.Atoi(f.Get("field3Width"))
+	w5, _ := strconv.Atoi(f.Get("field4Width"))
+
 	cd := &contestData{
-		filename:   filepath.Join(app.contestDir, f.Get("contestfile")),
-		name:       f.Get("contestname"),
-		score:      "0",
-		fieldCount: cData.FieldCount,
+		filename:    filepath.Join(app.contestDir, f.Get("contestfile")),
+		name:        f.Get("contestname"),
+		score:       "0",
+		fieldCount:  cData.FieldCount,
+		callWidth:   w0,
+		field1Width: w1,
+		field2Width: w2,
+		field3Width: w3,
+		field4Width: w4,
+		field5Width: w5,
 	}
 	td.FieldCount = cData.FieldCount
 	td.Top.Field1Name = cData.Field1Name
