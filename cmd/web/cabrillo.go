@@ -105,11 +105,8 @@ func (app *application) genCabrilloFile(rows []LogsRow, cd *contestData) error {
 
 func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) error {
 	b := new(bytes.Buffer)
-	//cabData = cabBuffer{}
-	//dd := make(cabBuffer, 10)
 	cd.score = ""
 	writeNewCabrilloHeader(b, cd.name, cd.score)
-	//w := tabwriter.NewWriter(dd, 1, 2, 1, ' ', 0)
 	for _, row := range rows {
 		s := ""
 		s += "QSO: "
@@ -147,21 +144,21 @@ func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) erro
 			if gap3 < 0 {
 				return fmt.Errorf("field 3 gap is negative by: %d", gap3)
 			}
-			s += row.Field1Sent + strings.Repeat(" ", gap3+1)
+			s += row.Field3Sent + strings.Repeat(" ", gap3+1)
 		}
 		if cd.fieldCount >= 4 {
 			gap4 := cd.field4Width - utf8.RuneCountInString(row.Field4Sent)
 			if gap4 < 0 {
 				return fmt.Errorf("field 4 gap is negative by: %d", gap4)
 			}
-			s += row.Field1Sent + strings.Repeat(" ", gap4+1)
+			s += row.Field4Sent + strings.Repeat(" ", gap4+1)
 		}
 		if cd.fieldCount == 5 {
 			gap5 := cd.field5Width - utf8.RuneCountInString(row.Field5Sent)
 			if gap5 < 0 {
 				return fmt.Errorf("field 5 gap is negative by: %d", gap5)
 			}
-			s += row.Field1Sent + strings.Repeat(" ", gap5+1)
+			s += row.Field5Sent + strings.Repeat(" ", gap5+1)
 		}
 		callGap = cd.callWidth - utf8.RuneCountInString(row.Call)
 		if callGap < 0 {
@@ -185,21 +182,21 @@ func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) erro
 			if gap3 < 0 {
 				return fmt.Errorf("field 3 gap is negative by: %d", gap3)
 			}
-			s += row.Field1Rcvd + strings.Repeat(" ", gap3+1)
+			s += row.Field3Rcvd + strings.Repeat(" ", gap3+1)
 		}
 		if cd.fieldCount >= 4 {
 			gap4 := cd.field4Width - utf8.RuneCountInString(row.Field4Rcvd)
 			if gap4 < 0 {
 				return fmt.Errorf("field 4 gap is negative by: %d", gap4)
 			}
-			s += row.Field1Rcvd + strings.Repeat(" ", gap4+1)
+			s += row.Field4Rcvd + strings.Repeat(" ", gap4+1)
 		}
 		if cd.fieldCount == 5 {
 			gap5 := cd.field5Width - utf8.RuneCountInString(row.Field5Rcvd)
 			if gap5 < 0 {
 				return fmt.Errorf("field 5 gap is negative by: %d", gap5)
 			}
-			s += row.Field1Rcvd + strings.Repeat(" ", gap5+1)
+			s += row.Field5Rcvd + strings.Repeat(" ", gap5+1)
 		}
 		s += "\n"
 
@@ -212,7 +209,7 @@ func (app *application) genNewCabrilloFile(rows []LogsRow, cd *contestData) erro
 	if err != nil {
 		return err
 	}
-	bb := make([]byte, 10000)
+	bb := make([]byte, b.Len())
 	b.Read(bb)
 	_, err = f.Write(bb)
 	if err != nil {
