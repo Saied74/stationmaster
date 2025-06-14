@@ -374,6 +374,17 @@ func (app *application) readYaesu(w http.ResponseWriter, r *http.Request) {
 				badV = true
 			}
 		}
+	} else {
+		y.Band, err = app.otherModel.getDefault("band")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+		y.Mode, err = app.otherModel.getDefault("mode")
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
 	}
 	var u = []byte{}
 	if !badV {

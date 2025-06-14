@@ -1065,7 +1065,6 @@ func (app *application) updateLog(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			field1Sent, err := app.otherModel.getDefault("field1Data")
-			fmt.Println("Field1Sent: ", field1Sent)
 			if err != nil {
 				app.serverError(w, err)
 				return
