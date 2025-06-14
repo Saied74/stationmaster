@@ -107,6 +107,36 @@
                <input type="text" name="contestfile" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
          </div>
        </div>
+       <div class="row"> <h5> Output Field Widths </h5> </row>
+       <div class="row">
+	     	<div class="col-sm-2">
+			{{with .FormData.Errors.Get "callWidth"}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            		{{end}}
+
+	       		<div class="input-group mb-3">
+               			<span class="input-group-text" id="inputGroup-sizing-default">Call Sign</span>
+               			<input type="text" name="callWidth" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+         		</div>
+	 	</div>
+		{{$fd := .FormData}}
+	   	{{range $nn, $val := .FieldNames}}
+	 	<div class="col-sm-2">
+			{{$fieldWidth := printf "field%dWidth" $nn}}
+			{{with $fd.Errors.Get $fieldWidth}}
+            		<label class="error"><p style="color:rgb(255, 0, 0)">{{.}}</p></label>
+            		{{end}}
+
+			<div class="input-group mb-3">
+				<span class="input-group-text" id="inputGroup-sizing-default">{{$val}} </span>
+		 		<input type="text" name="field{{$nn}}Width" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+         		</div>
+	 	</div>
+
+		{{end}}
+	</div>
+	
+
        <div class="row">
           <button type="submit" class="btn mb-3" style="background-color: #9FE1EA">Generate New Cabrillo File</button>
        </div>
